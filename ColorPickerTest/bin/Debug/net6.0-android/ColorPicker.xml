@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ColorPicker</name>
+    </assembly>
+    <members>
+        <member name="T:ColorPicker.BaseClasses.ColorPickerViewBase">
+            <summary>
+            ColorPicker base class
+            
+            This class exposes the SelectedColor and AttachedColorPicker bound properties to any 
+            ColorPicker implementation.
+            
+            </summary>
+        </member>
+        <member name="M:ColorPicker.BaseClasses.ColorPickerViewBase.BoundColorPicker_PropertyChanged(System.Object,System.ComponentModel.PropertyChangedEventArgs)">
+            <summary>
+            Property changed event handler
+            </summary>
+        </member>
+        <member name="E:ColorPicker.BaseClasses.ColorPickerViewBase.SelectedColorChanged">
+            <summary>
+            Custom event handler for changes in SelectedColor
+            </summary>
+        </member>
+        <member name="M:ColorPicker.BaseClasses.SkiaSharpPickerBase.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:ColorPicker.Classes.AppHostBuilderExtensions.UseCompatibilityColorPickersAndSliders(Microsoft.Maui.Hosting.MauiAppBuilder,System.Boolean)">
+            <summary>
+            Use this to use the SkiaSharp compatibility renderers
+            </summary>
+        </member>
+        <member name="M:ColorPicker.Controls.ColorCircle.#ctor">
+            <summary>
+            Constuctor
+            </summary>
+        </member>
+        <member name="M:ColorPicker.Controls.ColorTriangle.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:ColorPicker.Controls.ColorWheel.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+    </members>
+</doc>
