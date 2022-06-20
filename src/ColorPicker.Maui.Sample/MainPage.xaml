@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:cp="clr-namespace:ColorPicker.Maui;assembly=ColorPicker.Maui"
+             x:Class="ColorPicker.Maui.Sample.MainPage">
+			 
+    <ScrollView>
+        <VerticalStackLayout 
+            Spacing="25" 
+            Padding="30,0" 
+            VerticalOptions="Center">
+
+            <cp:HueHorisontalSlider
+                HorizontalOptions="FillAndExpand"
+                HeightRequest="500"/>
+
+
+        </VerticalStackLayout>
+    </ScrollView>
+ 
+</ContentPage>
