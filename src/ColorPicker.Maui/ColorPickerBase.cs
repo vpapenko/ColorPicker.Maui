@@ -8,7 +8,7 @@ namespace ColorPicker.Maui
         private readonly ColoPickerCalculationsBase _coloPickerCalculations = null;
         private PointF _pickerLocation;
 
-        public Color SelectedColor = Colors.Red;
+        public Color SelectedColor = Colors.Green;
 
         public ColorPickerBase()
         {
@@ -17,8 +17,7 @@ namespace ColorPicker.Maui
             StartInteraction += OnStartInteraction;
             DragInteraction += OnDragInteraction;
             EndInteraction += OnEndInteraction;
-
-            _pickerLocation = UnscalePoint(_coloPickerCalculations.ColorToPoint(SelectedColor));
+            UpdateBySelectedColor();
         }
 
         protected abstract void DrawBackground(ICanvas canvas, RectF dirtyRect);
@@ -32,6 +31,12 @@ namespace ColorPicker.Maui
             canvas.DrawCircle(_pickerLocation, 11);
             canvas.StrokeColor = Colors.White;
             canvas.DrawCircle(_pickerLocation, 12);
+        }
+
+        protected override Size ArrangeOverride(Rect bounds)
+        {
+            UpdateBySelectedColor();
+            return base.ArrangeOverride(bounds);
         }
 
         private void OnEndInteraction(object sender, TouchEventArgs e)
@@ -52,6 +57,12 @@ namespace ColorPicker.Maui
         private void UpdateColor(PointF pointF)
         {
             SelectedColor = _coloPickerCalculations.UpdateColor(ScalePoint(pointF), SelectedColor);
+            _pickerLocation = UnscalePoint(_coloPickerCalculations.ColorToPoint(SelectedColor));
+            this.Invalidate();
+        }
+
+        private void UpdateBySelectedColor()
+        {
             _pickerLocation = UnscalePoint(_coloPickerCalculations.ColorToPoint(SelectedColor));
             this.Invalidate();
         }

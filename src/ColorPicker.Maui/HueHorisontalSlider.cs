@@ -4,19 +4,20 @@
     {
         protected override void DrawBackground(ICanvas canvas, RectF dirtyRect)
         {
-            LinearGradientPaint linearGradientPaint = new LinearGradientPaint
+            LinearGradientPaint linearGradientPaint = new LinearGradientPaint()
             {
-                StartColor = Colors.Yellow,
-                EndColor = Colors.Green,
-                StartPoint = new Point(0, 0),
-                EndPoint = new Point(1, 1)
+                StartColor = Colors.Red,
+                EndColor = Colors.Red,
+                StartPoint = new Point(0, 0.5),
+                EndPoint = new Point(1, 0.5)
             };
 
-            linearGradientPaint.AddOffset(0.25f, Colors.Red);
-            linearGradientPaint.AddOffset(0.75f, Colors.Blue);
+            for (int i = 0; i <= 255; i++)
+            {
+                linearGradientPaint.AddOffset(i / 255F, Color.FromHsla(i / 255F, 1, 0.5));
+            }
 
             canvas.SetFillPaint(linearGradientPaint, dirtyRect);
-            canvas.SetShadow(new SizeF(10, 10), 10, Colors.Grey);
             canvas.FillRoundedRectangle(dirtyRect, 12);
         }
     }
