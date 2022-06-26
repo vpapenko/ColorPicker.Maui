@@ -5,13 +5,42 @@ namespace ColorPicker.Maui
     public abstract class ColorPickerBase<T> : GraphicsView
         where T: ColoPickerCalculationsBase, new()
     {
-        private readonly ColoPickerCalculationsBase _coloPickerCalculations = null;
+        private readonly T _coloPickerCalculations = null;
         private PointF _pickerLocation;
+        protected Action<double,double> _setAspectRatio;
 
-        public Color SelectedColor = Colors.Green;
+        public static readonly BindableProperty SelectedColorProperty = BindableProperty.Create(
+           nameof(SelectedColor),
+           typeof(Color),
+           typeof(ColorPickerBase<T>),
+           Color.FromHsla(0, 0.5, 0.5),
+           propertyChanged: new BindableProperty.BindingPropertyChangedDelegate(HandleSelectedColorSet));
+
+        static void HandleSelectedColorSet(BindableObject bindable, object oldValue, object newValue)
+        {
+            if (oldValue != newValue)
+            {
+                ((ColorPickerBase<T>)bindable).UpdateBySelectedColor();
+            }
+        }
+
+        public Color SelectedColor
+        {
+            get
+            {
+                return (Color)GetValue(SelectedColorProperty);
+            }
+            set
+            {
+                SetValue(SelectedColorProperty, value);
+            }
+        }
+
+        public double PickerRadius { get; set; } = 20;
 
         public ColorPickerBase()
         {
+            _setAspectRatio = SetAspectRatioToPickerHeigth;
             _coloPickerCalculations = new T();
             Drawable = new ColorPickerBaseDrowable(DrawBackground, DrawPicker);
             StartInteraction += OnStartInteraction;
@@ -24,13 +53,31 @@ namespace ColorPicker.Maui
 
         protected void DrawPicker(ICanvas canvas, RectF dirtyRect)
         {
-            canvas.StrokeSize = 1;
+            canvas.StrokeSize = 2;
             canvas.StrokeColor = Colors.White;
-            canvas.DrawCircle(_pickerLocation, 10);
+            canvas.DrawCircle(_pickerLocation, PickerRadius);
             canvas.StrokeColor = Colors.Black;
-            canvas.DrawCircle(_pickerLocation, 11);
+            canvas.DrawCircle(_pickerLocation, PickerRadius - 2);
             canvas.StrokeColor = Colors.White;
-            canvas.DrawCircle(_pickerLocation, 12);
+            canvas.DrawCircle(_pickerLocation, PickerRadius - 4);
+        }
+
+        protected void SetAspectRatioToPickerHeigth(double widthConstraint, double heightConstraint)
+        {
+            this.HeightRequest = PickerRadius * 2 + 2;
+        }
+
+        protected void SetAspectRatioSquare(double widthConstraint, double heightConstraint)
+        {
+            var minConstraint = Math.Min(widthConstraint, heightConstraint);
+            this.WidthRequest = minConstraint;
+            this.HeightRequest = minConstraint;
+        }
+
+        protected override Size MeasureOverride(double widthConstraint, double heightConstraint)
+        {
+            _setAspectRatio(widthConstraint,heightConstraint);
+            return base.MeasureOverride(widthConstraint, widthConstraint);
         }
 
         protected override Size ArrangeOverride(Rect bounds)

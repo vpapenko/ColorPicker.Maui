@@ -7,13 +7,16 @@
     <ScrollView>
         <VerticalStackLayout 
             Spacing="25" 
-            Padding="30,0" 
-            VerticalOptions="Center">
+            Padding="30,0">
+            
+            <Rectangle 
+                BackgroundColor="{Binding Source={x:Reference ColorPicker}, Path=SelectedColor}"
+                WidthRequest="400" HeightRequest="100"/>
 
-            <cp:HueHorisontalSlider
-                HorizontalOptions="FillAndExpand"
-                HeightRequest="500"/>
-
+            <cp:ColorCircle
+                SelectedColor="Green"
+                x:Name="ColorPicker"
+                HorizontalOptions="FillAndExpand"/>
 
         </VerticalStackLayout>
     </ScrollView>

@@ -11,7 +11,7 @@ namespace ColorPicker.Calculations.ColorWheel
             var r = color.GetSaturation() / 2f;
             var a = color.GetHue() * 2f * (float)Math.PI - Rotation;
             var polar = new PolarPoint(r, a);
-            var point = polar.ToAbstractPoint();
+            var point = polar.ToPoint();
             point.X = -point.X;
             point = ShiftFromCenter(point);
             return point;
@@ -22,7 +22,7 @@ namespace ColorPicker.Calculations.ColorWheel
             point = ShiftToCenter(point);
             var polar = point.ToPolarPoint();
             polar.Radius = polar.Radius > 0.5F ? 0.5F : polar.Radius;
-            point = polar.ToAbstractPoint();
+            point = polar.ToPoint();
             point = ShiftFromCenter(point);
             return point;
         }
@@ -41,7 +41,7 @@ namespace ColorPicker.Calculations.ColorWheel
             point.Y = -point.Y;
             var polar = point.ToPolarPoint();
             polar.Angle += Rotation;
-            polar = polar.ToAbstractPoint().ToPolarPoint();
+            polar = polar.ToPoint().ToPolarPoint();
             var h = (polar.Angle + Math.PI) / (Math.PI * 2);
             var s = polar.Radius * 2;
             return Color.FromHsla(h, s, color.GetLuminosity(), color.Alpha);

@@ -1,21 +1,18 @@
 ﻿namespace ColorPicker.Maui
 {
-    public class HueHorisontalSlider : ColorPickerBase<Calculations.Slider.HueHorisontalSlider>
+    public class RedHorisontalSlider : ColorPickerBase<Calculations.Slider.RedHorisontalSlider>
     {
         protected override void DrawBackground(ICanvas canvas, RectF dirtyRect)
         {
+            var startColor = Color.FromRgb(0, SelectedColor.Green, SelectedColor.Blue);
+            var endColor = Color.FromRgb(1, SelectedColor.Green, SelectedColor.Blue);
             var linearGradientPaint = new LinearGradientPaint()
             {
-                StartColor = Colors.Red,
-                EndColor = Colors.Red,
+                StartColor = startColor,
+                EndColor = endColor,
                 StartPoint = new Point(0, 0.5),
                 EndPoint = new Point(1, 0.5)
             };
-
-            for (int i = 0; i <= 255; i++)
-            {
-                linearGradientPaint.AddOffset(i / 255F, Color.FromHsla(i / 255F, 1, 0.5));
-            }
 
             canvas.SetFillPaint(linearGradientPaint, dirtyRect);
             canvas.FillRectangle(dirtyRect);

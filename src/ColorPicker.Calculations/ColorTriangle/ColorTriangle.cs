@@ -68,7 +68,7 @@ namespace ColorPicker.Calculations.ColorTriangle
             point.AddX(-0.5f);
             var polar = point.ToPolarPoint();
             polar.AddAngle(angle);
-            var p = polar.ToAbstractPoint();
+            var p = polar.ToPoint();
             point.X = p.X;
             point.Y = p.Y;
             point.AddX(0.5f);

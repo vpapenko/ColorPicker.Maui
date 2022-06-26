@@ -45,7 +45,7 @@ namespace ColorPicker.Calculations
             return this;
         }
 
-        public PointF ToAbstractPoint()
+        public PointF ToPoint()
         {
             float x = Radius * (float)Math.Cos(Angle);
             float y = Radius * (float)Math.Sin(Angle);

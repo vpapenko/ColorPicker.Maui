@@ -39,7 +39,7 @@ namespace ColorPicker.Calculations.ColorWheel
             var r = MiddleRadius;
             var a = color.GetLuminosity() * (float)Math.PI + side * (float)Math.PI / 2 - Rotation;
             var polar = new PolarPoint(r, a);
-            var point = polar.ToAbstractPoint();
+            var point = polar.ToPoint();
             point.Y = -1 * side * point.Y;
             point = ShiftFromCenter(point);
             return point;
@@ -48,7 +48,7 @@ namespace ColorPicker.Calculations.ColorWheel
         public override PointF FitToActiveAria(PointF point, Color color)
         {
             var polar = ToPolarPoint(point);
-            point = polar.ToAbstractPoint();
+            point = polar.ToPoint();
             point = ShiftFromCenter(point);
             return point;
         }
@@ -65,7 +65,7 @@ namespace ColorPicker.Calculations.ColorWheel
             UpdateSide(point);
             var polar = ToPolarPoint(point);
             polar.Angle += Rotation + (float)Math.PI / 2F;
-            polar = polar.ToAbstractPoint().ToPolarPoint();
+            polar = polar.ToPoint().ToPolarPoint();
             var l = Math.Abs(polar.Angle) / Math.PI;
             return Color.FromHsla(color.GetHue(), color.GetSaturation(), l, color.Alpha);
         }
