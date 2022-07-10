@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32611.2
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorPicker.Maui", "ColorPicker.Maui\ColorPicker.Maui.csproj", "{8A536D9B-41A9-4F9B-AC3E-DC646B3FCADF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorPicker", "ColorPicker\ColorPicker.csproj", "{8A536D9B-41A9-4F9B-AC3E-DC646B3FCADF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorPicker.Calculations", "ColorPicker.Calculations\ColorPicker.Calculations.csproj", "{4BB4EE78-9D70-4D5A-9495-1AD9620217E3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorPickerMath", "ColorPickerMath\ColorPickerMath.csproj", "{4BB4EE78-9D70-4D5A-9495-1AD9620217E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorPicker.Maui.Sample", "ColorPicker.Maui.Sample\ColorPicker.Maui.Sample.csproj", "{F205B4A9-10DC-42BF-B3B1-F6355D495A9B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorPicker.Sample", "ColorPicker.Sample\ColorPicker.Sample.csproj", "{F205B4A9-10DC-42BF-B3B1-F6355D495A9B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

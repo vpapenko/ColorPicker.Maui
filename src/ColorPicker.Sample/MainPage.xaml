@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:cp="clr-namespace:ColorPicker;assembly=ColorPicker"
+             x:Class="ColorPicker.Sample.MainPage">
+			 
+    <ScrollView>
+        <VerticalStackLayout 
+            Spacing="25" 
+            Padding="30,0">
+            
+            <Rectangle 
+                BackgroundColor="{Binding Source={x:Reference ColorPicker}, Path=SelectedColor}"
+                WidthRequest="400" HeightRequest="100"/>
+
+            <cp:ColorCircle
+                SelectedColor="Green"
+                x:Name="ColorPicker"
+                HorizontalOptions="FillAndExpand"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+ 
+</ContentPage>
