@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ColorMineStandard" Version="1.0.0" />
+    <PackageReference Include="ColorMinePortable" Version="2.0.1" />
     <PackageReference Include="Microsoft.Maui.Dependencies" Version="6.0.400" />
   </ItemGroup>
 
