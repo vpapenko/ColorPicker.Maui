@@ -63,7 +63,6 @@ public class LuminosityWheelMath : ColorPickerMathBase
 
         var polar = ToPolarPoint( point );
         polar.Angle += Rotation + (float)Math.PI / 2F;
-        polar = polar.ToPointF().ToPolarPoint();
 
         var l = Math.Abs(polar.Angle) / Math.PI;
         return Color.FromHsla( color.GetHue(), color.GetSaturation(), l, color.Alpha );
