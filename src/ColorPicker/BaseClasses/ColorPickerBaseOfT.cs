@@ -7,13 +7,13 @@ public abstract partial class ColorPickerBase<T> : GraphicsView where T : ColorP
 
     protected Action<double, double> _setAspectRatio;
 
-    public double PickerRadius { get; set; } = 20;
+    public double ReticleRadius { get; set; } = 20;
 
     public ColorPickerBase()
     {
         _setAspectRatio = SetAspectRatioToHeight;
         _colorPickerMath = new T();
-        Drawable = new ColorPickerBaseDrawable(DrawBackground, DrawPicker);
+        Drawable = new ColorPickerBaseDrawable(DrawBackground, DrawReticle);
 
         StartInteraction += OnStartInteraction;
         DragInteraction += OnDragInteraction;
@@ -24,23 +24,23 @@ public abstract partial class ColorPickerBase<T> : GraphicsView where T : ColorP
 
     protected abstract void DrawBackground(ICanvas canvas, RectF dirtyRect);
 
-    protected void DrawPicker(ICanvas canvas, RectF dirtyRect)
+    protected void DrawReticle(ICanvas canvas, RectF dirtyRect)
     {
         canvas.StrokeSize = 2;
 
         canvas.StrokeColor = Colors.White;
-        canvas.DrawCircle(_pickerLocation, PickerRadius);
+        canvas.DrawCircle(_pickerLocation, ReticleRadius);
 
         canvas.StrokeColor = Colors.Black;
-        canvas.DrawCircle(_pickerLocation, PickerRadius - 2);
+        canvas.DrawCircle(_pickerLocation, ReticleRadius - 2);
 
         canvas.StrokeColor = Colors.White;
-        canvas.DrawCircle(_pickerLocation, PickerRadius - 4);
+        canvas.DrawCircle(_pickerLocation, ReticleRadius - 4);
     }
 
     protected void SetAspectRatioToHeight(double widthConstraint, double heightConstraint)
     {
-        this.HeightRequest = PickerRadius * 2 + 2;
+        this.HeightRequest = ReticleRadius * 2 + 2;
     }
 
     protected void SetAspectRatioSquare(double widthConstraint, double heightConstraint)
