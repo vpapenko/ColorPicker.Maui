@@ -4,31 +4,21 @@ public class LuminosityWheelMath : ColorPickerMathBase
 {
     float _internalRadius = 0.25F;
 
-    public LuminosityWheelMath()
-    {
-    }
+    public LuminosityWheelMath()    { }
 
     public LuminosityWheelMath( float internalRadius )
-    {
-        InternalRadius = internalRadius;
-    }
+        => InternalRadius = internalRadius;
 
-    float MiddleRadius => ( 0.5F - _internalRadius ) / 2 + _internalRadius;
-    public float Rotation { get; set; }
-    public bool IsLeftSide { get; protected set; } = true;
 
-    public float InternalRadius
+    public float    Rotation    { get; set; }
+    public bool     IsLeftSide  { get; protected set; } = true;
+
+    float           MiddleRadius => ( 0.5F - _internalRadius ) / 2 + _internalRadius;
+
+    public float    InternalRadius
     {
-        get
-        {
-            return _internalRadius;
-        }
-        set
-        {
-            value = value < 0 ? 0 : value;
-            value = value > 0.5F ? 0.5F : value;
-            _internalRadius = value;
-        }
+        get => _internalRadius;
+        set => _internalRadius = value < 0 ? 0 : value > 0.5f ? 0.5f : value;
     }
 
     public override PointF ColorToPoint( Color color )
@@ -46,9 +36,8 @@ public class LuminosityWheelMath : ColorPickerMathBase
 
     public override PointF FitToActiveArea( PointF point, Color color )
     {
-        var polar = ToPolarPoint(point);
-        point = polar.ToPointF();
-        return point.ShiftFromCenter();
+        var polar = ToPolarPoint( point );
+        return polar.ToPointF().ShiftFromCenter();
     }
 
     public override bool IsInActiveArea( PointF point, Color color )
@@ -61,22 +50,22 @@ public class LuminosityWheelMath : ColorPickerMathBase
     {
         UpdateSide( point );
 
-        var polar = ToPolarPoint( point );
-        polar.Angle += Rotation + (float)Math.PI / 2F;
+        var polar       = ToPolarPoint( point ).AddAngle( Rotation + (float)Math.PI / 2F );
+        var luminosity  = Math.Abs(polar.Angle) / (float)Math.PI;
 
-        var l = Math.Abs(polar.Angle) / Math.PI;
-        return Color.FromHsla( color.GetHue(), color.GetSaturation(), l, color.Alpha );
+        return Color.FromHsla( color.GetHue(), color.GetSaturation(), luminosity, color.Alpha );
     }
 
     void UpdateSide( PointF point )
     {
-        var centeredPoint = point.ShiftToCenter();
-        IsLeftSide = centeredPoint.X < 0;
+        var centeredPoint   = point.ShiftToCenter();
+        IsLeftSide          = centeredPoint.X < 0;
     }
 
     PolarPoint ToPolarPoint( PointF point )
     {
-        var centeredPoint = point.ShiftToCenter();
+        var centeredPoint   = point.ShiftToCenter();
+
         return new PolarPoint( centeredPoint )
         {
             Radius = MiddleRadius

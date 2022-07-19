@@ -1,4 +1,6 @@
-﻿namespace ColorPickerMath;
+﻿using System.Runtime.CompilerServices;
+
+namespace ColorPickerMath;
 
 public static class PolarPointExtensions
 {
@@ -8,6 +10,7 @@ public static class PolarPointExtensions
     /// <param name="point">self</param>
     /// <param name="angle">value to add to the angle</param>
     /// <returns>self</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
     public static PolarPoint AddAngle( this PolarPoint point, float angle )
     {
         point.Angle += angle;
@@ -20,6 +23,7 @@ public static class PolarPointExtensions
     /// <param name="point">self</param>
     /// <param name="radius">value to add to the radius</param>
     /// <returns>self</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
     public static PolarPoint AddRadius( this PolarPoint point, float radius )
     {
         point.Radius += radius;
@@ -31,6 +35,7 @@ public static class PolarPointExtensions
     /// </summary>
     /// <param name="point">self</param>
     /// <returns>cloned value</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
     public static PolarPoint Clone( this PolarPoint pp )
             => new PolarPoint( pp.Radius, pp.Angle );
 }
