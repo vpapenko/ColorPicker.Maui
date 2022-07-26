@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public abstract partial class ColorPickerBase<T> : GraphicsView where T : ColorPickerMathBase, new()
+public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker where T : ColorPickerMathBase, new()
 {
     readonly T  _colorPickerMath;
     PointF      _pickerLocation;
@@ -11,94 +11,94 @@ public abstract partial class ColorPickerBase<T> : GraphicsView where T : ColorP
 
     public ColorPickerBase()
     {
-        _setAspectRatio = SetAspectRatioToHeight;
-        _colorPickerMath = new T();
-        Drawable = new ColorPickerBaseDrawable(DrawBackground, DrawReticle);
+        _setAspectRatio     = SetAspectRatioToHeight;
+        _colorPickerMath    = new T();
+        Drawable            = new ColorPickerBaseDrawable( DrawBackground, DrawReticle );
 
-        StartInteraction += OnStartInteraction;
-        DragInteraction += OnDragInteraction;
-        EndInteraction += OnEndInteraction;
+        StartInteraction   += OnStartInteraction;
+        DragInteraction    += OnDragInteraction;
+        EndInteraction     += OnEndInteraction;
 
         UpdateBySelectedColor();
     }
 
-    protected abstract void DrawBackground(ICanvas canvas, RectF dirtyRect);
+    protected abstract void DrawBackground( ICanvas canvas, RectF dirtyRect );
 
-    protected void DrawReticle(ICanvas canvas, RectF dirtyRect)
+    protected void DrawReticle( ICanvas canvas, RectF dirtyRect )
     {
         canvas.StrokeSize = 2;
 
         canvas.StrokeColor = Colors.White;
-        canvas.DrawCircle(_pickerLocation, ReticleRadius);
+        canvas.DrawCircle( _pickerLocation, ReticleRadius );
 
         canvas.StrokeColor = Colors.Black;
-        canvas.DrawCircle(_pickerLocation, ReticleRadius - 2);
+        canvas.DrawCircle( _pickerLocation, ReticleRadius - 2 );
 
         canvas.StrokeColor = Colors.White;
-        canvas.DrawCircle(_pickerLocation, ReticleRadius - 4);
+        canvas.DrawCircle( _pickerLocation, ReticleRadius - 4 );
     }
 
-    protected void SetAspectRatioToHeight(double widthConstraint, double heightConstraint)
+    protected void SetAspectRatioToHeight( double widthConstraint, double heightConstraint )
     {
         this.HeightRequest = ReticleRadius * 2 + 2;
     }
 
-    protected void SetAspectRatioSquare(double widthConstraint, double heightConstraint)
+    protected void SetAspectRatioSquare( double widthConstraint, double heightConstraint )
     {
         var minConstraint = Math.Min(widthConstraint, heightConstraint);
         this.WidthRequest = minConstraint;
         this.HeightRequest = minConstraint;
     }
 
-    protected override Size MeasureOverride(double widthConstraint, double heightConstraint)
+    protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
     {
-        _setAspectRatio(widthConstraint, heightConstraint);
-        return base.MeasureOverride(widthConstraint, widthConstraint);
+        _setAspectRatio( widthConstraint, heightConstraint );
+        return base.MeasureOverride( widthConstraint, widthConstraint );
     }
 
-    protected override Size ArrangeOverride(Rect bounds)
+    protected override Size ArrangeOverride( Rect bounds )
     {
         UpdateBySelectedColor();
-        return base.ArrangeOverride(bounds);
+        return base.ArrangeOverride( bounds );
     }
 
-    void OnEndInteraction(object? sender, TouchEventArgs e)
+    void OnEndInteraction( object? sender, TouchEventArgs e )
     {
-        UpdateColor(e.Touches[0]);
+        UpdateColor( e.Touches[ 0 ] );
     }
 
-    void OnDragInteraction(object? sender, TouchEventArgs e)
+    void OnDragInteraction( object? sender, TouchEventArgs e )
     {
-        UpdateColor(e.Touches[0]);
+        UpdateColor( e.Touches[ 0 ] );
     }
 
-    void OnStartInteraction(object? sender, TouchEventArgs e)
+    void OnStartInteraction( object? sender, TouchEventArgs e )
     {
-        UpdateColor(e.Touches[0]);
+        UpdateColor( e.Touches[ 0 ] );
     }
 
-    void UpdateColor(PointF pointF)
+    void UpdateColor( PointF pointF )
     {
-        SelectedColor = _colorPickerMath.UpdateColor(ScalePoint(pointF), SelectedColor);
-        _pickerLocation = UnscalePoint(_colorPickerMath.ColorToPoint(SelectedColor));
+        SelectedColor = _colorPickerMath.UpdateColor( ScalePoint( pointF ), SelectedColor );
+        _pickerLocation = UnscalePoint( _colorPickerMath.ColorToPoint( SelectedColor ) );
 
         this.Invalidate();
     }
 
     void UpdateBySelectedColor()
     {
-        _pickerLocation = UnscalePoint(_colorPickerMath.ColorToPoint(SelectedColor));
+        _pickerLocation = UnscalePoint( _colorPickerMath.ColorToPoint( SelectedColor ) );
 
         this.Invalidate();
     }
 
-    PointF ScalePoint(PointF point)
+    PointF ScalePoint( PointF point )
     {
-        return new PointF(point.X / (float)this.Width, point.Y / (float)this.Height);
+        return new PointF( point.X / (float)this.Width, point.Y / (float)this.Height );
     }
 
-    PointF UnscalePoint(PointF point)
+    PointF UnscalePoint( PointF point )
     {
-        return new PointF(point.X * (float)this.Width, point.Y * (float)this.Height);
+        return new PointF( point.X * (float)this.Width, point.Y * (float)this.Height );
     }
 }
