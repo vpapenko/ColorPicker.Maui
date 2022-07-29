@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public interface IColorPicker : INotifyPropertyChanged
+public interface IColorPicker
 {
     double          ReticleRadius   { get; set; }
     Color           SelectedColor   { get; set; }
