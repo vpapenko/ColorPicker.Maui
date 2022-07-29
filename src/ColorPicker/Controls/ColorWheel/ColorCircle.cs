@@ -4,7 +4,7 @@ public class ColorCircle : ColorPickerBase<ColorCircleMath>
 {
     public ColorCircle()
     {
-        _setAspectRatio = SetAspectRatioSquare;
+        SetAspectRatio = SetAspectRatioSquare;
     }
 
     protected override void DrawBackground(ICanvas canvas, RectF dirtyRect)

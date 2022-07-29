@@ -5,13 +5,13 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
     readonly T  _colorPickerMath;
     PointF      _pickerLocation;
 
-    protected Action<double, double> _setAspectRatio;
+    protected Action<double, double> SetAspectRatio;
 
     public double ReticleRadius { get; set; } = 20;
 
     public ColorPickerBase()
     {
-        _setAspectRatio     = SetAspectRatioToHeight;
+        SetAspectRatio      = SetAspectRatioToHeight;
         _colorPickerMath    = new T();
         Drawable            = new ColorPickerBaseDrawable( DrawBackground, DrawReticle );
 
@@ -40,19 +40,19 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
 
     protected void SetAspectRatioToHeight( double widthConstraint, double heightConstraint )
     {
-        this.HeightRequest = ReticleRadius * 2 + 2;
+        HeightRequest = ReticleRadius * 2 + 2;
     }
 
     protected void SetAspectRatioSquare( double widthConstraint, double heightConstraint )
     {
         var minConstraint = Math.Min(widthConstraint, heightConstraint);
-        this.WidthRequest = minConstraint;
-        this.HeightRequest = minConstraint;
+        WidthRequest = minConstraint;
+        HeightRequest = minConstraint;
     }
 
     protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
     {
-        _setAspectRatio( widthConstraint, heightConstraint );
+        SetAspectRatio( widthConstraint, heightConstraint );
         return base.MeasureOverride( widthConstraint, widthConstraint );
     }
 
@@ -62,43 +62,30 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
         return base.ArrangeOverride( bounds );
     }
 
-    void OnEndInteraction( object? sender, TouchEventArgs e )
-    {
-        UpdateColor( e.Touches[ 0 ] );
-    }
-
-    void OnDragInteraction( object? sender, TouchEventArgs e )
-    {
-        UpdateColor( e.Touches[ 0 ] );
-    }
-
-    void OnStartInteraction( object? sender, TouchEventArgs e )
-    {
-        UpdateColor( e.Touches[ 0 ] );
-    }
+    void OnStartInteraction( object? sender, TouchEventArgs e ) =>  UpdateColor( e.Touches[ 0 ] );
+    void OnDragInteraction( object? sender, TouchEventArgs e )  =>  UpdateColor( e.Touches[ 0 ] );
+    void OnEndInteraction( object? sender, TouchEventArgs e )   =>  UpdateColor( e.Touches[ 0 ] );
 
     void UpdateColor( PointF pointF )
     {
         SelectedColor = _colorPickerMath.UpdateColor( ScalePoint( pointF ), SelectedColor );
         _pickerLocation = UnscalePoint( _colorPickerMath.ColorToPoint( SelectedColor ) );
-
-        this.Invalidate();
+        Invalidate();
     }
 
     void UpdateBySelectedColor()
     {
         _pickerLocation = UnscalePoint( _colorPickerMath.ColorToPoint( SelectedColor ) );
-
-        this.Invalidate();
+        Invalidate();
     }
 
     PointF ScalePoint( PointF point )
     {
-        return new PointF( point.X / (float)this.Width, point.Y / (float)this.Height );
+        return new PointF( point.X / (float)Width, point.Y / (float)Height );
     }
 
     PointF UnscalePoint( PointF point )
     {
-        return new PointF( point.X * (float)this.Width, point.Y * (float)this.Height );
+        return new PointF( point.X * (float)Width, point.Y * (float)Height );
     }
 }
