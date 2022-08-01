@@ -1,6 +1,6 @@
 # Maui ColorPicker Developer's Guide
 
-## Chapter 2: ColorPicker Library
+## Chapter 3: ColorPicker Library
 This document describes the architecture of the ColorPicker project and many of the design decisions made when structuring the library.
 
 ### Project Structure

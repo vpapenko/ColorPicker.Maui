@@ -3,7 +3,7 @@
 >Please note that this document is a **Work in Progress**
 
 
-## Chapter 4: ColorPicker and Slider Design Guide
+## Chapter 2: ColorPicker and Slider Design Guide
 
 ### ColorPickers and Sliders
 > For simplicity, when referencing both ColorPickers and Slider controls, I will use the term **picker(s)**.
