@@ -2,7 +2,7 @@
 
 public abstract partial class ColorPickerBase<T>
 {
-#region SelectedColor implementation
+    #region SelectedColor implementation
     /// <summary>
     /// SelectedColor bindable property
     /// </summary>
@@ -43,7 +43,7 @@ public abstract partial class ColorPickerBase<T>
             => UpdateSelectedColorEvent?.Invoke(this, new ColorChangedEventArgs(oldColor, newColor));
     #endregion
 
-#region AttachedTo implementation
+    #region AttachedTo implementation
 
     /// <summary>
     /// AttachedTo bindable property
@@ -81,5 +81,43 @@ public abstract partial class ColorPickerBase<T>
         if ( sender is IColorPicker picker && e.PropertyName == nameof(SelectedColor) )
             SelectedColor = picker.SelectedColor;
     }
-#endregion
+    #endregion
+
+    #region ReticalRadius
+
+    /// <summary>
+    /// ReticalRadius bindable property
+    /// </summary>
+    public static readonly BindableProperty ReticleRadiusProperty
+            = BindableProperty.Create( nameof(ReticleRadius),
+                                       typeof(double),
+                                       typeof(ColorPickerBase<T>),
+                                       20.0,
+                                       BindingMode.OneTime );
+    public double   ReticleRadius
+    {
+        get => (double)GetValue( ReticleRadiusProperty );
+        set => SetValue( ReticleRadiusProperty, value );
+    }
+
+    #endregion
+
+    #region ShowReticleCrossHairs
+
+    /// <summary>
+    /// ReticalRadius bindable property
+    /// </summary>
+    public static readonly BindableProperty ShowReticleCrossHairsProperty
+            = BindableProperty.Create( nameof(ShowReticleCrossHairs),
+                                       typeof(bool),
+                                       typeof(ColorPickerBase<T>),
+                                       false,
+                                       BindingMode.OneTime );
+    public bool   ShowReticleCrossHairs
+    {
+        get => (bool)GetValue( ShowReticleCrossHairsProperty );
+        set => SetValue( ShowReticleCrossHairsProperty, value );
+    }
+
+    #endregion
 }

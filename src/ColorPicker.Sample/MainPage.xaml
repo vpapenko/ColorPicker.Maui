@@ -14,8 +14,12 @@
                                                  Path=SelectedColor}" />
 
             <cp:ColorCircle x:Name="ColorPicker"
-                            HorizontalOptions="FillAndExpand"
-                            SelectedColor="Green" />
+                            HorizontalOptions="Fill"
+                            ReticleRadius="{OnPlatform Default='20',
+                                                       WinUI='40',
+                                                       Android='20'}"
+                            SelectedColor="Green"
+                            ShowReticleCrossHairs="true" />
 
         </VerticalStackLayout>
     </ScrollView>

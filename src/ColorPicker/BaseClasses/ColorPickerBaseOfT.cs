@@ -7,8 +7,6 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
 
     protected Action<double, double> SetAspectRatio;
 
-    public double ReticleRadius { get; set; } = 20;
-
     public ColorPickerBase()
     {
         SetAspectRatio      = SetAspectRatioToHeight;
@@ -36,7 +34,27 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
 
         canvas.StrokeColor = Colors.White;
         canvas.DrawCircle( _pickerLocation, ReticleRadius - 4 );
+
+        if ( ShowReticleCrossHairs )
+        {
+            canvas.StrokeColor = Colors.Black;
+            DrawCrossHairsHorizontal( canvas, _pickerLocation, (float)(ReticleRadius - 4) );
+            DrawCrossHairsVertical( canvas, _pickerLocation, (float)(ReticleRadius - 4) );
+        }
     }
+
+    void DrawCrossHairsHorizontal( ICanvas canvas, PointF c, float r )
+    { 
+        canvas.DrawLine( c.X - r + 1, c.Y, c.X - 4f, c.Y );
+        canvas.DrawLine( c.X + 4f, c.Y, c.X + r - 1, c.Y );       
+    }
+
+    void DrawCrossHairsVertical( ICanvas canvas, PointF c, float r )
+    {
+        canvas.DrawLine( c.X, c.Y - r + 1, c.X, c.Y - 4f );
+        canvas.DrawLine( c.X, c.Y + 4f, c.X, c.Y + r - 1 );
+    }
+
 
     protected void SetAspectRatioToHeight( double widthConstraint, double heightConstraint )
     {
