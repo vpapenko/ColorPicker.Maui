@@ -18,7 +18,7 @@
                             ReticleRadius="{OnPlatform Default='20',
                                                        WinUI='40',
                                                        Android='20'}"
-                            SelectedColor="Green"
+                            SelectedColor="Orange"
                             ShowReticleCrossHairs="true" />
 
         </VerticalStackLayout>

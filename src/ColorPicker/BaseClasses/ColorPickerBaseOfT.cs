@@ -57,7 +57,6 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
         canvas.DrawLine( c.X, c.Y + 4, c.X, c.Y + r - 1 );
     }
 
-
     protected void SetAspectRatioToHeight( double widthConstraint, double heightConstraint )
     {
         HeightRequest = ReticleRadius * 2 + 2;
@@ -65,9 +64,9 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
 
     protected void SetAspectRatioSquare( double widthConstraint, double heightConstraint )
     {
-        var minConstraint = Math.Min(widthConstraint, heightConstraint);
-        WidthRequest = minConstraint;
-        HeightRequest = minConstraint;
+        var minConstraint   = Math.Min(widthConstraint, heightConstraint);
+        WidthRequest        = minConstraint;
+        HeightRequest       = minConstraint;
     }
 
     protected override Size MeasureOverride( double widthConstraint, double heightConstraint )

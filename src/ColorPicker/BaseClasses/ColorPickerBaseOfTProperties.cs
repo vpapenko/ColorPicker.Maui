@@ -93,11 +93,18 @@ public abstract partial class ColorPickerBase<T>
                                        typeof(double),
                                        typeof(ColorPickerBase<T>),
                                        20.0,
-                                       BindingMode.OneTime );
+                                       propertyChanged: OnReticleRadiusChanged );
+
+    private static void OnReticleRadiusChanged( BindableObject bindable, object oldValue, object newValue )
+    {
+        if ( bindable is ColorPickerBase<T> colorPickerBase && oldValue != newValue )
+            colorPickerBase.UpdateBySelectedColor();
+    }
+
     public double   ReticleRadius
     {
         get => (double)GetValue( ReticleRadiusProperty );
-        set => SetValue( ReticleRadiusProperty, value );
+        set => SetValue( ReticleRadiusProperty, value < 15.0 ? 15.0 : value );
     }
 
     #endregion
@@ -112,7 +119,14 @@ public abstract partial class ColorPickerBase<T>
                                        typeof(bool),
                                        typeof(ColorPickerBase<T>),
                                        false,
-                                       BindingMode.OneTime );
+                                       propertyChanged: OnShowReticleCrossHairsChanged );
+
+    private static void OnShowReticleCrossHairsChanged( BindableObject bindable, object oldValue, object newValue )
+    {
+        if ( bindable is ColorPickerBase<T> colorPickerBase && oldValue != newValue )
+            colorPickerBase.UpdateBySelectedColor();
+    }
+
     public bool   ShowReticleCrossHairs
     {
         get => (bool)GetValue( ShowReticleCrossHairsProperty );
