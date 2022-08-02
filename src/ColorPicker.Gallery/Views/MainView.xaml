@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage x:Class="ColorPicker.Gallery.MainView" x:Name="MainPage"
+                xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                xmlns:viewmodels="clr-namespace:ColorPicker.Gallery.ViewModels"
+                xmlns:views="clr-namespace:ColorPicker.Gallery.Views.Base"
+                Title="ColorPicker Gallery">
+
+    <views:BasePage.Resources>
+        <ResourceDictionary>
+
+            <Style x:Key="LogoStyle" TargetType="Image">
+                <Setter Property="Aspect"
+                        Value="AspectFit" />
+                <Setter Property="HorizontalOptions"
+                        Value="Center" />
+                <Setter Property="Margin"
+                        Value="12" />
+            </Style>
+
+            <Style x:Key="TitleStyle" TargetType="Label">
+                <Setter Property="FontSize"
+                        Value="{OnIdiom Default='48',
+                                        Phone='24'}" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource LightTextPrimaryColor},
+                                                Dark={StaticResource DarkTextPrimaryColor}}" />
+                <Setter Property="FontFamily"
+                        Value="Segoe UI" />
+                <Setter Property="HorizontalOptions"
+                        Value="Center" />
+                <Setter Property="Margin"
+                        Value="0, 12, 0, 0" />
+            </Style>
+
+            <Style x:Key="SubTitleStyle" TargetType="Label">
+                <Setter Property="FontSize"
+                        Value="Small" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource LightTextSecondaryColor},
+                                                Dark={StaticResource DarkTextSecondaryColor}}" />
+                <Setter Property="HorizontalTextAlignment"
+                        Value="Center" />
+                <Setter Property="HorizontalOptions"
+                        Value="Center" />
+                <Setter Property="Margin"
+                        Value="24, 12" />
+            </Style>
+
+            <Style x:Key="SectionItemContainerStyle" TargetType="Border">
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource LightBackgroundSecondaryColor},
+                                                Dark={StaticResource DarkBackgroundSecondaryColor}}" />
+                <Setter Property="Stroke"
+                        Value="{AppThemeBinding Light={StaticResource LightBorderColor},
+                                                Dark={StaticResource DarkBorderColor}}" />
+                <Setter Property="HeightRequest"
+                        Value="120" />
+                <Setter Property="Padding"
+                        Value="12" />
+                <Setter Property="Margin"
+                        Value="0" />
+                <Setter Property="FlexLayout.Basis"
+                        Value="50%" />
+                <Setter Property="FlexLayout.Grow"
+                        Value="0" />
+            </Style>
+
+            <Style x:Key="FooterStyle" TargetType="Label">
+                <Setter Property="FontSize"
+                        Value="Small" />
+                <Setter Property="HorizontalOptions"
+                        Value="Center" />
+                <Setter Property="VerticalOptions"
+                        Value="End" />
+                <Setter Property="Margin"
+                        Value="24" />
+            </Style>
+
+        </ResourceDictionary>
+    </views:BasePage.Resources>
+
+    <ContentPage.BindingContext>
+        <viewmodels:MainViewModel />
+    </ContentPage.BindingContext>
+
+    <ScrollView>
+        <Grid RowDefinitions="250, *, Auto"
+              RowSpacing="0">
+
+            <Grid RowDefinitions="100, Auto, *"
+                  RowSpacing="0"
+                  Grid.Row="0"
+                  BackgroundColor="{AppThemeBinding Light={StaticResource LightBackgroundSecondaryColor},
+                                                    Dark={StaticResource DarkBackgroundSecondaryColor}}">
+
+                <Image Source="colorcircle.png"
+                       Style="{StaticResource LogoStyle}" />
+
+                <Label Grid.Row="1"
+                       Style="{StaticResource TitleStyle}"
+                       Text="ColorPickers and Sliders" />
+
+                <Label Grid.Row="2"
+                       Style="{StaticResource SubTitleStyle}"
+                       Text="A custom set of drawn .NET MAUI controls." />
+            </Grid>
+
+            <!--  SECTIONS  -->
+            <Grid Grid.Row="1"
+                  Margin="12">
+
+                <CollectionView x:Name="HomeSections"
+                                Margin="6,12,6,0"
+                                BackgroundColor="Transparent"
+                                ItemsSource="{Binding Items}"
+                                SelectedItem="{Binding SelectedItem,
+                                                       Source={x:RelativeSource AncestorType={x:Type ContentPage}},
+                                                       Mode=TwoWay}"
+                                SelectionChangedCommand="{Binding NavigateCommand,
+                                                                  Source={x:Reference MainPage}}"
+                                SelectionMode="Single">
+
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout HorizontalItemSpacing="6"
+                                         Orientation="Vertical"
+                                         Span="2"
+                                         VerticalItemSpacing="6" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+
+                            <Border Style="{StaticResource SectionItemContainerStyle}">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="0" />
+                                </Border.StrokeShape>
+
+                                <Grid RowDefinitions="Auto, *"
+                                      RowSpacing="0">
+                                    <Label Style="{StaticResource GalleryItemTitleStyle}"
+                                           Text="{Binding Title}" />
+                                    <Label Grid.Row="1"
+                                           Style="{StaticResource GalleryItemDescriptionStyle}"
+                                           Text="{Binding Description}" />
+                                </Grid>
+
+                            </Border>
+
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                </CollectionView>
+            </Grid>
+
+            <!--  FOOTER  -->
+            <Label Grid.Row="2"
+                   Style="{StaticResource FooterStyle}"
+                   Text="ColorPickers and Sliders 2022" />
+
+        </Grid>
+    </ScrollView>
+
+</views:BasePage>
