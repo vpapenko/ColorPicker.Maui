@@ -3,7 +3,7 @@
 public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker where T : ColorPickerMathBase, new()
 {
     readonly T  _colorPickerMath;
-    PointF      _pickerLocation;
+    PointF      _pickerCenter;
 
     protected Action<double, double> SetAspectRatio;
 
@@ -27,32 +27,34 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
         canvas.StrokeSize = 2;
 
         canvas.StrokeColor = Colors.White;
-        canvas.DrawCircle( _pickerLocation, ReticleRadius );
+        canvas.DrawCircle( _pickerCenter, ReticleRadius );
 
         canvas.StrokeColor = Colors.Black;
-        canvas.DrawCircle( _pickerLocation, ReticleRadius - 2 );
+        canvas.DrawCircle( _pickerCenter, ReticleRadius - 2 );
 
         canvas.StrokeColor = Colors.White;
-        canvas.DrawCircle( _pickerLocation, ReticleRadius - 4 );
+        canvas.DrawCircle( _pickerCenter, ReticleRadius - 4 );
 
         if ( ShowReticleCrossHairs )
         {
+            var radius  =   (float)(ReticleRadius - 4);
+
             canvas.StrokeColor = Colors.Black;
-            DrawCrossHairsHorizontal( canvas, _pickerLocation, (float)(ReticleRadius - 4) );
-            DrawCrossHairsVertical( canvas, _pickerLocation, (float)(ReticleRadius - 4) );
+            DrawCrossHairsHorizontal( canvas, _pickerCenter, radius );
+            DrawCrossHairsVertical( canvas, _pickerCenter, radius );
         }
     }
 
     void DrawCrossHairsHorizontal( ICanvas canvas, PointF c, float r )
     { 
-        canvas.DrawLine( c.X - r + 1, c.Y, c.X - 4f, c.Y );
-        canvas.DrawLine( c.X + 4f, c.Y, c.X + r - 1, c.Y );       
+        canvas.DrawLine( c.X - r + 1, c.Y, c.X - 4, c.Y );
+        canvas.DrawLine( c.X + 4, c.Y, c.X + r - 1, c.Y );       
     }
 
     void DrawCrossHairsVertical( ICanvas canvas, PointF c, float r )
     {
-        canvas.DrawLine( c.X, c.Y - r + 1, c.X, c.Y - 4f );
-        canvas.DrawLine( c.X, c.Y + 4f, c.X, c.Y + r - 1 );
+        canvas.DrawLine( c.X, c.Y - r + 1, c.X, c.Y - 4 );
+        canvas.DrawLine( c.X, c.Y + 4, c.X, c.Y + r - 1 );
     }
 
 
@@ -87,13 +89,12 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
     void UpdateColor( PointF pointF )
     {
         SelectedColor = _colorPickerMath.UpdateColor( ScalePoint( pointF ), SelectedColor );
-        _pickerLocation = UnscalePoint( _colorPickerMath.ColorToPoint( SelectedColor ) );
-        Invalidate();
+        UpdateBySelectedColor();
     }
 
     void UpdateBySelectedColor()
     {
-        _pickerLocation = UnscalePoint( _colorPickerMath.ColorToPoint( SelectedColor ) );
+        _pickerCenter = UnscalePoint( _colorPickerMath.ColorToPoint( SelectedColor ) );
         Invalidate();
     }
 
