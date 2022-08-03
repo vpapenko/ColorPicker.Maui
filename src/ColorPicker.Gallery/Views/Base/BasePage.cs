@@ -1,7 +1,6 @@
-﻿using ColorPicker.Gallery.Models;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 
-namespace ColorPicker.Gallery.Views.Base;
+namespace ColorPicker.Gallery;
 
 public class BasePage : ContentPage
 {

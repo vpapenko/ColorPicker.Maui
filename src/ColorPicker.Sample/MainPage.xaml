@@ -5,19 +5,25 @@
              xmlns:cp="clr-namespace:ColorPicker;assembly=ColorPicker">
 
     <ScrollView>
-        <VerticalStackLayout Padding="30,0"
-                             Spacing="25">
+        <VerticalStackLayout WidthRequest="{OnPlatform Default=300,
+                                                       WinUI=500}"
+                             HeightRequest="{OnPlatform Default=500,
+                                                        WinUI=600}"
+                             Padding="0,40"
+                             Spacing="40"
+                             HorizontalOptions="Fill"
+                             VerticalOptions="Start">
 
-            <Rectangle WidthRequest="400"
-                       HeightRequest="100"
+            <Rectangle WidthRequest="{OnPlatform Default=200,
+                                                 WinUI=300}"
+                       HeightRequest="60"
                        BackgroundColor="{Binding Source={x:Reference ColorPicker},
                                                  Path=SelectedColor}" />
 
             <cp:ColorCircle x:Name="ColorPicker"
-                            HorizontalOptions="Fill"
-                            ReticleRadius="{OnPlatform Default='20',
-                                                       WinUI='40',
-                                                       Android='20'}"
+                            ReticleRadius="{OnPlatform Default=20,
+                                                       WinUI=30,
+                                                       Android=20}"
                             SelectedColor="Orange"
                             ShowReticleCrossHairs="true" />
 

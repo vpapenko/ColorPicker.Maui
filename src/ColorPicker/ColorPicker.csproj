@@ -20,13 +20,20 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Platforms\**" />
+	  <EmbeddedResource Remove="Platforms\**" />
+	  <MauiCss Remove="Platforms\**" />
+	  <MauiXaml Remove="Platforms\**" />
+	  <None Remove="Platforms\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\ColorPickerMath\ColorPickerMath.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Controls\ColorWheel\" />
 	  <Folder Include="Controls\ColorTriangle\" />
-	  <Folder Include="Platforms\Tizen\" />
-	  <Folder Include="Platforms\Windows\" />
 	</ItemGroup>
 
     <ItemGroup Condition="$(TargetFramework.StartsWith('net6.0-android')) != true">

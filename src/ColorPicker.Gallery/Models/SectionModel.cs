@@ -1,4 +1,4 @@
-namespace ColorPicker.Gallery.Models;
+namespace ColorPicker.Gallery;
 
 public sealed class SectionModel
 {

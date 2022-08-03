@@ -1,5 +1,4 @@
-﻿global using Microsoft.Maui.Graphics;
-
+﻿
 namespace ColorPickerMath;
 
 //  TODO: Implement default behavior

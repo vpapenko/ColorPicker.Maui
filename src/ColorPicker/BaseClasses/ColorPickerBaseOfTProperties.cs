@@ -83,7 +83,7 @@ public abstract partial class ColorPickerBase<T>
     }
     #endregion
 
-    #region ReticalRadius
+    #region ReticalRadius implementation
 
     /// <summary>
     /// ReticalRadius bindable property
@@ -107,9 +107,9 @@ public abstract partial class ColorPickerBase<T>
         set => SetValue( ReticleRadiusProperty, value < 15.0 ? 15.0 : value );
     }
 
-    #endregion
+    #endregion 
 
-    #region ShowReticleCrossHairs
+    #region ShowReticleCrossHairs implementation
 
     /// <summary>
     /// ReticalRadius bindable property

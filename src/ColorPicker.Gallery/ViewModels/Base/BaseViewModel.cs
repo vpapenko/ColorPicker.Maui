@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace ColorPicker.Gallery.ViewModels;
+namespace ColorPicker.Gallery;
 
 public abstract class BaseViewModel : INotifyPropertyChanged
 {
