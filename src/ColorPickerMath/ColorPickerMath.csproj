@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="ColorMinePortable" Version="2.0.1" />
-    <PackageReference Include="Microsoft.Maui.Dependencies" Version="6.0.400" />
+    <PackageReference Include="Microsoft.Maui.Dependencies" Version="6.0.486" />
   </ItemGroup>
 
 </Project>

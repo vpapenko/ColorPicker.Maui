@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <gallery:BasePage x:Class="ColorPicker.Gallery.MainView" x:Name="MainPage"
-                xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-                xmlns:gallery="clr-namespace:ColorPicker.Gallery"
-                Title="ColorPicker Gallery">
+                  xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                  xmlns:gallery="clr-namespace:ColorPicker.Gallery"
+                  Title="ColorPicker Gallery">
 
     <gallery:BasePage.Resources>
         <ResourceDictionary>
@@ -102,7 +102,7 @@
 
                 <Label Grid.Row="2"
                        Style="{StaticResource SubTitleStyle}"
-                       Text="A custom set of drawn .NET MAUI controls." />
+                       Text="A set of custom drawn .NET MAUI controls." />
             </Grid>
 
             <!--  SECTIONS  -->
@@ -138,7 +138,9 @@
 
                                 <Grid RowDefinitions="Auto, *"
                                       RowSpacing="0">
-                                    <Label Style="{StaticResource GalleryItemTitleStyle}"
+
+                                    <Label Grid.Row="0"
+                                           Style="{StaticResource GalleryItemTitleStyle}"
                                            Text="{Binding Title}" />
                                     <Label Grid.Row="1"
                                            Style="{StaticResource GalleryItemDescriptionStyle}"

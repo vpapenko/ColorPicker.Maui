@@ -37,10 +37,10 @@ public abstract partial class ColorPickerBase<T>
         UpdateBySelectedColor();
     }
 
-    public event EventHandler<ColorChangedEventArgs>? UpdateSelectedColorEvent;
+    public event EventHandler<ColorChangedEventArgs>? SelectedColorChangedEvent;
 
     protected virtual void RaiseUpdateSelectedColor(Color oldColor, Color newColor)
-            => UpdateSelectedColorEvent?.Invoke(this, new ColorChangedEventArgs(oldColor, newColor));
+            => SelectedColorChangedEvent?.Invoke(this, new ColorChangedEventArgs(oldColor, newColor));
     #endregion
 
     #region AttachedTo implementation
