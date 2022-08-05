@@ -26,9 +26,9 @@ public partial class ColorCircleView : ContentPage
             ColorCircle.SelectedColor = color;
 	}
 
-    void ReticleSizeEntry_TextChanged( object sender, TextChangedEventArgs e )
+    void ReticleSizeEntry_Completed( object sender, EventArgs e )
     {
-        var reticleSize = GetSizeFromText( ReticleSizeEntry.Text );
+        var reticleSize = GetSizeFromText( ((Entry)sender).Text );
 
         ColorCircle.ReticleRadius = reticleSize < 15f ? 15f 
                                                       : reticleSize > 40f ? 40f 

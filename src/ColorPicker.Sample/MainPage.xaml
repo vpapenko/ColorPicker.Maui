@@ -7,8 +7,8 @@
     <ScrollView>
         <VerticalStackLayout WidthRequest="{OnPlatform Default=300,
                                                        WinUI=500}"
-                             HeightRequest="{OnPlatform Default=500,
-                                                        WinUI=600}"
+                             HeightRequest="{OnPlatform Default=300,
+                                                        WinUI=500}"
                              Padding="0,40"
                              Spacing="40"
                              HorizontalOptions="Fill"

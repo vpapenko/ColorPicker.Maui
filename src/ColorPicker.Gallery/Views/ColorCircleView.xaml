@@ -29,6 +29,17 @@
                     Value="6, 0" />
         </Style>
 
+        <Style x:Key="SettingsNumberEntryStyle" TargetType="Entry">
+            <Setter Property="VerticalOptions"
+                    Value="Center" />
+            <Setter Property="WidthRequest"
+                    Value="120" />
+            <Setter Property="Margin"
+                    Value="6, 0" />
+            <Setter Property="Keyboard"
+                    Value="Numeric" />
+        </Style>
+
         <Style x:Key="SettingsPickerStyle" TargetType="Picker">
             <Setter Property="VerticalOptions"
                     Value="Center" />
@@ -85,9 +96,9 @@
                        VerticalOptions="Center" />
 
                 <Entry x:Name="ReticleSizeEntry"
-                       Style="{StaticResource SettingsEntryStyle}"
+                       Style="{StaticResource SettingsNumberEntryStyle}"
                        Text="20"
-                       TextChanged="ReticleSizeEntry_TextChanged" />
+                       TextChanged="ReticleSizeEntry_Completed" />
             </HorizontalStackLayout>
 
             <HorizontalStackLayout Margin="0,6">
@@ -102,8 +113,11 @@
         </VerticalStackLayout>
 
         <Grid Grid.Row="3"
-              WidthRequest="300"
-              HeightRequest="300"
+              WidthRequest="{OnPlatform Default=300,
+                                        WinUI=500}"
+              HeightRequest="{OnPlatform Default=300,
+                                         WinUI=500}"
+              Margin="20"
               HorizontalOptions="Center"
               VerticalOptions="Center">
 
