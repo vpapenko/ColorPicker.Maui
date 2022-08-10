@@ -6,10 +6,10 @@ public class HueHorizontalSlider : ColorPickerBase<HueHorizontalSliderMath>
     {
         var linearGradientPaint = new LinearGradientPaint()
         {
-            StartColor = Colors.Red,
-            EndColor = Colors.Red,
-            StartPoint = new Point(0, 0.5),
-            EndPoint = new Point(1, 0.5)
+            StartColor  = Colors.Red,
+            EndColor    = Colors.Red,
+            StartPoint  = new Point(0, 0.5),
+            EndPoint    = new Point(1, 0.5)
         };
 
         for ( var i = 0; i <= 255; i++ )

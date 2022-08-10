@@ -9,13 +9,13 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
 
     public ColorPickerBase()
     {
-        SetAspectRatio      = SetAspectRatioToHeight;
-        _colorPickerMath    = new T();
-        Drawable            = new ColorPickerBaseDrawable( DrawBackground, DrawReticle );
+        SetAspectRatio = SetAspectRatioToHeight;
+        _colorPickerMath = new T();
+        Drawable = new ColorPickerBaseDrawable( DrawBackground, DrawReticle );
 
-        StartInteraction   += OnStartInteraction;
-        DragInteraction    += OnDragInteraction;
-        EndInteraction     += OnEndInteraction;
+        StartInteraction += OnStartInteraction;
+        DragInteraction += OnDragInteraction;
+        EndInteraction += OnEndInteraction;
 
         UpdateBySelectedColor();
     }
@@ -46,9 +46,9 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
     }
 
     void DrawCrossHairsHorizontal( ICanvas canvas, PointF c, float r )
-    { 
+    {
         canvas.DrawLine( c.X - r + 1, c.Y, c.X - 4, c.Y );
-        canvas.DrawLine( c.X + 4, c.Y, c.X + r - 1, c.Y );       
+        canvas.DrawLine( c.X + 4, c.Y, c.X + r - 1, c.Y );
     }
 
     void DrawCrossHairsVertical( ICanvas canvas, PointF c, float r )
@@ -65,8 +65,8 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
     protected void SetAspectRatioSquare( double widthConstraint, double heightConstraint )
     {
         var minConstraint   = Math.Min(widthConstraint, heightConstraint);
-        WidthRequest        = minConstraint;
-        HeightRequest       = minConstraint;
+        WidthRequest = minConstraint;
+        HeightRequest = minConstraint;
     }
 
     protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
@@ -81,9 +81,9 @@ public abstract partial class ColorPickerBase<T> : GraphicsView, IColorPicker wh
         return base.ArrangeOverride( bounds );
     }
 
-    void OnStartInteraction( object? sender, TouchEventArgs e ) =>  UpdateColor( e.Touches[ 0 ] );
-    void OnDragInteraction( object? sender, TouchEventArgs e )  =>  UpdateColor( e.Touches[ 0 ] );
-    void OnEndInteraction( object? sender, TouchEventArgs e )   =>  UpdateColor( e.Touches[ 0 ] );
+    void OnStartInteraction( object? sender, TouchEventArgs e ) => UpdateColor( e.Touches[ 0 ] );
+    void OnDragInteraction( object? sender, TouchEventArgs e ) => UpdateColor( e.Touches[ 0 ] );
+    void OnEndInteraction( object? sender, TouchEventArgs e ) => UpdateColor( e.Touches[ 0 ] );
 
     void UpdateColor( PointF pointF )
     {

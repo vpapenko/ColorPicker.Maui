@@ -30,8 +30,8 @@ public class ColorCircle : ColorPickerBase<ColorCircleMath>
 
         for ( var i = 0; i <= countOfSectors; i++ )
         {
-            var angle1  = MathF.PI * 2 * i / countOfSectors - MathF.PI / countOfSectors + MathF.PI;
-            var angle2  = MathF.PI * 2 * i / countOfSectors + MathF.PI / countOfSectors + MathF.PI / (countOfSectors / 10) + MathF.PI;
+            var angle1  = (MathF.PI * 2 * i / countOfSectors) - (MathF.PI / countOfSectors) + MathF.PI;
+            var angle2  = (MathF.PI * 2 * i / countOfSectors) + (MathF.PI / countOfSectors) + (MathF.PI / (countOfSectors / 10)) + MathF.PI;
 
             var color   = Color.FromHsv((float)i / countOfSectors, 1f, 1f);
 
@@ -44,7 +44,7 @@ public class ColorCircle : ColorPickerBase<ColorCircleMath>
         var center  = dirtyRect.Center;
         var path    = new PathF(center);
 
-        path.AddArc( new PointF( 0, 0 ), 
+        path.AddArc( new PointF( 0, 0 ),
                      new PointF( dirtyRect.Width, dirtyRect.Height ), angle1 / ( 2 * MathF.PI ) * 360, angle2 / ( 2 * MathF.PI ) * 360, false );
 
         canvas.FillColor = color;
