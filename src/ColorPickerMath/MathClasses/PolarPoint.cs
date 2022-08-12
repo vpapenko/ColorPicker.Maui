@@ -5,7 +5,7 @@ public struct PolarPoint
     //  Properties
     //
     public float Radius { get; set; }
-    public float Angle  { get => _angle; set => _angle = (float)Math.Atan2( Math.Sin( value ), Math.Cos( value ) ); }
+    public float Angle { get => _angle; set => _angle = (float)Math.Atan2( Math.Sin( value ), Math.Cos( value ) ); }
     float _angle;
 
     /// <summary>
@@ -22,8 +22,11 @@ public struct PolarPoint
     /// </summary>
     public PolarPoint( PointF point )
     {
-        Radius  = (float)Math.Sqrt( (point.X * point.X) + (point.Y * point.Y) );
-        Angle   = (float)Math.Atan2( point.Y, point.X );
+        //  c = sqrt( X^2 + Y^2 )
+        Radius = (float)Math.Sqrt( ( point.X * point.X ) + ( point.Y * point.Y ) );
+
+        //  a = arctan( Y, X )
+        Angle = (float)Math.Atan2( point.Y, point.X );
     }
 
     public override string ToString()

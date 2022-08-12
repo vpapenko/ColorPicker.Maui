@@ -10,7 +10,7 @@ public static class PointFExtensions
     /// <param name="point">self</param>
     /// <param name="x">amount to add to the X value</param>
     /// <returns>self</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static PointF AddX( this PointF point, float x )
     {
         point.X += x;
@@ -23,7 +23,7 @@ public static class PointFExtensions
     /// <param name="point">self</param>
     /// <param name="y">amount to add to the Y value</param>
     /// <returns>self</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static PointF AddY( this PointF point, float y )
     {
         point.Y += y;
@@ -35,14 +35,14 @@ public static class PointFExtensions
     /// </summary>
     /// <param name="point">self</param>
     /// <returns>cloned value</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static PointF Clone( this PointF point )
             => new PointF( point.X, point.Y );
 
     /// <summary>
     /// Adjust the point to the center
     /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static PointF ShiftToCenter( this PointF point )
     {
         point.X -= 0.5F;
@@ -53,8 +53,8 @@ public static class PointFExtensions
     /// <summary>
     /// Return center-adjusted point to previous context
     /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
-    public static PointF ShiftFromCenter(  this PointF point )
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static PointF ShiftFromCenter( this PointF point )
     {
         point.X += 0.5F;
         point.Y += 0.5F;
@@ -62,25 +62,16 @@ public static class PointFExtensions
     }
 
     /// <summary>
-    /// Converts PointF to PolarPoint
-    /// </summary>
-    /// <param name="point"></param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
-    public static PolarPoint ToPolarPoint( this PointF point )
-        => new PolarPoint( point );
-   
-    /// <summary>
     /// Convert PolarPoint to PointF
     /// </summary>
     /// <param name="pp">self</param>
     /// <returns>converted value</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]    
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static PointF ToPointF( this PolarPoint pp )
     {
         float x = pp.Radius * (float)Math.Cos(pp.Angle);
         float y = pp.Radius * (float)Math.Sin(pp.Angle);
 
-        return new PointF(x, y);
+        return new PointF( x, y );
     }
 }
