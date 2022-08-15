@@ -5,7 +5,12 @@ public struct PolarPoint
     //  Properties
     //
     public float Radius { get; set; }
-    public float Angle { get => _angle; set => _angle = (float)Math.Atan2( Math.Sin( value ), Math.Cos( value ) ); }
+
+    public float Angle
+    {
+        get => _angle;
+        set => _angle = (float)Math.Atan2( Math.Sin( value ), Math.Cos( value ) );
+    }
     float _angle;
 
     /// <summary>

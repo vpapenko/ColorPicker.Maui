@@ -1,129 +1,120 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage x:Class="ColorPicker.Gallery.ColorCircleView"
-             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:controls="clr-namespace:ColorPicker;assembly=ColorPicker"
-             Title="ColorCircle">
+<ContentPage
+    x:Class="ColorPicker.Gallery.ColorCircleView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:ColorPicker;assembly=ColorPicker"
+    Title="ColorCircle">
 
     <ContentPage.Resources>
 
         <Style x:Key="SettingsCheckBoxStyle" TargetType="CheckBox">
-            <Setter Property="VerticalOptions"
-                    Value="Center" />
-            <Setter Property="Color"
-                    Value="{AppThemeBinding Light={StaticResource LightAccentColor},
-                                            Dark={StaticResource DarkAccentColor}}" />
+            <Setter Property="VerticalOptions" Value="Center" />
+            <Setter Property="Color" Value="{AppThemeBinding Light={StaticResource LightAccentColor}, Dark={StaticResource DarkAccentColor}}" />
         </Style>
 
         <Style x:Key="SettingsTextStyle" TargetType="Label">
-            <Setter Property="FontSize"
-                    Value="12" />
+            <Setter Property="FontSize" Value="12" />
         </Style>
 
         <Style x:Key="SettingsEntryStyle" TargetType="Entry">
-            <Setter Property="VerticalOptions"
-                    Value="Center" />
-            <Setter Property="WidthRequest"
-                    Value="120" />
-            <Setter Property="Margin"
-                    Value="6, 0" />
+            <Setter Property="VerticalOptions" Value="Center" />
+            <Setter Property="WidthRequest" Value="120" />
+            <Setter Property="Margin" Value="6, 0" />
         </Style>
 
         <Style x:Key="SettingsNumberEntryStyle" TargetType="Entry">
-            <Setter Property="VerticalOptions"
-                    Value="Center" />
-            <Setter Property="WidthRequest"
-                    Value="120" />
-            <Setter Property="Margin"
-                    Value="6, 0" />
-            <Setter Property="Keyboard"
-                    Value="Numeric" />
+            <Setter Property="VerticalOptions" Value="Center" />
+            <Setter Property="WidthRequest" Value="120" />
+            <Setter Property="Margin" Value="6, 0" />
+            <Setter Property="Keyboard" Value="Numeric" />
         </Style>
 
         <Style x:Key="SettingsPickerStyle" TargetType="Picker">
-            <Setter Property="VerticalOptions"
-                    Value="Center" />
-            <Setter Property="WidthRequest"
-                    Value="120" />
-            <Setter Property="Margin"
-                    Value="6, 0" />
+            <Setter Property="VerticalOptions" Value="Center" />
+            <Setter Property="WidthRequest" Value="120" />
+            <Setter Property="Margin" Value="6, 0" />
         </Style>
 
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto, Auto, Auto, *"
-          BackgroundColor="{Binding SelectedColor}"
-          BindingContext="{x:Reference Name=ColorCircle}">
+    <ScrollView>
+        <Grid
+            BackgroundColor="{Binding SelectedColor}"
+            BindingContext="{x:Reference Name=ColorCircle}"
+            RowDefinitions="Auto, Auto, Auto, *">
 
-        <!--  DESCRIPTION  -->
-        <VerticalStackLayout Style="{StaticResource SectionContainerStyle}">
-            <Label Text="The ColorCircle control is currently used only internally." />
-        </VerticalStackLayout>
+            <!--  DESCRIPTION  -->
+            <VerticalStackLayout Style="{StaticResource SectionContainerStyle}">
+                <Label Text="The ColorCircle control is currently used only internally." />
+            </VerticalStackLayout>
 
-        <!--  FEATURES  -->
-        <VerticalStackLayout Grid.Row="1"
-                             BackgroundColor="{AppThemeBinding Light={StaticResource LightBackgroundSecondaryColor},
-                                                               Dark={StaticResource DarkBackgroundSecondaryColor}}"
-                             Style="{StaticResource SectionContainerStyle}">
+            <!--  FEATURES  -->
+            <VerticalStackLayout
+                Grid.Row="1"
+                BackgroundColor="{AppThemeBinding Light={StaticResource LightBackgroundSecondaryColor},
+                                                  Dark={StaticResource DarkBackgroundSecondaryColor}}"
+                Style="{StaticResource SectionContainerStyle}">
 
-            <Label Style="{StaticResource SectionTitleStyle}"
-                   Text="Features" />
-            <Label Text="- Draws a color circle using a sweep gradient." />
-            <Label Text="- Draws a movable Reticle that indicates the selected color" />
-            <Label Text="- Supports changing the Reticle size" />
-            <Label Text="- Supports optional display of cross-hairs in the Reticle" />
+                <Label Style="{StaticResource SectionTitleStyle}" Text="Features" />
+                <Label Text="- Draws a color circle using a sweep gradient." />
+                <Label Text="- Draws a movable Reticle that indicates the selected color" />
+                <Label Text="- Supports changing the Reticle size" />
+                <Label Text="- Supports optional display of cross-hairs in the Reticle" />
 
-        </VerticalStackLayout>
+            </VerticalStackLayout>
 
-        <!--  SETTINGS  -->
-        <VerticalStackLayout Grid.Row="2"
-                             Style="{StaticResource SectionContainerStyle}">
+            <!--  SETTINGS  -->
+            <VerticalStackLayout Grid.Row="2" Style="{StaticResource SectionContainerStyle}">
 
-            <Label Style="{StaticResource SectionTitleStyle}"
-                   Text="Settings" />
+                <Label Style="{StaticResource SectionTitleStyle}" Text="Settings" />
 
-            <HorizontalStackLayout Margin="0,6">
-                <Label Style="{StaticResource SettingsTextStyle}"
-                       Text="SelectedColor"
-                       VerticalOptions="Center" />
+                <HorizontalStackLayout Margin="0,6">
+                    <Label
+                        Style="{StaticResource SettingsTextStyle}"
+                        Text="SelectedColor"
+                        VerticalOptions="Center" />
 
-                <Entry x:Name="SelectedColorEntry"
-                       Completed="SelectedColorEntry_Completed"
-                       Style="{StaticResource SettingsEntryStyle}" />
+                    <Entry
+                        x:Name="SelectedColorEntry"
+                        Completed="SelectedColorEntry_Completed"
+                        Style="{StaticResource SettingsEntryStyle}" />
 
-                <Label Style="{StaticResource SettingsTextStyle}"
-                       Text="ReticleSize"
-                       VerticalOptions="Center" />
+                    <Label
+                        Style="{StaticResource SettingsTextStyle}"
+                        Text="ReticleSize"
+                        VerticalOptions="Center" />
 
-                <Entry x:Name="ReticleSizeEntry"
-                       Style="{StaticResource SettingsNumberEntryStyle}"
-                       Text="20"
-                       TextChanged="ReticleSizeEntry_Completed" />
-            </HorizontalStackLayout>
+                    <Entry
+                        x:Name="ReticleSizeEntry"
+                        Style="{StaticResource SettingsNumberEntryStyle}"
+                        Text="20"
+                        TextChanged="ReticleSizeEntry_Completed" />
+                </HorizontalStackLayout>
 
-            <HorizontalStackLayout Margin="0,6">
-                <Label Style="{StaticResource SettingsTextStyle}"
-                       Text="Show Reticle Cross-Hairs" />
-                <CheckBox x:Name="HasCrossHairs"
-                          CheckedChanged="HasCrossHairs_CheckedChanged"
-                          IsChecked="False"
-                          Style="{StaticResource SettingsCheckBoxStyle}" />
-            </HorizontalStackLayout>
+                <HorizontalStackLayout Margin="0,6">
+                    <Label Style="{StaticResource SettingsTextStyle}" Text="Show Reticle Cross-Hairs" />
+                    <CheckBox
+                        x:Name="HasCrossHairs"
+                        CheckedChanged="HasCrossHairs_CheckedChanged"
+                        IsChecked="False"
+                        Style="{StaticResource SettingsCheckBoxStyle}" />
+                </HorizontalStackLayout>
 
-        </VerticalStackLayout>
+            </VerticalStackLayout>
 
-        <Grid Grid.Row="3"
-              WidthRequest="{OnPlatform Default=300,
-                                        WinUI=500}"
-              HeightRequest="{OnPlatform Default=300,
-                                         WinUI=500}"
-              Margin="20"
-              HorizontalOptions="Center"
-              VerticalOptions="Center">
+            <Grid
+                Grid.Row="3"
+                Margin="15,0"
+                HorizontalOptions="Start"
+                VerticalOptions="Center">
 
-            <controls:ColorCircle x:Name="ColorCircle" />
+                <controls:ColorCircle
+                    x:Name="ColorCircle"
+                    HeightRequest="450"
+                    WidthRequest="450" />
 
+            </Grid>
         </Grid>
-    </Grid>
-
+    </ScrollView>
 </ContentPage>

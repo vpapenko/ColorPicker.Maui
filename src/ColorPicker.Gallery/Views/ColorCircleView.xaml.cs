@@ -2,36 +2,36 @@ namespace ColorPicker.Gallery;
 
 public partial class ColorCircleView : ContentPage
 {
-	public ColorCircleView()
-	{
-		InitializeComponent();
-	}
+    public ColorCircleView()
+    {
+        InitializeComponent();
+    }
 
     protected override void OnAppearing()
     {
-        ColorCircle.SelectedColorChangedEvent += ColorCircle_SelectedColorChangedEvent;
+        ColorCircle.SelectedColorChanged += ColorCircle_SelectedColorChangedEvent;
         ColorCircle.SelectedColor = GetColorFromString( "#9D9E9C" )!;
     }
 
     protected override void OnDisappearing()
     {
-        ColorCircle.SelectedColorChangedEvent -= ColorCircle_SelectedColorChangedEvent;
+        ColorCircle.SelectedColorChanged -= ColorCircle_SelectedColorChangedEvent;
     }
 
     void SelectedColorEntry_Completed( object sender, EventArgs e )
-	{
+    {
         var color =  GetColorFromString( ((Entry)sender).Text );
 
         if ( color is not null )
             ColorCircle.SelectedColor = color;
-	}
+    }
 
     void ReticleSizeEntry_Completed( object sender, EventArgs e )
     {
         var reticleSize = GetSizeFromText( ((Entry)sender).Text );
 
-        ColorCircle.ReticleRadius = reticleSize < 15f ? 15f 
-                                                      : reticleSize > 40f ? 40f 
+        ColorCircle.ReticleRadius = reticleSize < 15f ? 15f
+                                                      : reticleSize > 40f ? 40f
                                                                           : reticleSize;
     }
 
@@ -47,7 +47,7 @@ public partial class ColorCircleView : ContentPage
 
     Color? GetColorFromString( string value )
     {
-        if (string.IsNullOrEmpty(value))
+        if ( string.IsNullOrEmpty( value ) )
             return null;
 
         try
@@ -57,7 +57,7 @@ public partial class ColorCircleView : ContentPage
 
             return null;
         }
-        catch (Exception)
+        catch ( Exception )
         {
             return null;
         }
@@ -65,7 +65,7 @@ public partial class ColorCircleView : ContentPage
 
     float GetSizeFromText( string value )
     {
-        if (! string.IsNullOrEmpty(value) && float.TryParse( value, out var result ) )
+        if ( !string.IsNullOrEmpty( value ) && float.TryParse( value, out var result ) )
             return result;
 
         return 20f;

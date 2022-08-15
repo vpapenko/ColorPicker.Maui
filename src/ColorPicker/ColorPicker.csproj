@@ -20,20 +20,25 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Controls\ColorTriangle\**" />
+	  <Compile Remove="Controls\ColorWheel\**" />
 	  <Compile Remove="Platforms\**" />
+	  <EmbeddedResource Remove="Controls\ColorTriangle\**" />
+	  <EmbeddedResource Remove="Controls\ColorWheel\**" />
 	  <EmbeddedResource Remove="Platforms\**" />
+	  <MauiCss Remove="Controls\ColorTriangle\**" />
+	  <MauiCss Remove="Controls\ColorWheel\**" />
 	  <MauiCss Remove="Platforms\**" />
+	  <MauiXaml Remove="Controls\ColorTriangle\**" />
+	  <MauiXaml Remove="Controls\ColorWheel\**" />
 	  <MauiXaml Remove="Platforms\**" />
+	  <None Remove="Controls\ColorTriangle\**" />
+	  <None Remove="Controls\ColorWheel\**" />
 	  <None Remove="Platforms\**" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\ColorPickerMath\ColorPickerMath.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Controls\ColorWheel\" />
-	  <Folder Include="Controls\ColorTriangle\" />
 	</ItemGroup>
 
     <ItemGroup Condition="$(TargetFramework.StartsWith('net6.0-android')) != true">

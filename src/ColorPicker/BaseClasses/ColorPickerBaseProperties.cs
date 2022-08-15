@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public abstract partial class ColorPickerBase<T>
+public abstract partial class ColorPickerBase : IColorPicker
 {
     #region SelectedColor implementation
     /// <summary>
@@ -9,36 +9,24 @@ public abstract partial class ColorPickerBase<T>
     public static readonly BindableProperty SelectedColorProperty
             = BindableProperty.Create( nameof(SelectedColor),
                                        typeof(Color),
-                                       typeof(ColorPickerBase<T>),
+                                       typeof(IColorPicker),
                                        Color.FromHsla(0, 0.5, 0.5),
                                 propertyChanged: (bindable, oldValue, newValue) =>
                                 {
-                                    if ( newValue is not null && bindable is ColorPickerBase<T> colorPickerBase )
+                                    if ( newValue is not null && bindable is ColorPickerBase colorPickerBase )
                                     {
-                                        colorPickerBase.SelectedColorChanged( (Color)newValue );
-
-                                        if ( colorPickerBase.AttachedTo is not null )
-                                            colorPickerBase.AttachedTo.SelectedColor = (Color)newValue;
-
-                                        colorPickerBase.RaiseUpdateSelectedColor( (Color)oldValue, (Color)newValue );
+                                        colorPickerBase.UpdateSelectedColor();
+                                        colorPickerBase.SelectedColorChanged?.Invoke( colorPickerBase, new ColorChangedEventArgs( (Color)oldValue, (Color)newValue ) );
                                     }
                                 } );
+
+    public event EventHandler<ColorChangedEventArgs>? SelectedColorChanged;
 
     public Color SelectedColor
     {
         get => (Color)GetValue( SelectedColorProperty );
         set => SetValue( SelectedColorProperty, value );
     }
-
-    protected virtual void SelectedColorChanged( Color newColor )
-    {
-        UpdateBySelectedColor();
-    }
-
-    public event EventHandler<ColorChangedEventArgs>? SelectedColorChangedEvent;
-
-    protected virtual void RaiseUpdateSelectedColor( Color oldColor, Color newColor )
-            => SelectedColorChangedEvent?.Invoke( this, new ColorChangedEventArgs( oldColor, newColor ) );
     #endregion
 
     #region AttachedTo implementation
@@ -48,18 +36,18 @@ public abstract partial class ColorPickerBase<T>
     public static readonly BindableProperty AttachedToProperty
             = BindableProperty.Create( nameof(AttachedTo),
                                        typeof(IColorPicker),
-                                       typeof(ColorPickerBase<T>),
+                                       typeof(IColorPicker),
                                        null,
                                 propertyChanged: (bindable, oldValue, newValue) =>
                                 {
-                                    if ( newValue is not null && bindable is ColorPickerBase<T> colorPickerBase )
+                                    if ( bindable is ColorPickerBase colorPickerBase )
                                     {
                                         if ( oldValue is IColorPicker oldPicker )
-                                            oldPicker.PropertyChanged  -= colorPickerBase.AttachedToPropertyChanged;
+                                            oldPicker.PropertyChanged  -= colorPickerBase.AttachedToPicker;
 
                                         if ( newValue is IColorPicker newPicker )
                                         {
-                                            newPicker.PropertyChanged  += colorPickerBase.AttachedToPropertyChanged;
+                                            newPicker.PropertyChanged  += colorPickerBase.AttachedToPicker;
                                             newPicker.SelectedColor     = colorPickerBase.SelectedColor;
                                         }
                                     }
@@ -71,7 +59,7 @@ public abstract partial class ColorPickerBase<T>
         set => SetValue( AttachedToProperty, value );
     }
 
-    void AttachedToPropertyChanged( object? sender, PropertyChangedEventArgs e )
+    void AttachedToPicker( object? sender, PropertyChangedEventArgs e )
     {
         if ( sender is IColorPicker picker && e.PropertyName == nameof( SelectedColor ) )
             SelectedColor = picker.SelectedColor;
@@ -85,12 +73,12 @@ public abstract partial class ColorPickerBase<T>
     public static readonly BindableProperty ReticleRadiusProperty
             = BindableProperty.Create( nameof(ReticleRadius),
                                        typeof(double),
-                                       typeof(ColorPickerBase<T>),
+                                       typeof(IColorPicker),
                                        20.0,
                                 propertyChanged: (bindable, oldValue, newValue) =>
                                 {
-                                    if ( newValue is not null && bindable is ColorPickerBase<T> colorPickerBase )
-                                        colorPickerBase.UpdateBySelectedColor();
+                                    if ( newValue is not null && bindable is ColorPickerBase colorPickerBase )
+                                        colorPickerBase.UpdateReticle();
                                 } );
 
     public double ReticleRadius
@@ -107,12 +95,12 @@ public abstract partial class ColorPickerBase<T>
     public static readonly BindableProperty ShowReticleCrossHairsProperty
             = BindableProperty.Create( nameof(ShowReticleCrossHairs),
                                        typeof(bool),
-                                       typeof(ColorPickerBase<T>),
+                                       typeof(IColorPicker),
                                        false,
                                 propertyChanged: (bindable, oldValue, newValue) =>
                                 {
-                                    if ( newValue is not null && bindable is ColorPickerBase<T> colorPickerBase )
-                                        colorPickerBase.UpdateBySelectedColor();
+                                    if ( newValue is not null && bindable is ColorPickerBase colorPickerBase )
+                                        colorPickerBase.UpdateCrossHairs();
                                 } );
 
     public bool ShowReticleCrossHairs

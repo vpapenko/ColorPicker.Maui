@@ -7,39 +7,11 @@
 
     <ScrollView>
 
-        <!--<VerticalStackLayout Padding="0,40"
-                             Spacing="40"
-                             HorizontalOptions="Fill"
-                             VerticalOptions="Start">
-
-            <Rectangle WidthRequest="{OnPlatform Default=200,
-                                                 WinUI=300}"
-                       HeightRequest="60"
-                       BackgroundColor="{Binding Source={x:Reference ColorPicker},
-                                                 Path=SelectedColor}" />
-
-            <cp:ColorCircle x:Name="ColorPicker"
-                            WidthRequest="{OnPlatform Default=300,
-                                                      WinUI=500}"
-                            HeightRequest="{OnPlatform Default=300,
-                                                       WinUI=500}"
-                            ReticleRadius="{OnPlatform Default=20,
-                                                       WinUI=30,
-                                                       Android=20}"
-                            SelectedColor="Orange"
-                            ShowReticleCrossHairs="true" />
-
-        </VerticalStackLayout>-->
-
         <VerticalStackLayout
             Padding="0,40"
-            HeightRequest="{OnPlatform Default=300,
-                                       WinUI=500}"
             HorizontalOptions="Fill"
             Spacing="40"
-            VerticalOptions="Start"
-            WidthRequest="{OnPlatform Default=300,
-                                      WinUI=500}">
+            VerticalOptions="Start">
 
             <Rectangle
                 BackgroundColor="{Binding Source={x:Reference ColorPicker}, Path=SelectedColor}"
@@ -49,11 +21,15 @@
 
             <cp:ColorCircle
                 x:Name="ColorPicker"
+                HeightRequest="{OnPlatform Default=200,
+                                           WinUI=400}"
                 ReticleRadius="{OnPlatform Default=20,
-                                           WinUI=30,
+                                           WinUI=40,
                                            Android=20}"
                 SelectedColor="Orange"
-                ShowReticleCrossHairs="true" />
+                ShowReticleCrossHairs="true"
+                WidthRequest="{OnPlatform Default=200,
+                                          WinUI=400}" />
 
         </VerticalStackLayout>
 
