@@ -13,10 +13,17 @@ public abstract partial class ColorPickerBase : IColorPicker
                                        Color.FromHsla(0, 0.5, 0.5),
                                 propertyChanged: (bindable, oldValue, newValue) =>
                                 {
-                                    if ( newValue is not null && bindable is ColorPickerBase colorPickerBase )
+                                    if ( bindable is ColorPickerBase colorPickerBase )
                                     {
-                                        colorPickerBase.UpdateSelectedColor();
-                                        colorPickerBase.SelectedColorChanged?.Invoke( colorPickerBase, new ColorChangedEventArgs( (Color)oldValue, (Color)newValue ) );
+                                        if ( oldValue != newValue && newValue is Color newColor )
+                                        {
+                                            colorPickerBase.UpdateSelectedColor();
+
+                                            if ( colorPickerBase.AttachedTo is IColorPicker attachedPicker )
+                                                attachedPicker.SelectedColor = newColor;
+
+                                            colorPickerBase.SelectedColorChanged?.Invoke( colorPickerBase, new ColorChangedEventArgs( (Color)oldValue, newColor ) );
+                                        }
                                     }
                                 } );
 
