@@ -13,7 +13,7 @@ public abstract partial class ColorPickerBase : GraphicsView
     }
 
     #region UI Updates
-    protected override void OnParentSet()
+    protected override void OnParentChanged()
     {
         base.OnParentChanged();
 
