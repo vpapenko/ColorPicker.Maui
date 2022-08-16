@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public abstract partial class ColorPickerBase : GraphicsView
+public partial class ColorPickerBase : GraphicsView, IColorPicker
 {
     public ColorPickerBaseDrawable? PickerDrawable { get; set; }
     public IMathAbstractions? PickerMath { get; set; }
@@ -42,19 +42,19 @@ public abstract partial class ColorPickerBase : GraphicsView
     #endregion
 
     #region Touch/Mouse interactions
-    void OnStartInteraction( object? sender, TouchEventArgs e )
+    internal virtual void OnStartInteraction( object? sender, TouchEventArgs e )
     {
         var touchPoint = e.Touches[ 0 ];
         UpdatePositionFromInteraction( touchPoint );
     }
 
-    void OnDragInteraction( object? sender, TouchEventArgs e )
+    internal virtual void OnDragInteraction( object? sender, TouchEventArgs e )
     {
         var touchPoint = e.Touches[ 0 ];
         UpdatePositionFromInteraction( touchPoint );
     }
 
-    void OnEndInteraction( object? sender, TouchEventArgs e )
+    internal virtual void OnEndInteraction( object? sender, TouchEventArgs e )
     {
         var touchPoint = e.Touches[ 0 ];
         UpdatePositionFromInteraction( touchPoint );

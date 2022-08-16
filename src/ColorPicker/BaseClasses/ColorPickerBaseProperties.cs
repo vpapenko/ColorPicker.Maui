@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public abstract partial class ColorPickerBase : IColorPicker
+public partial class ColorPickerBase
 {
     #region SelectedColor implementation
     /// <summary>
