@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorPicker.Sample", "Color
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorPicker.Gallery", "ColorPicker.Gallery\ColorPicker.Gallery.csproj", "{D7B78760-4F36-4E0E-9299-D0C152DD963C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorPicker.Test.xUnit", "ColorPicker.Test.xUnit\ColorPicker.Test.xUnit.csproj", "{C8B4B02C-E0DB-4BA3-A7C2-EB98BAAA6D2C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorPicker.Test.xUnit", "ColorPicker.Test.xUnit\ColorPicker.Test.xUnit.csproj", "{C8B4B02C-E0DB-4BA3-A7C2-EB98BAAA6D2C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
