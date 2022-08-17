@@ -27,46 +27,46 @@ public partial class ColorPickerBase : GraphicsView, IColorPicker
 
     void UpdateSelectedColor()
     {
-        UpdateWithSelectedColor();
+        UpdateBySelectedColor();
     }
 
     void UpdateReticle()
     {
-        UpdateWithSelectedColor();
+        UpdateBySelectedColor();
     }
 
     void UpdateCrossHairs()
     {
-        UpdateWithSelectedColor();
+        UpdateBySelectedColor();
     }
     #endregion
 
-    #region Touch/Mouse interactions
-    internal virtual void OnStartInteraction( object? sender, TouchEventArgs e )
+    #region Touch/Mouse interactions (overridable)
+    public virtual void OnStartInteraction( object? sender, TouchEventArgs e )
     {
         var touchPoint = e.Touches[ 0 ];
-        UpdatePositionFromInteraction( touchPoint );
+        UpdateColorFromInteraction( touchPoint );
     }
 
-    internal virtual void OnDragInteraction( object? sender, TouchEventArgs e )
+    public virtual void OnDragInteraction( object? sender, TouchEventArgs e )
     {
         var touchPoint = e.Touches[ 0 ];
-        UpdatePositionFromInteraction( touchPoint );
+        UpdateColorFromInteraction( touchPoint );
     }
 
-    internal virtual void OnEndInteraction( object? sender, TouchEventArgs e )
+    public virtual void OnEndInteraction( object? sender, TouchEventArgs e )
     {
         var touchPoint = e.Touches[ 0 ];
-        UpdatePositionFromInteraction( touchPoint );
+        UpdateColorFromInteraction( touchPoint );
     }
 
-    void UpdatePositionFromInteraction( PointF touchPoint )
+    public void UpdateColorFromInteraction( PointF touchPoint )
     {
         SelectedColor = PickerMath!.UpdateColor( ScalePoint( touchPoint ), SelectedColor );
-        UpdateWithSelectedColor();
+        UpdateBySelectedColor();
     }
 
-    void UpdateWithSelectedColor()
+    public void UpdateBySelectedColor()
     {
         PickerDrawable!.Center = UnscalePoint( PickerMath!.ColorToPoint( SelectedColor ) );
         Invalidate();

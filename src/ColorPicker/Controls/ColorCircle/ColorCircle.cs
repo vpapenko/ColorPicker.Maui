@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public class ColorCircle : ColorPickerBase
+public partial class ColorCircle : PickerBase
 {
     public ColorCircle()
     {

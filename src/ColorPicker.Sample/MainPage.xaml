@@ -1,35 +1,32 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<ContentPage
-    x:Class="ColorPicker.Sample.MainPage"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:cp="clr-namespace:ColorPicker;assembly=ColorPicker">
+<ContentPage x:Class="ColorPicker.Sample.MainPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:cp="clr-namespace:ColorPicker;assembly=ColorPicker">
 
     <ScrollView>
 
-        <VerticalStackLayout
-            Padding="0,40"
-            HorizontalOptions="Fill"
-            Spacing="40"
-            VerticalOptions="Start">
+        <VerticalStackLayout Padding="0,40"
+                             Spacing="40"
+                             HorizontalOptions="Fill"
+                             VerticalOptions="Start">
 
-            <Rectangle
-                BackgroundColor="{Binding Source={x:Reference ColorPicker}, Path=SelectedColor}"
-                HeightRequest="60"
-                WidthRequest="{OnPlatform Default=200,
-                                          WinUI=300}" />
+            <Rectangle WidthRequest="{OnPlatform Default=200,
+                                                 WinUI=300}"
+                       HeightRequest="60"
+                       BackgroundColor="{Binding Source={x:Reference ColorPicker},
+                                                 Path=SelectedColor}" />
 
-            <cp:ColorCircle
-                x:Name="ColorPicker"
-                HeightRequest="{OnPlatform Default=200,
-                                           WinUI=400}"
-                ReticleRadius="{OnPlatform Default=20,
-                                           WinUI=40,
-                                           Android=20}"
-                SelectedColor="Orange"
-                ShowReticleCrossHairs="true"
-                WidthRequest="{OnPlatform Default=200,
-                                          WinUI=400}" />
+            <cp:ColorCircle x:Name="ColorPicker"
+                            WidthRequest="{OnPlatform Default=200,
+                                                      WinUI=400}"
+                            HeightRequest="{OnPlatform Default=200,
+                                                       WinUI=400}"
+                            ReticleRadius="{OnPlatform Default=20,
+                                                       WinUI=20,
+                                                       Android=20}"
+                            SelectedColor="Orange"
+                            ShowReticleCrossHairs="true" />
 
         </VerticalStackLayout>
 

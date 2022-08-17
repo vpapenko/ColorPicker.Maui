@@ -1,35 +1,16 @@
 ﻿namespace ColorPicker;
 
-public class ColorPickerBaseDrawable : IDrawable
+public class PickerBaseDrawable : ColorPickerBaseDrawable
 {
-    public ColorPickerBase Picker { get; }
-    public PointF Center { get; set; }
-    public SizeF CanvasSize { get; set; }
-
-    public ColorPickerBaseDrawable( ColorPickerBase picker )
+    public PickerBaseDrawable( PickerBase picker ) : base( picker )
     {
-        Picker = picker;
     }
 
-    public void Draw( ICanvas canvas, RectF dirtyRect )
-    {
-        CanvasSize = new SizeF()
-        {
-            Width = dirtyRect.Width,
-            Height = dirtyRect.Height
-        };
+    //  Defers to subclass
+    public override void DrawBackground( ICanvas canvas, RectF dirtyRect ) { }
 
-        canvas.Antialias = true;
-        DrawBackground( canvas, dirtyRect );
-        DrawContent( canvas, dirtyRect );
-    }
-
-    //  Must override
-    public virtual void DrawBackground( ICanvas canvas, RectF dirtyRect )
-            => throw new NotImplementedException();
-
-    //  May override - default draws a reticle
-    public virtual void DrawContent( ICanvas canvas, RectF dirtyRect )
+    //  Draws a reticle ( subclass can override)
+    public override void DrawContent( ICanvas canvas, RectF dirtyRect )
     {
         canvas.StrokeSize = 2;
 

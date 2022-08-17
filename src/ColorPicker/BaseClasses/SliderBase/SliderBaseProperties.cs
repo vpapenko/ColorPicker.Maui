@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public class SliderBase : ColorPickerBase
+public partial class SliderBase
 {
     #region Virtual functions
     //  Virtual functions - defaults do nothing
