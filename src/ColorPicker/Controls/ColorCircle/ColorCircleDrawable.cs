@@ -4,9 +4,8 @@ public class ColorCircleDrawable : PickerBaseDrawable
 {
     public ColorCircleDrawable( ColorCircle picker ) : base( picker ) { }
 
-
     /// <summary>
-    /// Draw the background colors
+    /// Draws the background using a sweep gradient
     /// </summary>
     public override void DrawBackground( ICanvas canvas, RectF dirtyRect )
     {
@@ -14,9 +13,12 @@ public class ColorCircleDrawable : PickerBaseDrawable
         DrawGrayGradient( canvas, dirtyRect );
     }
 
+    /// <summary>
+    /// Draws the reticle
+    /// </summary>
     public override void DrawContent( ICanvas canvas, RectF dirtyRect )
     {
-        base.DrawContent( canvas, dirtyRect );
+        base.DrawReticle( canvas, dirtyRect );
     }
 
     /// <summary>

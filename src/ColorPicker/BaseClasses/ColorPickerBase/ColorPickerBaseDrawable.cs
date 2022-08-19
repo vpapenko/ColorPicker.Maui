@@ -25,8 +25,10 @@ public class ColorPickerBaseDrawable : IDrawable
         DrawContent( canvas, dirtyRect );
     }
 
-    public virtual void DrawBackground( ICanvas canvas, RectF dirtyRect ) => throw new NotImplementedException();
-    public virtual void DrawContent( ICanvas canvas, RectF dirtyRect ) => throw new NotImplementedException();
+    public virtual void DrawBackground( ICanvas canvas, RectF dirtyRect )
+        => throw new NotImplementedException();
+    public virtual void DrawContent( ICanvas canvas, RectF dirtyRect )
+        => throw new NotImplementedException();
 
     /// <summary>
     /// Both an picker and a slider need to be able to draw a reticle
