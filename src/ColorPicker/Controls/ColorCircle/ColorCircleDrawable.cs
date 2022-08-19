@@ -4,6 +4,7 @@ public class ColorCircleDrawable : PickerBaseDrawable
 {
     public ColorCircleDrawable( ColorCircle picker ) : base( picker ) { }
 
+
     /// <summary>
     /// Draw the background colors
     /// </summary>
@@ -98,11 +99,12 @@ public class ColorCircleDrawable : PickerBaseDrawable
 
         canvas.RestoreState();
     }
-
-    public struct SweepInfo
-    {
-        internal Color SweepColor { get; set; }
-        internal float Angle1 { get; set; }
-        internal float Angle2 { get; set; }
-    }
 }
+
+public struct SweepInfo
+{
+    internal Color SweepColor { get; set; }
+    internal float Angle1 { get; set; }
+    internal float Angle2 { get; set; }
+}
+
