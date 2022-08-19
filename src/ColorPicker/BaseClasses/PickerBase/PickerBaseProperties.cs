@@ -2,9 +2,9 @@
 
 public partial class PickerBase
 {
-    #region ShowLuminosityWheel implementation
+    #region ShowLuminosity implementation
     /// <summary>
-    /// ShowLuminosityWheel bindable property
+    /// ShowLuminosity bindable property
     /// </summary>
     public static readonly BindableProperty ShowLuminosityProperty
             = BindableProperty.Create( nameof(ShowLuminosity),
@@ -23,6 +23,4 @@ public partial class PickerBase
         set => SetValue( ShowLuminosityProperty, value );
     }
     #endregion
-
-
 }

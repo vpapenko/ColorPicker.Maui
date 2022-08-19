@@ -10,6 +10,10 @@ public partial class ColorPickerBase : GraphicsView, IColorPicker
         StartInteraction += OnStartInteraction;
         DragInteraction += OnDragInteraction;
         EndInteraction += OnEndInteraction;
+        CancelInteraction += OnCancelInteraction;
+        StartHoverInteraction += OnStartHoverInteraction;
+        MoveHoverInteraction += OnMoveHoverInteraction;
+        EndHoverInteraction += OnEndHoverInteraction;
     }
 
     #region UI Updates
@@ -59,6 +63,11 @@ public partial class ColorPickerBase : GraphicsView, IColorPicker
         var touchPoint = e.Touches[ 0 ];
         UpdateColorFromInteraction( touchPoint );
     }
+
+    public virtual void OnStartHoverInteraction( object? sender, TouchEventArgs e ) { }
+    public virtual void OnMoveHoverInteraction( object? sender, TouchEventArgs e ) { }
+    public virtual void OnEndHoverInteraction( object? sender, EventArgs e ) { }
+    public virtual void OnCancelInteraction( object? sender, EventArgs e ) { }
 
     public void UpdateColorFromInteraction( PointF touchPoint )
     {

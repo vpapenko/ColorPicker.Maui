@@ -9,7 +9,7 @@ public class ColorCircleDrawable : PickerBaseDrawable
     /// </summary>
     public override void DrawBackground( ICanvas canvas, RectF dirtyRect )
     {
-        DrawSweepGradient( canvas, dirtyRect );
+        DrawSweepGradientInternal( canvas, dirtyRect );
         DrawGrayGradient( canvas, dirtyRect );
     }
 
@@ -21,7 +21,7 @@ public class ColorCircleDrawable : PickerBaseDrawable
     /// <summary>
     /// Poor man's sweep gradient
     /// </summary>
-    void DrawSweepGradient( ICanvas canvas, RectF dirtyRect )
+    void DrawSweepGradientInternal( ICanvas canvas, RectF dirtyRect )
     {
         var countOfSectors = 512;
         var colors = new Color[ countOfSectors ];
@@ -29,13 +29,13 @@ public class ColorCircleDrawable : PickerBaseDrawable
         for ( var i = 0; i < countOfSectors; i++ )
             colors[ i ] = Color.FromHsv( (float)i / countOfSectors, 1f, 1f );
 
-        canvas.SaveState();
-
         DrawSweepGradient( canvas, dirtyRect, CreateSweepGradient( colors ) );
-
-        canvas.RestoreState();
     }
 
+    /// <summary>
+    /// Support creation of sweep gradient array
+    /// </summary>
+    /// <returns></returns>
     public SweepInfo[] CreateSweepGradient( Color[] colors )
     {
         var infoList = new List<SweepInfo>();
@@ -55,7 +55,10 @@ public class ColorCircleDrawable : PickerBaseDrawable
         return infoList.ToArray();
     }
 
-    void DrawSweepGradient( ICanvas canvas, RectF dirtyRect, SweepInfo[] infoArray )
+    /// <summary>
+    /// Draw sweep gradients
+    /// </summary>
+    public void DrawSweepGradient( ICanvas canvas, RectF dirtyRect, SweepInfo[] infoArray )
     {
         var sectorCount = infoArray.Length;
 
@@ -80,7 +83,7 @@ public class ColorCircleDrawable : PickerBaseDrawable
         canvas.FillPath( path );
     }
 
-    static void DrawGrayGradient( ICanvas canvas, RectF dirtyRect )
+    void DrawGrayGradient( ICanvas canvas, RectF dirtyRect )
     {
         canvas.SaveState();
 
@@ -89,6 +92,7 @@ public class ColorCircleDrawable : PickerBaseDrawable
             StartColor  = Colors.Gray,
             EndColor    = Colors.Transparent
         };
+
         canvas.SetFillPaint( radialGradientPaint, dirtyRect );
         canvas.FillRoundedRectangle( dirtyRect, dirtyRect.Center.X );
 

@@ -2,12 +2,6 @@
 
 public partial class SliderBase
 {
-    #region Virtual functions
-    //  Virtual functions - defaults do nothing
-    //
-    protected virtual void OnOrientationChanged( Orientation newOrientation ) { }
-    #endregion
-
     #region Orientation implementation
     /// <summary>
     /// Orientation bindable property
@@ -23,11 +17,12 @@ public partial class SliderBase
                                         sliderBase.OnOrientationChanged( (Orientation)newValue );
                                 } );
 
+    protected virtual void OnOrientationChanged( Orientation newOrientation ) { }
+
     public Orientation Orientation
     {
         get => (Orientation)GetValue( OrientationProperty );
         set => SetValue( OrientationProperty, value );
     }
     #endregion
-
 }
