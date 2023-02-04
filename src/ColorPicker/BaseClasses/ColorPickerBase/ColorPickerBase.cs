@@ -2,18 +2,18 @@
 
 public partial class ColorPickerBase : GraphicsView, IColorPicker
 {
-    public ColorPickerBaseDrawable? PickerDrawable { get; set; }
-    public IMathAbstractions? PickerMath { get; set; }
+    public ColorPickerBaseDrawable? PickerDrawable  { get; set; }
+    public IMathAbstractions? PickerMath            { get; set; }
 
     public ColorPickerBase()
     {
-        StartInteraction += OnStartInteraction;
-        DragInteraction += OnDragInteraction;
-        EndInteraction += OnEndInteraction;
-        CancelInteraction += OnCancelInteraction;
-        StartHoverInteraction += OnStartHoverInteraction;
-        MoveHoverInteraction += OnMoveHoverInteraction;
-        EndHoverInteraction += OnEndHoverInteraction;
+        StartInteraction        += OnStartInteraction;
+        DragInteraction         += OnDragInteraction;
+        EndInteraction          += OnEndInteraction;
+        CancelInteraction       += OnCancelInteraction;
+        StartHoverInteraction   += OnStartHoverInteraction;
+        MoveHoverInteraction    += OnMoveHoverInteraction;
+        EndHoverInteraction     += OnEndHoverInteraction;
     }
 
     #region UI Updates
@@ -81,14 +81,7 @@ public partial class ColorPickerBase : GraphicsView, IColorPicker
         Invalidate();
     }
 
-    public PointF ScalePoint( PointF point )
-    {
-        return new PointF( point.X / (float)Width, point.Y / (float)Height );
-    }
-
-    public PointF UnscalePoint( PointF point )
-    {
-        return new PointF( point.X * (float)Width, point.Y * (float)Height );
-    }
+    public PointF ScalePoint( PointF point )    => new PointF( point.X / (float)Width, point.Y / (float)Height );
+    public PointF UnscalePoint( PointF point )  => new PointF( point.X * (float)Width, point.Y * (float)Height );
     #endregion
 }
