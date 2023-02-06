@@ -2,9 +2,9 @@
 
 public class ColorPickerBaseDrawable : IDrawable
 {
-    public ColorPickerBase Picker { get; }
-    public PointF Center { get; set; }
-    public SizeF CanvasSize { get; set; }
+    public ColorPickerBase  Picker      { get; }
+    public SizeF            CanvasSize  { get; set; }
+    public PointF           Center      { get; set; }
 
     public ColorPickerBaseDrawable( ColorPickerBase picker )
     {
@@ -15,9 +15,12 @@ public class ColorPickerBaseDrawable : IDrawable
     {
         CanvasSize = new SizeF()
         {
-            Width = dirtyRect.Width,
+            Width  = dirtyRect.Width,
             Height = dirtyRect.Height
         };
+
+        if ( Center.X == -0.5 && Center.Y == -0.5 )
+            Center = dirtyRect.Center;
 
         canvas.Antialias = true;
 
@@ -25,25 +28,22 @@ public class ColorPickerBaseDrawable : IDrawable
         DrawContent( canvas, dirtyRect );
     }
 
-    public virtual void DrawBackground( ICanvas canvas, RectF dirtyRect )
-        => throw new NotImplementedException();
-    public virtual void DrawContent( ICanvas canvas, RectF dirtyRect )
-        => throw new NotImplementedException();
+    public virtual void DrawBackground( ICanvas canvas, RectF dirtyRect )   => throw new NotImplementedException();
+    public virtual void DrawContent( ICanvas canvas, RectF dirtyRect )      => throw new NotImplementedException();
 
     /// <summary>
     /// Both an picker and a slider need to be able to draw a reticle
     /// </summary>
     public void DrawReticle( ICanvas canvas, RectF dirtyRect )
     {
-        canvas.StrokeSize = 2;
-
-        canvas.StrokeColor = Colors.White;
+        canvas.StrokeSize   = 2;
+        canvas.StrokeColor  = Colors.White;
         canvas.DrawCircle( Center, Picker.ReticleRadius );
 
-        canvas.StrokeColor = Colors.Black;
+        canvas.StrokeColor  = Colors.Black;
         canvas.DrawCircle( Center, Picker.ReticleRadius - 2 );
 
-        canvas.StrokeColor = Colors.White;
+        canvas.StrokeColor  = Colors.White;
         canvas.DrawCircle( Center, Picker.ReticleRadius - 4 );
 
         if ( Picker.ShowReticleCrossHairs )
@@ -51,20 +51,20 @@ public class ColorPickerBaseDrawable : IDrawable
             var radius  =   (float)(Picker.ReticleRadius - 4);
 
             canvas.StrokeColor = Colors.Black;
-            DrawCrossHairsHorizontal( canvas, Center, radius );
-            DrawCrossHairsVertical( canvas, Center, radius );
+            DrawHorizontalCrossHair( canvas, Center, radius );
+            DrawVerticalCrossHair( canvas, Center, radius );
         }
     }
 
-    void DrawCrossHairsHorizontal( ICanvas canvas, PointF c, float r )
+    void DrawHorizontalCrossHair( ICanvas canvas, PointF center, float radius )
     {
-        canvas.DrawLine( c.X - r + 1, c.Y, c.X - 4, c.Y );
-        canvas.DrawLine( c.X + 4, c.Y, c.X + r - 1, c.Y );
+        canvas.DrawLine( center.X - radius + 1, center.Y, center.X - 4, center.Y );
+        canvas.DrawLine( center.X + 4, center.Y, center.X + radius - 1, center.Y );
     }
 
-    void DrawCrossHairsVertical( ICanvas canvas, PointF c, float r )
+    void DrawVerticalCrossHair( ICanvas canvas, PointF center, float radius )
     {
-        canvas.DrawLine( c.X, c.Y - r + 1, c.X, c.Y - 4 );
-        canvas.DrawLine( c.X, c.Y + 4, c.X, c.Y + r - 1 );
+        canvas.DrawLine( center.X, center.Y - radius + 1, center.X, center.Y - 4 );
+        canvas.DrawLine( center.X, center.Y + 4, center.X, center.Y + radius - 1 );
     }
 }

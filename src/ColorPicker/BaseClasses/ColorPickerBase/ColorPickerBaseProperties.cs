@@ -12,7 +12,7 @@ public partial class ColorPickerBase
                                                     typeof(IColorPicker),
                                                     Color.FromHsla(0, 0.5, 0.5),
                                                     propertyChanged: OnSelectedColorPropertyChanged );
-\
+
     public event EventHandler<ColorChangedEventArgs>? SelectedColorChanged;
 
     static void OnSelectedColorPropertyChanged( BindableObject bindable, object oldValue, object newValue )
@@ -21,7 +21,7 @@ public partial class ColorPickerBase
         {
             if ( oldValue != newValue && newValue is Color newColor )
             {
-                colorPickerBase.UpdateSelectedColor();
+                colorPickerBase.UpdateSelectedColor( newColor );
 
                 if ( colorPickerBase.AttachedTo is IColorPicker attachedPicker )
                     attachedPicker.SelectedColor = newColor;
@@ -91,7 +91,7 @@ public partial class ColorPickerBase
     static void OnReticleRadiusPropertyChanged( BindableObject bindable, object oldValue, object newValue )
     {
         if ( newValue is not null && bindable is ColorPickerBase colorPickerBase )
-            colorPickerBase.UpdateReticle();
+            colorPickerBase.UpdateSelectedColor();
     }
 
     public double ReticleRadius
@@ -115,7 +115,7 @@ public partial class ColorPickerBase
     static void OnReticleCrosshairsPropertyChanged( BindableObject bindable, object oldValue, object newValue )
     {
         if ( newValue is not null && bindable is ColorPickerBase colorPickerBase )
-            colorPickerBase.UpdateCrossHairs();
+            colorPickerBase.UpdateSelectedColor();
     }
 
     public bool ShowReticleCrossHairs
