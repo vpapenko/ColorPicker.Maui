@@ -20,19 +20,19 @@
 
 	<ItemGroup>
 	  <Compile Remove="Controls\ColorTriangle\**" />
-	  <Compile Remove="Controls\ColorWheel\**" />
+	  <Compile Remove="Controls\Sliders\**" />
 	  <Compile Remove="Platforms\**" />
 	  <EmbeddedResource Remove="Controls\ColorTriangle\**" />
-	  <EmbeddedResource Remove="Controls\ColorWheel\**" />
+	  <EmbeddedResource Remove="Controls\Sliders\**" />
 	  <EmbeddedResource Remove="Platforms\**" />
 	  <MauiCss Remove="Controls\ColorTriangle\**" />
-	  <MauiCss Remove="Controls\ColorWheel\**" />
+	  <MauiCss Remove="Controls\Sliders\**" />
 	  <MauiCss Remove="Platforms\**" />
 	  <MauiXaml Remove="Controls\ColorTriangle\**" />
-	  <MauiXaml Remove="Controls\ColorWheel\**" />
+	  <MauiXaml Remove="Controls\Sliders\**" />
 	  <MauiXaml Remove="Platforms\**" />
 	  <None Remove="Controls\ColorTriangle\**" />
-	  <None Remove="Controls\ColorWheel\**" />
+	  <None Remove="Controls\Sliders\**" />
 	  <None Remove="Platforms\**" />
 	</ItemGroup>
 
@@ -56,7 +56,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Controls\Sliders\" />
+      <Folder Include="Controls\ColorWheel\" />
     </ItemGroup>    
 
 </Project>

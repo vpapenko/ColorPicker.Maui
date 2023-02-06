@@ -36,10 +36,19 @@ public class ColorCircleDrawable : PickerBaseDrawable
     }
 
     /// <summary>
+    /// Sweep gradient information
+    /// </summary>
+    struct SweepInfo
+    {
+        internal Color SweepColor { get; set; }
+        internal float Angle1 { get; set; }
+        internal float Angle2 { get; set; }
+    }
+
+    /// <summary>
     /// Support creation of sweep gradient array
     /// </summary>
-    /// <returns></returns>
-    public SweepInfo[] CreateSweepGradient( Color[] colors )
+    SweepInfo[] CreateSweepGradient( Color[] colors )
     {
         var infoList = new List<SweepInfo>();
         var sectorCount = colors.Length;
@@ -61,7 +70,7 @@ public class ColorCircleDrawable : PickerBaseDrawable
     /// <summary>
     /// Draw sweep gradients
     /// </summary>
-    public void DrawSweepGradient( ICanvas canvas, RectF dirtyRect, SweepInfo[] infoArray )
+    void DrawSweepGradient( ICanvas canvas, RectF dirtyRect, SweepInfo[] infoArray )
     {
         var sectorCount = infoArray.Length;
 
@@ -102,11 +111,3 @@ public class ColorCircleDrawable : PickerBaseDrawable
         canvas.RestoreState();
     }
 }
-
-public struct SweepInfo
-{
-    internal Color SweepColor { get; set; }
-    internal float Angle1 { get; set; }
-    internal float Angle2 { get; set; }
-}
-

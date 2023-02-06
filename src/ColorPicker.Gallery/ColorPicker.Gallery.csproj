@@ -56,6 +56,10 @@
 	  <None Remove="Resources\Splash\splash.svg" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="CommunityToolkit.Maui" Version="4.0.0" />
+	</ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\ColorPicker\ColorPicker.csproj" />
     </ItemGroup>

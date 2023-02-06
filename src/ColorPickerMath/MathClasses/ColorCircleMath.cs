@@ -1,6 +1,6 @@
 ﻿namespace ColorPickerMath;
 
-public class ColorCircleMath : IMathAbstractions
+public struct ColorCircleMath : IMathAbstractions
 {
     public float Rotation { get; set; }
 
@@ -9,13 +9,13 @@ public class ColorCircleMath : IMathAbstractions
         var r = color.GetSaturation() / 2f;
         var a = color.GetHue() * 2f * (float)Math.PI - Rotation;
 
-        var point = new PolarPoint( r, a ).ToPointF();
-        point.X = -point.X;
+        var point   = new PolarPoint( r, a ).ToPointF();
+        point.X     = -point.X;
 
         return point.ShiftFromCenter();
     }
 
-    public PointF FitToActiveArea( PointF point, Color color )
+    public PointF FitToActiveArea( PointF point )
     {
         var polar = new PolarPoint( point.ShiftToCenter() );
 
@@ -25,14 +25,13 @@ public class ColorCircleMath : IMathAbstractions
         return polar.ToPointF().ShiftFromCenter();
     }
 
-    public bool IsInActiveArea( PointF point, Color color )
+    public bool IsInActiveArea( PointF point )
             => new PolarPoint( point.ShiftToCenter() ).Radius <= 1f;
 
     public Color UpdateColor( PointF point, Color color )
     {
-        var centeredPoint   = FitToActiveArea( point, color ).ShiftToCenter();
-        centeredPoint.Y = -centeredPoint.Y;
-
+        var centeredPoint   = FitToActiveArea( point ).ShiftToCenter();
+        centeredPoint.Y     = -centeredPoint.Y;
         var rotatedPolar    = centeredPoint.ToPolarPoint().AddAngle( Rotation );
 
         var h   = (rotatedPolar.Angle + Math.PI) / (Math.PI * 2);

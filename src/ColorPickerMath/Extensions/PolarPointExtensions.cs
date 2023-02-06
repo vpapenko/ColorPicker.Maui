@@ -36,8 +36,7 @@ public static class PolarPointExtensions
     /// <param name="point">self</param>
     /// <returns>cloned value</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static PolarPoint Clone( this PolarPoint pp )
-            => new PolarPoint( pp.Radius, pp.Angle );
+    public static PolarPoint Clone( this PolarPoint pp )        => new PolarPoint( pp.Radius, pp.Angle );
 
     /// <summary>
     /// Converts PointF to PolarPoint
@@ -45,6 +44,5 @@ public static class PolarPointExtensions
     /// <param name="point"></param>
     /// <returns></returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static PolarPoint ToPolarPoint( this PointF point )
-        => new PolarPoint( point );
+    public static PolarPoint ToPolarPoint( this PointF point )  => new PolarPoint( point );
 }

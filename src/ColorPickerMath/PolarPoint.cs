@@ -27,7 +27,7 @@ public struct PolarPoint
     /// </summary>
     public PolarPoint( PointF point )
     {
-        //  c = sqrt( X^2 + Y^2 )
+        //  r = sqrt( X^2 + Y^2 )
         Radius = (float)Math.Sqrt( ( point.X * point.X ) + ( point.Y * point.Y ) );
 
         //  a = arctan( Y, X )

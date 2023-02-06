@@ -7,17 +7,19 @@ public partial class SliderBase
     /// Orientation bindable property
     /// </summary>
     public static readonly BindableProperty OrientationProperty
-            = BindableProperty.Create( nameof(Orientation),
-                                       typeof(Orientation),
-                                       typeof(PickerBase),
-                                       Orientation.Horizontal,
-                                propertyChanged: (bindable, oldValue, newValue) =>
-                                {
-                                    if ( newValue is not null && bindable is SliderBase sliderBase )
-                                        sliderBase.OnOrientationChanged( (Orientation)newValue );
-                                } );
+                         = BindableProperty.Create( nameof(Orientation),
+                                                    typeof(Orientation),
+                                                    typeof(PickerBase),
+                                                    Orientation.Horizontal,
+                                                    propertyChanged: OnOrientationPropertyChanged );
 
     protected virtual void OnOrientationChanged( Orientation newOrientation ) { }
+
+    static void OnOrientationPropertyChanged( BindableObject bindable, object oldValue, object newValue )
+    {
+        if ( newValue is not null && bindable is SliderBase sliderBase )
+            sliderBase.OnOrientationChanged( (Orientation)newValue );
+    }
 
     public Orientation Orientation
     {
