@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public partial class ColorCircle : ColorPickerBase
+public partial class ColorCircle
 {
     public new float Rotation { get; set; }
 
