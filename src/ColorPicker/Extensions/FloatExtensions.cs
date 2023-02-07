@@ -1,4 +1,4 @@
-﻿namespace ColorPickerMath;
+﻿namespace ColorPicker;
 
 public static class FloatExtensions
 {

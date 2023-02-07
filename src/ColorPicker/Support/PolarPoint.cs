@@ -1,4 +1,4 @@
-﻿namespace ColorPickerMath;
+﻿namespace ColorPicker;
 
 public struct PolarPoint
 {

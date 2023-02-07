@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public class ColorCircleDrawable : PickerBaseDrawable
+public class ColorCircleDrawable : ColorPickerBaseDrawable
 {
     public ColorCircleDrawable( ColorCircle picker ) : base( picker ) { }
 

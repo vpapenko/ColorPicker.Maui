@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace ColorPickerMath;
+namespace ColorPicker;
 
 public static class PointFExtensions
 {

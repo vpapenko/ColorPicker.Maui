@@ -19,25 +19,26 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="BaseClasses\PickerBase\**" />
 	  <Compile Remove="Controls\ColorTriangle\**" />
 	  <Compile Remove="Controls\Sliders\**" />
 	  <Compile Remove="Platforms\**" />
+	  <EmbeddedResource Remove="BaseClasses\PickerBase\**" />
 	  <EmbeddedResource Remove="Controls\ColorTriangle\**" />
 	  <EmbeddedResource Remove="Controls\Sliders\**" />
 	  <EmbeddedResource Remove="Platforms\**" />
+	  <MauiCss Remove="BaseClasses\PickerBase\**" />
 	  <MauiCss Remove="Controls\ColorTriangle\**" />
 	  <MauiCss Remove="Controls\Sliders\**" />
 	  <MauiCss Remove="Platforms\**" />
+	  <MauiXaml Remove="BaseClasses\PickerBase\**" />
 	  <MauiXaml Remove="Controls\ColorTriangle\**" />
 	  <MauiXaml Remove="Controls\Sliders\**" />
 	  <MauiXaml Remove="Platforms\**" />
+	  <None Remove="BaseClasses\PickerBase\**" />
 	  <None Remove="Controls\ColorTriangle\**" />
 	  <None Remove="Controls\Sliders\**" />
 	  <None Remove="Platforms\**" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\ColorPickerMath\ColorPickerMath.csproj" />
 	</ItemGroup>
 
     <ItemGroup Condition="$(TargetFramework.StartsWith('net7.0-android')) != true">

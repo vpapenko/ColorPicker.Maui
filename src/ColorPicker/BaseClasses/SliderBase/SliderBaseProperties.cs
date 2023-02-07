@@ -9,7 +9,7 @@ public partial class SliderBase
     public static readonly BindableProperty OrientationProperty
                          = BindableProperty.Create( nameof(Orientation),
                                                     typeof(Orientation),
-                                                    typeof(PickerBase),
+                                                    typeof(SliderBase),
                                                     Orientation.Horizontal,
                                                     propertyChanged: OnOrientationPropertyChanged );
 

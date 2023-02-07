@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace ColorPickerMath;
+namespace ColorPicker;
 
 public static class PolarPointExtensions
 {
@@ -33,10 +33,10 @@ public static class PolarPointExtensions
     /// <summary>
     /// Clone a PolarPoint
     /// </summary>
-    /// <param name="point">self</param>
+    /// <param name="source">self</param>
     /// <returns>cloned value</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static PolarPoint Clone( this PolarPoint pp )        => new PolarPoint( pp.Radius, pp.Angle );
+    public static PolarPoint Clone( this PolarPoint source )    => new PolarPoint( source.Radius, source.Angle );
 
     /// <summary>
     /// Converts PointF to PolarPoint
