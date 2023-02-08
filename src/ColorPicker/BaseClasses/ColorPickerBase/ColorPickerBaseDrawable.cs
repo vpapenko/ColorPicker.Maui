@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public class ColorPickerBaseDrawable : IDrawable
+public abstract class ColorPickerBaseDrawable : IDrawable
 {
     public ColorPickerBase  Picker      { get; }
     public SizeF            CanvasSize  { get; set; }
@@ -13,16 +13,11 @@ public class ColorPickerBaseDrawable : IDrawable
 
     public void Draw( ICanvas canvas, RectF dirtyRect )
     {
-        CanvasSize = new SizeF()
-        {
-            Width  = dirtyRect.Width,
-            Height = dirtyRect.Height
-        };
+        canvas.Antialias    = true;
+        CanvasSize          = new SizeF( dirtyRect.Width, dirtyRect.Height );
 
         if ( Center.X == -0.5 && Center.Y == -0.5 )
             Center = dirtyRect.Center;
-
-        canvas.Antialias = true;
 
         DrawBackground( canvas, dirtyRect );
         DrawContent( canvas, dirtyRect );

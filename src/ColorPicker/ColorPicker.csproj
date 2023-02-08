@@ -54,10 +54,6 @@
     <ItemGroup Condition="$(TargetFramework.Contains('-windows')) != true ">
         <Compile Remove="**\*.Windows.cs" />
         <None Include="**\*.Windows.cs" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Controls\ColorWheel\" />
     </ItemGroup>    
 
 </Project>
