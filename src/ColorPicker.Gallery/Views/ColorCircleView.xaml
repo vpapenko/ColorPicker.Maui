@@ -117,8 +117,8 @@
                   VerticalOptions="Center">
 
                 <controls:ColorCircle x:Name="ColorCircle"
-                                      Radius="{OnPlatform Default=300,
-                                                          WinUI=460}"
+                                      Radius="{OnPlatform Default=180,
+                                                          WinUI=260}"
                                       ReticleRadius="{Binding Source={x:Reference reticleSize},
                                                               Path=Text}"
                                       SelectedColor="DarkGray"

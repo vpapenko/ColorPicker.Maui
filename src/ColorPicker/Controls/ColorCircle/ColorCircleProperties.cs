@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public partial class ColorCircle : ColorPickerBase
+public partial class ColorCircle
 { 
     #region Radius implementation
     /// <summary>
@@ -17,7 +17,7 @@ public partial class ColorCircle : ColorPickerBase
     {
         if ( newValue is not null && bindable is ColorCircle colorCircle )
         {
-            colorCircle.HeightRequest = colorCircle.WidthRequest = (double)newValue;
+            colorCircle.HeightRequest = colorCircle.WidthRequest = (double)newValue * 2.0;
         }
     }
 

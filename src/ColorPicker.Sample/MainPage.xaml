@@ -28,8 +28,8 @@
                                   Path=SelectedColor}" />
 
             <cp:ColorCircle x:Name="ColorPicker"
-                            Radius="{OnPlatform Default=300,
-                                                WinUI=460}"
+                            Radius="{OnPlatform Default=180,
+                                                WinUI=260}"
                             ReticleRadius="{OnPlatform Default=20,
                                                        WinUI=30}"
                             SelectedColor="Gray"
