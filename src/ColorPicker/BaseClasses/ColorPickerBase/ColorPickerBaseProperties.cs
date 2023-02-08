@@ -124,29 +124,4 @@ public partial class ColorPickerBase
         set => SetValue( ShowReticleCrossHairsProperty, value );
     }
     #endregion
-
-    #region ShowLuminosity implementation
-    /// <summary>
-    /// ShowLuminosity bindable property
-    /// </summary>
-    public static readonly BindableProperty ShowLuminosityProperty
-                         = BindableProperty.Create( nameof(ShowLuminosity),
-                                                    typeof(bool),
-                                                    typeof(IColorPicker),
-                                                    false,
-                                                    propertyChanged: OnShowLuminosityPropertyChanged );
-
-    static void OnShowLuminosityPropertyChanged( BindableObject bindable, object oldValue, object newValue )
-    {
-        if ( newValue is not null && bindable is ColorPickerBase pickerBase )
-            pickerBase.Invalidate();
-    }
-
-    public bool ShowLuminosity
-    {
-        get => (bool)GetValue( ShowLuminosityProperty );
-        set => SetValue( ShowLuminosityProperty, value );
-    }
-    #endregion
-
 }
