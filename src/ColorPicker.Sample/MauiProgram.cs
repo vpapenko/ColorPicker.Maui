@@ -28,11 +28,11 @@ public static class MauiProgram
                 windows.OnWindowCreated( window =>
                 {
                     window.ExtendsContentIntoTitleBar = false;
-                    window.SetWindowSize( 600, 800 );
+                    window.SetWindowSize( 600, 1000 );
                     window.SetIsResizable( false );
                     window.MoveAndResize( window.Bounds.X + 3840, window.Bounds.Y, window.Bounds.Width, window.Bounds.Height );
                     window.SetForegroundWindow();
-                    window.SetIsAlwaysOnTop( true );
+                    window.SetIsAlwaysOnTop( false );
                 } ) ) );
 #endif
 
