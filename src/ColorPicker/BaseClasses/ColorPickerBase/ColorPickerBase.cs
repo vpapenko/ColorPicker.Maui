@@ -1,6 +1,6 @@
 ﻿namespace ColorPicker;
 
-public partial class ColorPickerBase : GraphicsView, IColorPicker, IMathAbstractions
+public partial class ColorPickerBase : GraphicsView, IColorPicker
 {
     public ColorPickerBaseDrawable? PickerDrawable  { get; set; }
 
@@ -53,11 +53,5 @@ public partial class ColorPickerBase : GraphicsView, IColorPicker, IMathAbstract
 
     public PointF ScalePoint( PointF point )    => new PointF( point.X / (float)Width, point.Y / (float)Height );
     public PointF UnscalePoint( PointF point )  => new PointF( point.X * (float)Width, point.Y * (float)Height );
-
-    //  Math Abstractions - must be implemented by subclass
-    public virtual bool     IsInActiveArea( PointF point )              => throw new NotImplementedException();
-    public virtual PointF   FitToActiveArea( PointF point )             => throw new NotImplementedException();
-    public virtual PointF   ColorToPoint( Color color )                 => throw new NotImplementedException();
-    public virtual Color    UpdateColor( PointF point, Color color )    => throw new NotImplementedException();
     #endregion
 }
