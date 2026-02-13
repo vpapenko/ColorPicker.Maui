@@ -1,0 +1,59 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Install MAUI workload
+      run: dotnet workload install maui-android
+      
+    - name: Restore dependencies
+      run: dotnet restore ColorPicker.Maui.sln
+      
+    - name: Build library
+      run: dotnet build ColorPicker/ColorPicker.csproj --configuration Release --no-restore -f net8.0-android
+      
+    - name: Build sample app
+      run: dotnet build ColorPickerTest/ColorPickerTest.csproj --configuration Release --no-restore -f net8.0-android
+      
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Install MAUI workload
+      run: dotnet workload install maui-windows
+      
+    - name: Restore dependencies
+      run: dotnet restore ColorPicker.Maui.sln
+      
+    - name: Build library
+      run: dotnet build ColorPicker/ColorPicker.csproj --configuration Release --no-restore -f net8.0-windows10.0.19041.0
+      
+    - name: Build sample app
+      run: dotnet build ColorPickerTest/ColorPickerTest.csproj --configuration Release --no-restore -f net8.0-windows10.0.19041.0
