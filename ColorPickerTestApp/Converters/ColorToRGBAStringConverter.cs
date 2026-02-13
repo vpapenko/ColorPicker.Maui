@@ -1,15 +1,15 @@
-﻿namespace ColorPickerTest.Converters;
+﻿namespace ColorPickerTestApp.Converters;
 
 using static ColorConverterExtensions;
 
-public class ColorToHexStringConverter : IValueConverter
+public class ColorToRGBAStringConverter : IValueConverter
 {
     public object Convert( object value, Type targetType, object parameter, CultureInfo culture )
     {
         if ( value is not Color color )
             throw new InvalidDataException( "Source is not a Color" );
 
-        return (string) color.ToHexRgbaString();
+        return (string) color.ToRgbaString();
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

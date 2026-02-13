@@ -43,12 +43,12 @@ dotnet build ColorPicker.Maui.sln --configuration Release
 
 ## Running the Sample App
 
-The `ColorPickerTest` project is a sample MAUI application that demonstrates all the color picker controls.
+The `ColorPickerTestApp` project is a sample MAUI application that demonstrates all the color picker controls.
 
 ### Run on Android
 
 ```bash
-cd ColorPickerTest
+cd ColorPickerTestApp
 dotnet build -f net8.0-android
 # Deploy to connected Android device or emulator
 dotnet run -f net8.0-android
@@ -57,7 +57,7 @@ dotnet run -f net8.0-android
 ### Run on Windows (Windows only)
 
 ```bash
-cd ColorPickerTest
+cd ColorPickerTestApp
 dotnet build -f net8.0-windows10.0.19041.0
 dotnet run -f net8.0-windows10.0.19041.0
 ```
@@ -65,7 +65,7 @@ dotnet run -f net8.0-windows10.0.19041.0
 ### Run on iOS/Mac Catalyst (macOS only)
 
 ```bash
-cd ColorPickerTest
+cd ColorPickerTestApp
 dotnet build -f net8.0-ios
 # or
 dotnet build -f net8.0-maccatalyst
@@ -121,7 +121,7 @@ public static class MauiProgram
 
 ## Sample Usage
 
-See the `ColorPickerTest` project for comprehensive examples of all controls and their configurations.
+See the `ColorPickerTestApp` project for comprehensive examples of all controls and their configurations.
 
 ## Dependencies
 

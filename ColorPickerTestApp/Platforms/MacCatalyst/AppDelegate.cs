@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace ColorPickerTest;
+namespace ColorPickerTestApp;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate

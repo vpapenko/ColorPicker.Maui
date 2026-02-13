@@ -36,7 +36,7 @@ jobs:
       run: dotnet build ColorPicker/ColorPicker.csproj --configuration Release --no-restore -f net8.0-android
       
     - name: Build sample app
-      run: dotnet build ColorPickerTest/ColorPickerTest.csproj --configuration Release --no-restore -f net8.0-android
+      run: dotnet build ColorPickerTestApp/ColorPickerTestApp.csproj --configuration Release --no-restore -f net8.0-android
       
   build-windows:
     name: Build Windows
@@ -63,4 +63,4 @@ jobs:
       run: dotnet build ColorPicker/ColorPicker.csproj --configuration Release --no-restore -f net8.0-windows10.0.19041.0
       
     - name: Build sample app
-      run: dotnet build ColorPickerTest/ColorPickerTest.csproj --configuration Release --no-restore -f net8.0-windows10.0.19041.0
+      run: dotnet build ColorPickerTestApp/ColorPickerTestApp.csproj --configuration Release --no-restore -f net8.0-windows10.0.19041.0

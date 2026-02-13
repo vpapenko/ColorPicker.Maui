@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31611.283
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorPickerTest", "ColorPickerTest\ColorPickerTest.csproj", "{C0B832F1-A0F8-4B9B-A409-5B1AEA932E00}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorPickerTestApp", "ColorPickerTestApp\ColorPickerTestApp.csproj", "{C0B832F1-A0F8-4B9B-A409-5B1AEA932E00}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ColorPicker", "ColorPicker\ColorPicker.csproj", "{BD627D4A-EBAE-4499-ADAE-498ADA7670AB}"
 EndProject

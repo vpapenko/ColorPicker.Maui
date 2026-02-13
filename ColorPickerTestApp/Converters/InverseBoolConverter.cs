@@ -1,4 +1,4 @@
-﻿namespace ColorPickerTest.Converters;
+﻿namespace ColorPickerTestApp.Converters;
 
 public class InverseBoolConverter : IValueConverter
 {

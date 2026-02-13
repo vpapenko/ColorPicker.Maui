@@ -1,4 +1,4 @@
-﻿namespace ColorPickerTest;
+﻿namespace ColorPickerTestApp;
 
 public partial class App : Application
 {

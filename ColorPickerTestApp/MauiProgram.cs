@@ -1,4 +1,4 @@
-﻿namespace ColorPickerTest;
+﻿namespace ColorPickerTestApp;
 
 using ColorPicker.Classes;
 

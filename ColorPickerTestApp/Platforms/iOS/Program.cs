@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace ColorPickerTest;
+namespace ColorPickerTestApp;
 
 public class Program
 {
