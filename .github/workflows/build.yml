@@ -7,10 +7,15 @@ on:
     branches: [ main, develop ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-android:
     name: Build Android
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout code
@@ -36,6 +41,8 @@ jobs:
   build-windows:
     name: Build Windows
     runs-on: windows-latest
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout code

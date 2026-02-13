@@ -45,29 +45,25 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
     protected abstract void OnSelectedColorChanging( Color color );
 
     //  Required for .NET 8 MAUI Layout - use a simple layout manager
-    //  that just respects the measure and arrange overrides in derived classes
+    //  that properly delegates measurement and arrangement to children
     //
     protected override ILayoutManager CreateLayoutManager()
-        => new ColorPickerLayoutManager( this );
+        => new ColorPickerLayoutManager();
 
     private class ColorPickerLayoutManager : ILayoutManager
     {
-        private readonly Layout _layout;
-
-        public ColorPickerLayoutManager( Layout layout )
-        {
-            _layout = layout;
-        }
-
         public Size Measure( double widthConstraint, double heightConstraint )
         {
-            // Let the layout handle its own measurement through MeasureOverride
-            return Size.Zero;
+            // The layout's MeasureOverride will handle measurement
+            // This returns the constraint bounds as a starting point
+            var width = double.IsInfinity( widthConstraint ) ? 0 : widthConstraint;
+            var height = double.IsInfinity( heightConstraint ) ? 0 : heightConstraint;
+            return new Size( width, height );
         }
 
         public Size ArrangeChildren( Rect bounds )
         {
-            // Let the layout handle its own arrangement through ArrangeOverride
+            // The layout's ArrangeOverride will handle arrangement of children
             return bounds.Size;
         }
     }
