@@ -140,7 +140,7 @@ public class ColorWheel : ColorPickerViewBase
 
     protected override void OnSelectedColorChanging( Color color ) { }
 
-    protected override SizeRequest OnMeasure( double widthConstraint, double heightConstraint )
+    protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
     {
         if ( double.IsPositiveInfinity( widthConstraint ) &&
              double.IsPositiveInfinity( heightConstraint ) )
@@ -171,14 +171,19 @@ public class ColorWheel : ColorPickerViewBase
             minHeight = minWidth / aspectRatio;
         }
 
-        return new SizeRequest( new Size( minWidth, minHeight ) );
+        return new Size( minWidth, minHeight );
     }
 
-    protected override void LayoutChildren( double x, double y, double width, double height )
+    protected override Size ArrangeOverride( Rect bounds )
     {
+        var x = bounds.X;
+        var y = bounds.Y;
+        var width = bounds.Width;
+        var height = bounds.Height;
+        
         var circleSize = Vertical ? height : width;
 
-        _colorCircle.Layout( new Rectangle( x, y, circleSize, circleSize ) );
+        _colorCircle.Arrange( new Rect( x, y, circleSize, circleSize ) );
 
         var bottom = Vertical ? x + circleSize 
                               : y + width;
@@ -188,9 +193,9 @@ public class ColorWheel : ColorPickerViewBase
         if ( ShowLuminositySlider )
         {
             if ( Vertical )
-                _luminositySlider.Layout( new Rectangle( bottom, x, sliderHeight, circleSize ) );
+                _luminositySlider.Arrange( new Rect( bottom, x, sliderHeight, circleSize ) );
             else
-                _luminositySlider.Layout( new Rectangle( x, bottom, circleSize, sliderHeight ) );
+                _luminositySlider.Arrange( new Rect( x, bottom, circleSize, sliderHeight ) );
 
             bottom += sliderHeight;
         }
@@ -198,10 +203,12 @@ public class ColorWheel : ColorPickerViewBase
         if ( ShowAlphaSlider )
         {
             if ( Vertical )
-                _alphaSlider.Layout( new Rectangle( bottom, x, sliderHeight, circleSize ) );
+                _alphaSlider.Arrange( new Rect( bottom, x, sliderHeight, circleSize ) );
             else
-                _alphaSlider.Layout( new Rectangle( x, bottom, circleSize, sliderHeight ) );
+                _alphaSlider.Arrange( new Rect( x, bottom, circleSize, sliderHeight ) );
         }
+        
+        return bounds.Size;
     }
 
     void BoundColorPicker_PropertyChanged( object sender, System.ComponentModel.PropertyChangedEventArgs e )

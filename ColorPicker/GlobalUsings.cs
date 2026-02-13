@@ -11,8 +11,9 @@ global using ColorPicker.Behaviors;
 global using ColorPicker.Classes;
 global using ColorPicker.Interfaces;
 
-global using Microsoft.Maui.Controls.Compatibility;
 global using Microsoft.Maui.Controls.Platform;
+global using Microsoft.Maui.Graphics;
+global using Microsoft.Maui.Layouts;
 global using Microsoft.Maui.Platform;
 
 global using SkiaSharp;

@@ -69,11 +69,17 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
     protected abstract  void        OnTouchActionReleased( ColorPickerTouchActionEventArgs args );
     protected abstract  void        OnTouchActionCancelled( ColorPickerTouchActionEventArgs args );
 
-    protected override SizeRequest OnMeasure( double widthConstraint, double heightConstraint )
-            => GetMeasure( widthConstraint, heightConstraint );
+    protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
+    {
+        var sizeRequest = GetMeasure( widthConstraint, heightConstraint );
+        return sizeRequest.Request;
+    }
 
-    protected override void LayoutChildren( double x, double y, double width, double height )
-            => MyCanvasView.Layout( new Rectangle( x, y, width, height ) );
+    protected override Size ArrangeOverride( Rect bounds )
+    {
+        MyCanvasView.Arrange( bounds );
+        return bounds.Size;
+    }
 
     protected SKPoint ConvertToPixel( Point pt )
     {

@@ -17,13 +17,9 @@ public static class MauiProgram
         builder.UseMauiApp<App>();
 
         //  You'll find this in ColorPicker.Classes.AppHostBuilderExtension.cs.
-        //  It eliminates the need for the user to mess renderer/handler registration.
-        //  It also registers SkiaSharp by default. If the user has already registered
-        //  SkiaSharp for his own code use this instead:
-        //  
-        // builder.UseCompatibilityColorPickersAndSliders( alreadyUsingSkiaSharp: true );
+        //  It registers SkiaSharp which is required for the ColorPicker controls.
         //
-        builder.UseCompatibilityColorPickersAndSliders();
+        builder.UseColorPickersAndSliders();
 
         builder.ConfigureFonts( fonts => fonts.AddFont( "OpenSans-Regular.ttf", "OpenSansRegular" ) );
 

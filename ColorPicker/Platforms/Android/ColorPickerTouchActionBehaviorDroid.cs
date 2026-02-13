@@ -1,6 +1,7 @@
 ﻿namespace ColorPicker.Platforms.Droid;
 
 using Android.Views;
+using Microsoft.Maui.Graphics;
 
 public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
 {
@@ -35,7 +36,7 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
         var mauiContext =   bindable.Handler.MauiContext ?? bindable.Parent.Handler.MauiContext;
 
         // Get the Android View corresponding to the Element that the effect is attached to
-        _nativeView =   bindable.ToNative( mauiContext );
+        _nativeView =   bindable.ToPlatform( mauiContext );
 
         if ( _commonBehavior is null || _nativeView is null )
             return;
@@ -171,7 +172,7 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
                 continue;
             }
 
-            Rectangle viewRect = new( _screenLocationArray[0], 
+            Rect viewRect = new( _screenLocationArray[0], 
                                       _screenLocationArray[1], 
                                       view.Width, 
                                       view.Height );
