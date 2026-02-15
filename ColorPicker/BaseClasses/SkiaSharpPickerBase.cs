@@ -33,6 +33,8 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
     /// </summary>
     public SkiaSharpPickerBase()
     {
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] Constructor START ({GetType().Name})" );
+
         HorizontalOptions           =   LayoutOptions.Center;
         VerticalOptions             =   LayoutOptions.Center;
 
@@ -46,15 +48,22 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         throw new NotImplementedException( "Specified platform not yet implemented" );
 #endif
 
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] Touch behavior created" );
+
         var view                    =   new SKCanvasView();  
         view.PaintSurface          +=   OnPaintSurface;
+        view.Loaded                +=   OnCanvasViewLoaded;
         MyCanvasView                =   view;
+
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] SKCanvasView created" );
 
         touchBehavior.Capture       =   true;
         touchBehavior.TouchAction  +=   OnTouchAction;
 
         Behaviors.Add( touchImpl );
         Children.Add( MyCanvasView );
+
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] Constructor END, Children.Count={Children.Count}" );
     }
 
     public abstract     float       GetPickerRadiusPixels();
@@ -71,14 +80,38 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
 
     protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
     {
+        // Apply WidthRequest/HeightRequest as constraints
+        if ( WidthRequest >= 0 )
+            widthConstraint = Math.Min( widthConstraint, WidthRequest );
+        if ( HeightRequest >= 0 )
+            heightConstraint = Math.Min( heightConstraint, HeightRequest );
+
         var sizeRequest = GetMeasure( widthConstraint, heightConstraint );
-        return sizeRequest.Request;
+        var size = sizeRequest.Request;
+
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] MeasureOverride({GetType().Name}) w={widthConstraint} h={heightConstraint} -> {size}" );
+
+        // Measure the child SKCanvasView so MAUI knows it needs rendering
+        ( (IView)MyCanvasView ).Measure( size.Width, size.Height );
+
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] MeasureOverride({GetType().Name}) child measured: DesiredSize={MyCanvasView.DesiredSize}" );
+
+        return size;
     }
 
     protected override Size ArrangeOverride( Rect bounds )
     {
-        MyCanvasView.Arrange( bounds );
-        return bounds.Size;
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] ArrangeOverride({GetType().Name}) bounds={bounds}" );
+
+        // Call base which sets Frame, calls PlatformArrange on the native container,
+        // and calls LayoutManager.ArrangeChildren to position native child views.
+        var result = base.ArrangeOverride( bounds );
+
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] ArrangeOverride({GetType().Name}) canvasView.Width={MyCanvasView.Width} Height={MyCanvasView.Height} Handler={MyCanvasView.Handler?.GetType().Name ?? "NULL"}" );
+
+        InvalidateSurface();
+
+        return result;
     }
 
     protected SKPoint ConvertToPixel( Point pt )
@@ -90,6 +123,12 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
 
     protected SKSize GetCanvasSize()    => MyCanvasView.CanvasSize;
     protected void InvalidateSurface()  => MyCanvasView.InvalidateSurface();
+
+    void OnCanvasViewLoaded( object sender, EventArgs e )
+    {
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] OnCanvasViewLoaded({GetType().Name}) canvasView.Handler={MyCanvasView.Handler?.GetType().Name ?? "NULL"} Width={MyCanvasView.Width} Height={MyCanvasView.Height}" );
+        InvalidateSurface();
+    }
 
     protected void PaintPicker( SKCanvas canvas, SKPoint point )
     {
@@ -110,7 +149,10 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
     }
 
     void OnPaintSurface( object sender, SKPaintSurfaceEventArgs e )
-      => OnPaintSurface( e.Surface.Canvas, e.Info.Width, e.Info.Height );
+    {
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] OnPaintSurface({GetType().Name}) info={e.Info.Width}x{e.Info.Height} canvasSize={MyCanvasView.CanvasSize}" );
+        OnPaintSurface( e.Surface.Canvas, e.Info.Width, e.Info.Height );
+    }
 
     void OnTouchAction( object sender, ColorPickerTouchActionEventArgs e )
     {

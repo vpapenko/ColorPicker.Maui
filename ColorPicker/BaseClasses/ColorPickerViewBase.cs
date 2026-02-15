@@ -48,22 +48,40 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
     //  that properly delegates measurement and arrangement to children
     //
     protected override ILayoutManager CreateLayoutManager()
-        => new ColorPickerLayoutManager();
+        => new ColorPickerLayoutManager( this );
 
     private class ColorPickerLayoutManager : ILayoutManager
     {
+        readonly Layout _layout;
+
+        public ColorPickerLayoutManager( Layout layout ) => _layout = layout;
+
         public Size Measure( double widthConstraint, double heightConstraint )
         {
-            // The layout's MeasureOverride will handle measurement
-            // This returns the constraint bounds as a starting point
+            // Measure all children so MAUI knows they need rendering
+            foreach ( var child in _layout.Children )
+                ( (IView)child ).Measure( widthConstraint, heightConstraint );
+
             var width = double.IsInfinity( widthConstraint ) ? 0 : widthConstraint;
             var height = double.IsInfinity( heightConstraint ) ? 0 : heightConstraint;
+            System.Diagnostics.Debug.WriteLine( $"[ColorPickerLayoutManager] Measure w={widthConstraint} h={heightConstraint} -> {width}x{height} children={_layout.Children.Count}" );
             return new Size( width, height );
         }
 
         public Size ArrangeChildren( Rect bounds )
         {
-            // The layout's ArrangeOverride will handle arrangement of children
+            // Arrange all children so native LayoutPanel positions them.
+            // Without this, WinUI's LayoutPanel.ArrangeOverride never positions
+            // the native child views and they remain invisible.
+            System.Diagnostics.Debug.WriteLine( $"[ColorPickerLayoutManager] ArrangeChildren bounds={bounds} children={_layout.Children.Count}" );
+
+            foreach ( var child in _layout.Children )
+            {
+                var childView = (IView)child;
+                childView.Arrange( bounds );
+                System.Diagnostics.Debug.WriteLine( $"[ColorPickerLayoutManager] Arranged child {child.GetType().Name} Frame={((VisualElement)child).Frame}" );
+            }
+
             return bounds.Size;
         }
     }

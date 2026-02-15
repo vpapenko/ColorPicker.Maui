@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ColorPickerTestApp.TestPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:ColorPicker.Controls;assembly=ColorPicker"
+    Title="ColorWheel Test">
+
+    <VerticalStackLayout
+        Padding="20"
+        Spacing="20"
+        VerticalOptions="Center"
+        HorizontalOptions="Center">
+
+        <Label
+            Text="Test: ColorWheel control"
+            FontSize="18"
+            HorizontalOptions="Center" />
+
+        <controls:ColorWheel
+            WidthRequest="300"
+            HeightRequest="300"
+            ShowLuminosityWheel="True"
+            ShowLuminositySlider="True"
+            ShowAlphaSlider="True"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+
+        <Label
+            Text="If you see a color wheel with sliders, ColorWheel works."
+            FontSize="14"
+            HorizontalOptions="Center" />
+
+    </VerticalStackLayout>
+
+</ContentPage>

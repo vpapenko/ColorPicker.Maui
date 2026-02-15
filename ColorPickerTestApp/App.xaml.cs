@@ -13,6 +13,7 @@ public partial class App : Application
         if ( Handler?.MauiContext is MauiContext context ) 
             MauiContext = context;
 
-        MainPage = new MainPage();
+        //MainPage = new MainPage();  // Original page - restore when done testing
+        MainPage = new TestPage();
 	}
 }

@@ -142,6 +142,12 @@ public class ColorWheel : ColorPickerViewBase
 
     protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
     {
+        // Apply WidthRequest/HeightRequest as constraints
+        if ( WidthRequest >= 0 )
+            widthConstraint = Math.Min( widthConstraint, WidthRequest );
+        if ( HeightRequest >= 0 )
+            heightConstraint = Math.Min( heightConstraint, HeightRequest );
+
         if ( double.IsPositiveInfinity( widthConstraint ) &&
              double.IsPositiveInfinity( heightConstraint ) )
         {
@@ -176,6 +182,9 @@ public class ColorWheel : ColorPickerViewBase
 
     protected override Size ArrangeOverride( Rect bounds )
     {
+        // Call base to set Frame and PlatformArrange on the native layout container
+        base.ArrangeOverride( bounds );
+
         var x = bounds.X;
         var y = bounds.Y;
         var width = bounds.Width;
