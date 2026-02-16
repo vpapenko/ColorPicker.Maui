@@ -92,7 +92,6 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
                 _measuring = true;
                 var result = _layout.MeasureOverride( widthConstraint, heightConstraint );
                 _measuring = false;
-                System.Diagnostics.Debug.WriteLine( $"[ColorPickerLayoutManager] Measure w={widthConstraint} h={heightConstraint} -> {result} children={_layout.Children.Count}" );
                 return result;
             }
 
@@ -104,7 +103,6 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
 
         public Size ArrangeChildren( Rect bounds )
         {
-            System.Diagnostics.Debug.WriteLine( $"[ColorPickerLayoutManager] ArrangeChildren bounds={bounds} children={_layout.Children.Count}" );
             return _layout.ArrangeLayoutChildren( bounds );
         }
     }

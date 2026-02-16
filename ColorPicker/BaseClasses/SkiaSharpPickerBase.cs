@@ -89,25 +89,17 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         var sizeRequest = GetMeasure( widthConstraint, heightConstraint );
         var size = sizeRequest.Request;
 
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] MeasureOverride({GetType().Name}) w={widthConstraint} h={heightConstraint} -> {size}" );
-
         // Measure the child SKCanvasView so MAUI knows it needs rendering
         ( (IView)MyCanvasView ).Measure( size.Width, size.Height );
-
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] MeasureOverride({GetType().Name}) child measured: DesiredSize={MyCanvasView.DesiredSize}" );
 
         return size;
     }
 
     protected override Size ArrangeOverride( Rect bounds )
     {
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] ArrangeOverride({GetType().Name}) bounds={bounds}" );
-
         // Call base which sets Frame, calls PlatformArrange on the native container,
         // and calls LayoutManager.ArrangeChildren to position native child views.
         var result = base.ArrangeOverride( bounds );
-
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] ArrangeOverride({GetType().Name}) canvasView.Width={MyCanvasView.Width} Height={MyCanvasView.Height} Handler={MyCanvasView.Handler?.GetType().Name ?? "NULL"}" );
 
         InvalidateSurface();
 
@@ -126,7 +118,6 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
 
     void OnCanvasViewLoaded( object sender, EventArgs e )
     {
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] OnCanvasViewLoaded({GetType().Name}) canvasView.Handler={MyCanvasView.Handler?.GetType().Name ?? "NULL"} Width={MyCanvasView.Width} Height={MyCanvasView.Height}" );
         InvalidateSurface();
     }
 
