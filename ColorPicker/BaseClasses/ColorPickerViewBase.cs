@@ -50,39 +50,62 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
     protected override ILayoutManager CreateLayoutManager()
         => new ColorPickerLayoutManager( this );
 
+    /// <summary>
+    /// Called by the layout manager to arrange children within the layout.
+    /// The native LayoutPanel uses this to position native child views.
+    /// Override in subclasses for custom child positioning.
+    /// </summary>
+    protected virtual Size ArrangeLayoutChildren( Rect bounds )
+    {
+        // Default: arrange all children to fill bounds
+        foreach ( var child in Children )
+            ( (IView)child ).Arrange( bounds );
+
+        return bounds.Size;
+    }
+
     private class ColorPickerLayoutManager : ILayoutManager
     {
-        readonly Layout _layout;
+        readonly ColorPickerViewBase _layout;
+        bool _measuring;
 
-        public ColorPickerLayoutManager( Layout layout ) => _layout = layout;
+        public ColorPickerLayoutManager( ColorPickerViewBase layout ) => _layout = layout;
 
         public Size Measure( double widthConstraint, double heightConstraint )
         {
-            // Measure all children so MAUI knows they need rendering
+            // Apply the layout's WidthRequest/HeightRequest before measuring children.
+            // Without this, children get the raw parent constraints (e.g. 1192×∞)
+            // and SkiaSharp renders at that size, causing clipping.
+            if ( _layout.WidthRequest >= 0 )
+                widthConstraint = Math.Min( widthConstraint, _layout.WidthRequest );
+            if ( _layout.HeightRequest >= 0 )
+                heightConstraint = Math.Min( heightConstraint, _layout.HeightRequest );
+
+            // Measure all children with constrained values
             foreach ( var child in _layout.Children )
                 ( (IView)child ).Measure( widthConstraint, heightConstraint );
 
+            // Return the same size as MeasureOverride to keep native panel
+            // and MAUI layout in sync.
+            if ( !_measuring )
+            {
+                _measuring = true;
+                var result = _layout.MeasureOverride( widthConstraint, heightConstraint );
+                _measuring = false;
+                System.Diagnostics.Debug.WriteLine( $"[ColorPickerLayoutManager] Measure w={widthConstraint} h={heightConstraint} -> {result} children={_layout.Children.Count}" );
+                return result;
+            }
+
+            // Fallback for recursive calls
             var width = double.IsInfinity( widthConstraint ) ? 0 : widthConstraint;
             var height = double.IsInfinity( heightConstraint ) ? 0 : heightConstraint;
-            System.Diagnostics.Debug.WriteLine( $"[ColorPickerLayoutManager] Measure w={widthConstraint} h={heightConstraint} -> {width}x{height} children={_layout.Children.Count}" );
             return new Size( width, height );
         }
 
         public Size ArrangeChildren( Rect bounds )
         {
-            // Arrange all children so native LayoutPanel positions them.
-            // Without this, WinUI's LayoutPanel.ArrangeOverride never positions
-            // the native child views and they remain invisible.
             System.Diagnostics.Debug.WriteLine( $"[ColorPickerLayoutManager] ArrangeChildren bounds={bounds} children={_layout.Children.Count}" );
-
-            foreach ( var child in _layout.Children )
-            {
-                var childView = (IView)child;
-                childView.Arrange( bounds );
-                System.Diagnostics.Debug.WriteLine( $"[ColorPickerLayoutManager] Arranged child {child.GetType().Name} Frame={((VisualElement)child).Frame}" );
-            }
-
-            return bounds.Size;
+            return _layout.ArrangeLayoutChildren( bounds );
         }
     }
 

@@ -123,7 +123,10 @@ public class ColorCircle : SkiaSharpPickerBase
 
     protected override void OnPaintSurface( SKCanvas canvas, int width, int height )
     {
+        System.Diagnostics.Debug.WriteLine( $"[ColorCircle] OnPaintSurface width={width} height={height} CanvasSize={GetCanvasSize()} MyCanvasView.Width={MyCanvasView.Width} MyCanvasView.Height={MyCanvasView.Height}" );
+
         var canvasRadius = GetSize() / 2F;
+        System.Diagnostics.Debug.WriteLine( $"[ColorCircle] canvasRadius={canvasRadius} GetSize()={GetSize()}" );
 
         UpdateLocations( SelectedColor, canvasRadius );
         canvas.Clear();

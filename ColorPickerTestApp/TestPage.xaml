@@ -23,6 +23,7 @@
             ShowLuminosityWheel="True"
             ShowLuminositySlider="True"
             ShowAlphaSlider="True"
+            Vertical="True"
             HorizontalOptions="Center"
             VerticalOptions="Center" />
 

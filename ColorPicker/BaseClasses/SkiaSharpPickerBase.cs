@@ -150,7 +150,7 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
 
     void OnPaintSurface( object sender, SKPaintSurfaceEventArgs e )
     {
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] OnPaintSurface({GetType().Name}) info={e.Info.Width}x{e.Info.Height} canvasSize={MyCanvasView.CanvasSize}" );
+        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] OnPaintSurface({GetType().Name}) info={e.Info.Width}x{e.Info.Height} canvasSize={MyCanvasView.CanvasSize} viewW={MyCanvasView.Width} viewH={MyCanvasView.Height} Frame={Frame}" );
         OnPaintSurface( e.Surface.Canvas, e.Info.Width, e.Info.Height );
     }
 
