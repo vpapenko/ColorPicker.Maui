@@ -113,8 +113,11 @@ public class ColorWheel : ColorPickerViewBase
     {
         if ( newValue != oldValue )
         {
-            ( (ColorWheel)bindable )._alphaSlider.Vertical = (bool)newValue;
-            ( (ColorWheel)bindable )._luminositySlider.Vertical = (bool)newValue;
+            var wheel = (ColorWheel)bindable;
+            System.Diagnostics.Debug.WriteLine( $"[ColorWheel] HandleVertical old={oldValue} new={newValue} children={wheel.Children.Count}" );
+            wheel._alphaSlider.Vertical = (bool)newValue;
+            wheel._luminositySlider.Vertical = (bool)newValue;
+            wheel.InvalidateMeasure();
         }
     }
 
@@ -177,7 +180,7 @@ public class ColorWheel : ColorPickerViewBase
             totalHeight = circleSize / ( 1.0 - sliderFraction );
         }
 
-        System.Diagnostics.Debug.WriteLine( $"[ColorWheel] MeasureOverride w={widthConstraint} h={heightConstraint} circleSize={circleSize} -> totalW={totalWidth} totalH={totalHeight}" );
+        System.Diagnostics.Debug.WriteLine( $"[ColorWheel] MeasureOverride Vertical={Vertical} sliders={sliderCount} w={widthConstraint} h={heightConstraint} circleSize={circleSize} -> totalW={totalWidth} totalH={totalHeight}" );
         return new Size( totalWidth, totalHeight );
     }
 
