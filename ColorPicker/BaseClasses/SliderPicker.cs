@@ -168,7 +168,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
     {
         foreach ( var slider in _sliders )
         {
-            if ( !IsInSliderArea( slider.Location, slider.GetSliderOffset( GetPickerRadiusPixels() ) ) )
+            if ( slider.LocationProgressId is null )
             {
                 var left = (GetPickerRadiusPixels() * 2) + (SlidersWidht(canvasSize) * slider.Slider.NewValue(color));
                 slider.Location = Vertical
