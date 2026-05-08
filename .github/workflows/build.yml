@@ -26,17 +26,17 @@ jobs:
       with:
         dotnet-version: '8.0.x'
         
-    - name: Install MAUI workload
-      run: dotnet workload install maui-android
-      
+    - name: Install MAUI workloads
+      run: dotnet workload install maui-android maui-windows
+
     - name: Restore dependencies
       run: dotnet restore ColorPicker.Maui.sln
-      
+
     - name: Build library
-      run: dotnet build ColorPicker/ColorPicker.csproj --configuration Release --no-restore -f net8.0-android
-      
+      run: dotnet build ColorPicker/ColorPicker.csproj --configuration Release --no-restore -f net8.0-android34.0
+
     - name: Build sample app
-      run: dotnet build ColorPickerTestApp/ColorPickerTestApp.csproj --configuration Release --no-restore -f net8.0-android
+      run: dotnet build ColorPickerTestApp/ColorPickerTestApp.csproj --configuration Release --no-restore -f net8.0-android34.0
       
   build-windows:
     name: Build Windows
@@ -53,14 +53,14 @@ jobs:
       with:
         dotnet-version: '8.0.x'
         
-    - name: Install MAUI workload
-      run: dotnet workload install maui-windows
-      
+    - name: Install MAUI workloads
+      run: dotnet workload install maui-android maui-windows
+
     - name: Restore dependencies
       run: dotnet restore ColorPicker.Maui.sln
-      
+
     - name: Build library
       run: dotnet build ColorPicker/ColorPicker.csproj --configuration Release --no-restore -f net8.0-windows10.0.19041.0
-      
+
     - name: Build sample app
-      run: dotnet build ColorPickerTestApp/ColorPickerTestApp.csproj --configuration Release --no-restore -f net8.0-windows10.0.19041.0
+      run: dotnet build ColorPickerTestApp/ColorPickerTestApp.csproj --configuration Release --no-restore -f net8.0-windows10.0.19041.0 -r win-x64

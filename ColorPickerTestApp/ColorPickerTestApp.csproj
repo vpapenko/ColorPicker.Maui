@@ -77,6 +77,8 @@
 	<PropertyGroup Condition="$(TargetFramework.Contains('-windows'))">
 		<OutputType>WinExe</OutputType>
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<WindowsPackageType>None</WindowsPackageType>
+		<PublishReadyToRun>false</PublishReadyToRun>
 	</PropertyGroup>
 
 	<ProjectExtensions><VisualStudio><UserProperties XamarinHotReloadDebuggerTimeoutExceptionColorPickerTestAppHideInfoBar="True" /></VisualStudio></ProjectExtensions>
