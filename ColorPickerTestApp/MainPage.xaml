@@ -37,6 +37,7 @@
 
                 <Switch
                     x:Name="ShowTriangleSwitch"
+                    AutomationId="ShowTriangleSwitch"
                     Margin="25,0,0,0"
                     HorizontalOptions="Start"
                     VerticalOptions="Center" />
@@ -47,6 +48,7 @@
                     VerticalOptions="Center" />
                 <Switch
                     x:Name="ShowAlphaSwitch"
+                    AutomationId="ShowAlphaSwitch"
                     Margin="45,0,0,0"
                     HorizontalOptions="Start"
                     VerticalOptions="Center" />
@@ -60,6 +62,7 @@
                     VerticalOptions="Center" />
                 <Switch
                     x:Name="ShowLuminositySlider"
+                    AutomationId="ShowLuminositySlider"
                     Margin="5,0,0,0"
                     HorizontalOptions="Start"
                     IsVisible="{Binding Source={x:Reference ShowTriangleSwitch}, Path=IsToggled, Converter={StaticResource InvertedBoolConverter}}"
@@ -72,6 +75,7 @@
                     VerticalOptions="Center" />
                 <Switch
                     x:Name="ShowLuminosityWheel"
+                    AutomationId="ShowLuminosityWheel"
                     Margin="6,0,0,0"
                     HorizontalOptions="Start"
                     IsToggled="True"
@@ -87,6 +91,7 @@
                     VerticalOptions="Center" />
                 <Switch
                     x:Name="ShowVerticalSlider"
+                    AutomationId="ShowVerticalSlider"
                     Margin="28,0,0,0"
                     HorizontalOptions="Start"
                     IsToggled="False"
@@ -101,6 +106,7 @@
 
                 <Switch
                     x:Name="RotateTriangleByHue"
+                    AutomationId="RotateTriangleByHue"
                     Margin="7,0,0,0"
                     HorizontalOptions="Start"
                     IsToggled="True"
@@ -117,12 +123,14 @@
 
                 <Label
                     Margin="10,0,0,0"
+                    AutomationId="SelectedColorHex"
                     HorizontalOptions="Start"
                     Text="{Binding Source={x:Reference ColorWheel1}, Converter={StaticResource ColorToHexStringConverter}, Path=SelectedColor}"
                     VerticalOptions="Center" />
 
                 <Label
                     Margin="10,0,0,0"
+                    AutomationId="SelectedColorRGBA"
                     HorizontalOptions="Start"
                     Text="{Binding Source={x:Reference ColorWheel1}, Converter={StaticResource ColorToRGBAStringConverter}, Path=SelectedColor}"
                     VerticalOptions="Center" />
@@ -132,6 +140,7 @@
 
                 <Label
                     Margin="10,0,0,0"
+                    AutomationId="SelectedColorHSLA"
                     HorizontalOptions="Start"
                     Text="{Binding Source={x:Reference ColorWheel1}, Converter={StaticResource ColorToHSLAStringConverter}, Path=SelectedColor}"
                     VerticalOptions="Center" />
@@ -140,41 +149,65 @@
 
         </VerticalStackLayout>
 
-        <controls:ColorWheel
-            x:Name="ColorWheel1"
+        <Border
             Grid.Row="1"
-            Padding="5"
+            AutomationId="ColorWheel1Host"
+            SemanticProperties.Description="ColorWheel host"
             IsVisible="{Binding Source={x:Reference ShowTriangleSwitch}, Path=IsToggled, Converter={StaticResource InvertedBoolConverter}}"
-            ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}"
-            ShowLuminositySlider="{Binding Source={x:Reference ShowLuminositySlider}, Path=IsToggled}"
-            ShowLuminosityWheel="{Binding Source={x:Reference ShowLuminosityWheel}, Path=IsToggled}"
-            Vertical="{Binding Source={x:Reference ShowVerticalSlider}, Path=IsToggled}" />
+            StrokeThickness="0">
+            <controls:ColorWheel
+                x:Name="ColorWheel1"
+                AutomationId="ColorWheel1"
+                Padding="5"
+                ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}"
+                ShowLuminositySlider="{Binding Source={x:Reference ShowLuminositySlider}, Path=IsToggled}"
+                ShowLuminosityWheel="{Binding Source={x:Reference ShowLuminosityWheel}, Path=IsToggled}"
+                Vertical="{Binding Source={x:Reference ShowVerticalSlider}, Path=IsToggled}" />
+        </Border>
 
-        <controls:ColorTriangle
-            x:Name="ColorTriangle1"
+        <Border
             Grid.Row="1"
-            Padding="5"
-            AttachedColorPicker="{x:Reference Name=ColorWheel1}"
+            AutomationId="ColorTriangle1Host"
+            SemanticProperties.Description="ColorTriangle host"
             IsVisible="{Binding Source={x:Reference ShowTriangleSwitch}, Path=IsToggled}"
-            RotateTriangleByHue="{Binding Source={x:Reference RotateTriangleByHue}, Path=IsToggled}" />
+            StrokeThickness="0">
+            <controls:ColorTriangle
+                x:Name="ColorTriangle1"
+                AutomationId="ColorTriangle1"
+                Padding="5"
+                AttachedColorPicker="{x:Reference Name=ColorWheel1}"
+                RotateTriangleByHue="{Binding Source={x:Reference RotateTriangleByHue}, Path=IsToggled}" />
+        </Border>
 
         <Label Grid.Row="2" />
 
-        <controls:HSLSliders
-            x:Name="HSLSliders1"
+        <Border
             Grid.Row="3"
-            Padding="5"
-            AttachedColorPicker="{x:Reference Name=ColorWheel1}"
-            ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}" />
+            AutomationId="HSLSliders1Host"
+            SemanticProperties.Description="HSL sliders host"
+            StrokeThickness="0">
+            <controls:HSLSliders
+                x:Name="HSLSliders1"
+                AutomationId="HSLSliders1"
+                Padding="5"
+                AttachedColorPicker="{x:Reference Name=ColorWheel1}"
+                ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}" />
+        </Border>
 
         <Label Grid.Row="4" />
 
-        <controls:RGBSliders
-            x:Name="RGBSliders1"
+        <Border
             Grid.Row="5"
-            Padding="5"
-            AttachedColorPicker="{x:Reference Name=ColorWheel1}"
-            ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}" />
+            AutomationId="RGBSliders1Host"
+            SemanticProperties.Description="RGB sliders host"
+            StrokeThickness="0">
+            <controls:RGBSliders
+                x:Name="RGBSliders1"
+                AutomationId="RGBSliders1"
+                Padding="5"
+                AttachedColorPicker="{x:Reference Name=ColorWheel1}"
+                ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}" />
+        </Border>
     </Grid>
 
 </ContentPage>
