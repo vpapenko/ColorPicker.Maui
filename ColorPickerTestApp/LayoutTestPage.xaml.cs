@@ -96,6 +96,10 @@ public partial class LayoutTestPage : ContentPage
 
             ApplyHostSizing(wMode, wValue, hMode, hValue);
 
+            // Per-scenario host bg (the canvas behind the picker). Applied
+            // unconditionally so the runtime-toggle path picks up bg= changes.
+            HostBorder.BackgroundColor = ParseColorOpt(opts, "bg") ?? Colors.White;
+
             // Runtime-toggle path: if neither the control type nor the host
             // spec changed, mutate the *existing* instance's feature flags
             // instead of replacing the view. This is what exercises the
@@ -114,7 +118,7 @@ public partial class LayoutTestPage : ContentPage
             View child = control switch
             {
                 "wheel"    => MakeWheel(opts),
-                "triangle" => new ColorTriangle    { AutomationId = "ScenarioControl", HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill },
+                "triangle" => MakeTriangle(opts),
                 "hsl"      => new HSLSliders       { AutomationId = "ScenarioControl", HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill },
                 "rgb"      => new RGBSliders       { AutomationId = "ScenarioControl", HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill },
                 _          => throw new ArgumentException($"Unknown control '{control}'"),
@@ -141,8 +145,10 @@ public partial class LayoutTestPage : ContentPage
             w.ShowLuminositySlider= false;
             w.ShowLuminosityWheel = true;
             w.Vertical            = false;
+            w.WheelBackgroundColor = Colors.Transparent;
             foreach (var opt in opts)
             {
+                if (IsKvOpt(opt, out _, out _)) continue; // handled separately
                 switch (opt.Trim().ToLowerInvariant())
                 {
                     case "alpha":     w.ShowAlphaSlider     = true;  break;
@@ -153,11 +159,18 @@ public partial class LayoutTestPage : ContentPage
                     default:          throw new ArgumentException("Unknown option: " + opt);
                 }
             }
+            var wbg = ParseColorOpt(opts, "wbg");
+            if (wbg is not null) w.WheelBackgroundColor = wbg;
             return true;
         }
+        if (control == "triangle" && existing is ColorTriangle t)
+        {
+            t.WheelBackgroundColor = ParseColorOpt(opts, "wbg") ?? Colors.Transparent;
+            return opts.All(o => IsKvOpt(o, out _, out _));
+        }
         // Other control types have no toggleable flags supported yet — fall
-        // through and let the caller rebuild.
-        return opts.Length == 0 && (control == "triangle" || control == "hsl" || control == "rgb");
+        // through and let the caller rebuild when bare.
+        return opts.Length == 0 && (control == "hsl" || control == "rgb");
     }
 
     static ColorWheel MakeWheel(string[] opts)
@@ -170,6 +183,7 @@ public partial class LayoutTestPage : ContentPage
         };
         foreach (var opt in opts)
         {
+            if (IsKvOpt(opt, out _, out _)) continue;
             switch (opt.Trim().ToLowerInvariant())
             {
                 case "alpha":     wheel.ShowAlphaSlider     = true;  break;
@@ -181,7 +195,66 @@ public partial class LayoutTestPage : ContentPage
                 default:          throw new ArgumentException("Unknown option: " + opt);
             }
         }
+        var wbg = ParseColorOpt(opts, "wbg");
+        if (wbg is not null) wheel.WheelBackgroundColor = wbg;
         return wheel;
+    }
+    static ColorTriangle MakeTriangle(string[] opts)
+    {
+        var t = new ColorTriangle
+        {
+            AutomationId      = "ScenarioControl",
+            HorizontalOptions = LayoutOptions.Fill,
+            VerticalOptions   = LayoutOptions.Fill,
+        };
+        var wbg = ParseColorOpt(opts, "wbg");
+        if (wbg is not null) t.WheelBackgroundColor = wbg;
+        return t;
+    }
+
+    static bool IsKvOpt(string opt, out string key, out string value)
+    {
+        var idx = opt.IndexOf('=');
+        if (idx > 0)
+        {
+            key   = opt[..idx].Trim().ToLowerInvariant();
+            value = opt[(idx + 1)..].Trim();
+            return true;
+        }
+        key = ""; value = "";
+        return false;
+    }
+
+    static Color? ParseColorOpt(string[] opts, string key)
+    {
+        foreach (var opt in opts)
+        {
+            if (IsKvOpt(opt, out var k, out var v) && k == key)
+                return ParseColor(v);
+        }
+        return null;
+    }
+
+    static Color ParseColor(string s)
+    {
+        s = s.Trim();
+        // Accept #RRGGBB, #AARRGGBB, or named colors (subset).
+        if (s.StartsWith("#")) return Color.FromArgb(s);
+        return s.ToLowerInvariant() switch
+        {
+            "transparent"  => Colors.Transparent,
+            "white"        => Colors.White,
+            "black"        => Colors.Black,
+            "red"          => Colors.Red,
+            "green"        => Colors.Green,
+            "blue"         => Colors.Blue,
+            "yellow"       => Colors.Yellow,
+            "magenta"      => Colors.Magenta,
+            "cyan"         => Colors.Cyan,
+            "gray" or "grey" => Colors.Gray,
+            "lightgray" or "lightgrey" => Colors.LightGray,
+            _ => throw new ArgumentException("Unknown color: " + s),
+        };
     }
 
     static (string control, SizeMode wMode, double wValue, SizeMode hMode, double hValue, string[] opts) Parse(string spec)
