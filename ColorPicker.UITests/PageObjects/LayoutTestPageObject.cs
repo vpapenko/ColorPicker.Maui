@@ -90,7 +90,11 @@ public readonly record struct LogicalBounds(double X, double Y, double W, double
 
 /// <summary>Snapshot of a scenario's resolved layout, parsed from the page's
 /// AppliedLabel marker. Bounds are in MAUI logical units.</summary>
-public readonly record struct ScenarioState(string Spec, LogicalBounds HostBounds, LogicalBounds ControlBounds)
+public readonly record struct ScenarioState(
+    string Spec,
+    LogicalBounds HostBounds,
+    LogicalBounds ControlBounds,
+    LogicalBounds ViewportBounds = default)
 {
     public static bool TryParse(string text, out ScenarioState state)
     {
@@ -98,12 +102,17 @@ public readonly record struct ScenarioState(string Spec, LogicalBounds HostBound
         if (string.IsNullOrEmpty(text)) return false;
 
         var parts = text.Split('|');
-        if (parts.Length != 3) return false;
+        // Accept legacy 3-segment markers (Tier 1/2 pages) plus the new
+        // 4-segment marker that includes viewport bounds.
+        if (parts.Length != 3 && parts.Length != 4) return false;
 
         if (!TryParseBounds(parts[1], out var host)) return false;
         if (!TryParseBounds(parts[2], out var ctrl)) return false;
+        var viewport = default(LogicalBounds);
+        if (parts.Length == 4 && !TryParseBounds(parts[3], out viewport))
+            return false;
 
-        state = new ScenarioState(parts[0], host, ctrl);
+        state = new ScenarioState(parts[0], host, ctrl, viewport);
         return true;
     }
 

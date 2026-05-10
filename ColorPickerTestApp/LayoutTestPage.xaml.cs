@@ -18,18 +18,58 @@ public partial class LayoutTestPage : ContentPage
 
     string _lastSpec = "";
     string _lastControl = "";
-    double _lastW, _lastH;
+    string _lastSizeKey = "";
+
+    void ApplyHostSizing(SizeMode wMode, double wValue, SizeMode hMode, double hValue)
+    {
+        // Width
+        switch (wMode)
+        {
+            case SizeMode.Fixed:
+                HostBorder.WidthRequest    = wValue;
+                HostBorder.HorizontalOptions = LayoutOptions.Start;
+                break;
+            case SizeMode.Auto:
+                HostBorder.WidthRequest    = -1;        // -1 == unset
+                HostBorder.HorizontalOptions = LayoutOptions.Start;
+                break;
+            case SizeMode.Fill:
+                HostBorder.WidthRequest    = -1;
+                HostBorder.HorizontalOptions = LayoutOptions.Fill;
+                break;
+        }
+        // Height
+        switch (hMode)
+        {
+            case SizeMode.Fixed:
+                HostBorder.HeightRequest    = hValue;
+                HostBorder.VerticalOptions  = LayoutOptions.Start;
+                break;
+            case SizeMode.Auto:
+                HostBorder.HeightRequest    = -1;
+                HostBorder.VerticalOptions  = LayoutOptions.Start;
+                break;
+            case SizeMode.Fill:
+                HostBorder.HeightRequest    = -1;
+                HostBorder.VerticalOptions  = LayoutOptions.Fill;
+                break;
+        }
+    }
 
     void UpdateAppliedMarker()
     {
-        // Format: "spec|hostX,Y,WxH|ctrlX,Y,WxH"
+        // Format: "spec|hostX,Y,WxH|ctrlX,Y,WxH|viewportX,Y,WxH"
         // Coordinates are MAUI logical units (the test fixture knows DPI scale).
         var hX = HostBorder.X;       var hY = HostBorder.Y;
         var hW = HostBorder.Width;   var hH = HostBorder.Height;
         var cX = ScenarioContent.X;  var cY = ScenarioContent.Y;
         var cW = ScenarioContent.Width; var cH = ScenarioContent.Height;
+        var vX = HostContainer.X;    var vY = HostContainer.Y;
+        var vW = HostContainer.Width;var vH = HostContainer.Height;
         AppliedLabel.Text =
-            $"{_lastSpec}|{hX:0.##},{hY:0.##},{hW:0.##}x{hH:0.##}|{cX:0.##},{cY:0.##},{cW:0.##}x{cH:0.##}";
+            $"{_lastSpec}|{hX:0.##},{hY:0.##},{hW:0.##}x{hH:0.##}" +
+            $"|{cX:0.##},{cY:0.##},{cW:0.##}x{cH:0.##}" +
+            $"|{vX:0.##},{vY:0.##},{vW:0.##}x{vH:0.##}";
     }
 
     /// <summary>
@@ -41,25 +81,28 @@ public partial class LayoutTestPage : ContentPage
     ///   "wheel:400x400:alpha,vertical"
     ///   "triangle:600x300"
     /// </summary>
+    /// <summary>How a single dimension is sized.</summary>
+    enum SizeMode { Fixed, Auto, Fill }
+
     void ApplyScenario(string spec)
     {
         try
         {
-            var (control, w, h, opts) = Parse(spec);
+            var (control, wMode, wValue, hMode, hValue, opts) = Parse(spec);
 
             // Update _lastSpec FIRST so SizeChanged events triggered by the
             // WidthRequest/HeightRequest assignments below report the new spec.
             _lastSpec = spec;
 
-            HostBorder.WidthRequest  = w;
-            HostBorder.HeightRequest = h;
+            ApplyHostSizing(wMode, wValue, hMode, hValue);
 
             // Runtime-toggle path: if neither the control type nor the host
-            // size changed, mutate the *existing* instance's feature flags
+            // spec changed, mutate the *existing* instance's feature flags
             // instead of replacing the view. This is what exercises the
             // runtime-invalidation code path (the bug class that broke when
             // ShowAlpha was toggled on a live wheel).
-            if (control == _lastControl && w == _lastW && h == _lastH
+            var sizeKey = $"{wMode}:{wValue}x{hMode}:{hValue}";
+            if (control == _lastControl && sizeKey == _lastSizeKey
                 && ScenarioContent.Content is View existing
                 && TryReconfigure(existing, control, opts))
             {
@@ -77,7 +120,7 @@ public partial class LayoutTestPage : ContentPage
                 _          => throw new ArgumentException($"Unknown control '{control}'"),
             };
             ScenarioContent.Content = child;
-            _lastControl = control; _lastW = w; _lastH = h;
+            _lastControl = control; _lastSizeKey = sizeKey;
 
             StatusLabel.Text  = $"applied: {spec}";
             UpdateAppliedMarker();
@@ -141,7 +184,7 @@ public partial class LayoutTestPage : ContentPage
         return wheel;
     }
 
-    static (string control, double width, double height, string[] opts) Parse(string spec)
+    static (string control, SizeMode wMode, double wValue, SizeMode hMode, double hValue, string[] opts) Parse(string spec)
     {
         if (string.IsNullOrWhiteSpace(spec))
             throw new ArgumentException("empty scenario");
@@ -155,13 +198,22 @@ public partial class LayoutTestPage : ContentPage
         if (sizeParts.Length != 2)
             throw new ArgumentException("bad size: " + parts[1]);
 
-        var w = double.Parse(sizeParts[0], System.Globalization.CultureInfo.InvariantCulture);
-        var h = double.Parse(sizeParts[1], System.Globalization.CultureInfo.InvariantCulture);
+        var (wMode, wVal) = ParseSizeToken(sizeParts[0]);
+        var (hMode, hVal) = ParseSizeToken(sizeParts[1]);
 
         var opts = parts.Length >= 3
             ? parts[2].Split(',', StringSplitOptions.RemoveEmptyEntries)
             : Array.Empty<string>();
 
-        return (control, w, h, opts);
+        return (control, wMode, wVal, hMode, hVal, opts);
+    }
+
+    static (SizeMode mode, double value) ParseSizeToken(string token)
+    {
+        var t = token.Trim().ToLowerInvariant();
+        if (t == "auto") return (SizeMode.Auto, 0);
+        if (t == "fill") return (SizeMode.Fill, 0);
+        var v = double.Parse(t, System.Globalization.CultureInfo.InvariantCulture);
+        return (SizeMode.Fixed, v);
     }
 }

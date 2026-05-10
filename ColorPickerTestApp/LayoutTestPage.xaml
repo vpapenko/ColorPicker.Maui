@@ -28,20 +28,26 @@
                AutomationId="ScenarioApplied"
                Text="initial" />
 
-        <!-- Outer host: top-left aligned so screen position is predictable -->
-        <Border Grid.Row="2"
-                x:Name="HostBorder"
-                AutomationId="ScenarioHost"
-                StrokeThickness="0"
-                Stroke="Transparent"
-                BackgroundColor="White"
-                HorizontalOptions="Start"
-                VerticalOptions="Start"
-                Margin="0"
-                SizeChanged="OnHostSizeChanged">
-            <ContentView x:Name="ScenarioContent"
-                         AutomationId="ScenarioContent"
-                         SizeChanged="OnHostSizeChanged" />
-        </Border>
+        <!-- Outer host: top-left aligned so screen position is predictable.
+             Wrapped in HostContainer (a Grid filling row 2) so tests can
+             observe the viewport size available to Fill-mode hosts. -->
+        <Grid Grid.Row="2"
+              x:Name="HostContainer"
+              AutomationId="HostContainer"
+              SizeChanged="OnHostSizeChanged">
+            <Border x:Name="HostBorder"
+                    AutomationId="ScenarioHost"
+                    StrokeThickness="0"
+                    Stroke="Transparent"
+                    BackgroundColor="White"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Start"
+                    Margin="0"
+                    SizeChanged="OnHostSizeChanged">
+                <ContentView x:Name="ScenarioContent"
+                             AutomationId="ScenarioContent"
+                             SizeChanged="OnHostSizeChanged" />
+            </Border>
+        </Grid>
     </Grid>
 </ContentPage>
