@@ -17,6 +17,8 @@ public partial class LayoutTestPage : ContentPage
     void OnHostSizeChanged(object sender, EventArgs e) => UpdateAppliedMarker();
 
     string _lastSpec = "";
+    string _lastControl = "";
+    double _lastW, _lastH;
 
     void UpdateAppliedMarker()
     {
@@ -52,6 +54,20 @@ public partial class LayoutTestPage : ContentPage
             HostBorder.WidthRequest  = w;
             HostBorder.HeightRequest = h;
 
+            // Runtime-toggle path: if neither the control type nor the host
+            // size changed, mutate the *existing* instance's feature flags
+            // instead of replacing the view. This is what exercises the
+            // runtime-invalidation code path (the bug class that broke when
+            // ShowAlpha was toggled on a live wheel).
+            if (control == _lastControl && w == _lastW && h == _lastH
+                && ScenarioContent.Content is View existing
+                && TryReconfigure(existing, control, opts))
+            {
+                StatusLabel.Text = $"toggled: {spec}";
+                UpdateAppliedMarker();
+                return;
+            }
+
             View child = control switch
             {
                 "wheel"    => MakeWheel(opts),
@@ -61,6 +77,7 @@ public partial class LayoutTestPage : ContentPage
                 _          => throw new ArgumentException($"Unknown control '{control}'"),
             };
             ScenarioContent.Content = child;
+            _lastControl = control; _lastW = w; _lastH = h;
 
             StatusLabel.Text  = $"applied: {spec}";
             UpdateAppliedMarker();
@@ -70,6 +87,34 @@ public partial class LayoutTestPage : ContentPage
             StatusLabel.Text  = "error: " + ex.Message;
             AppliedLabel.Text = "ERROR:" + ex.Message;
         }
+    }
+
+    static bool TryReconfigure(View existing, string control, string[] opts)
+    {
+        if (control == "wheel" && existing is ColorWheel w)
+        {
+            // Reset to defaults then apply opts.
+            w.ShowAlphaSlider     = false;
+            w.ShowLuminositySlider= false;
+            w.ShowLuminosityWheel = true;
+            w.Vertical            = false;
+            foreach (var opt in opts)
+            {
+                switch (opt.Trim().ToLowerInvariant())
+                {
+                    case "alpha":     w.ShowAlphaSlider     = true;  break;
+                    case "lumslider": w.ShowLuminositySlider= true;  break;
+                    case "nolumwheel":w.ShowLuminosityWheel = false; break;
+                    case "vertical":  w.Vertical            = true;  break;
+                    case "":          break;
+                    default:          throw new ArgumentException("Unknown option: " + opt);
+                }
+            }
+            return true;
+        }
+        // Other control types have no toggleable flags supported yet — fall
+        // through and let the caller rebuild.
+        return opts.Length == 0 && (control == "triangle" || control == "hsl" || control == "rgb");
     }
 
     static ColorWheel MakeWheel(string[] opts)
