@@ -59,8 +59,9 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
     {
         // Default: arrange all children to fill bounds
         foreach ( var child in Children )
+        {
             ( (IView)child ).Arrange( bounds );
-
+        }
         return bounds.Size;
     }
 
@@ -83,7 +84,9 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
 
             // Measure all children with constrained values
             foreach ( var child in _layout.Children )
+            {
                 ( (IView)child ).Measure( widthConstraint, heightConstraint );
+            }
 
             // Return the same size as MeasureOverride to keep native panel
             // and MAUI layout in sync.

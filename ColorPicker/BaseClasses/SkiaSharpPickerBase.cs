@@ -33,8 +33,6 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
     /// </summary>
     public SkiaSharpPickerBase()
     {
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] Constructor START ({GetType().Name})" );
-
         HorizontalOptions           =   LayoutOptions.Center;
         VerticalOptions             =   LayoutOptions.Center;
 
@@ -48,22 +46,16 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         throw new NotImplementedException( "Specified platform not yet implemented" );
 #endif
 
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] Touch behavior created" );
-
-        var view                    =   new SKCanvasView();  
+        var view                    =   new SKCanvasView();
         view.PaintSurface          +=   OnPaintSurface;
         view.Loaded                +=   OnCanvasViewLoaded;
         MyCanvasView                =   view;
-
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] SKCanvasView created" );
 
         touchBehavior.Capture       =   true;
         touchBehavior.TouchAction  +=   OnTouchAction;
 
         Behaviors.Add( touchImpl );
         Children.Add( MyCanvasView );
-
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] Constructor END, Children.Count={Children.Count}" );
     }
 
     public abstract     float       GetPickerRadiusPixels();
@@ -100,6 +92,16 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         // Call base which sets Frame, calls PlatformArrange on the native container,
         // and calls LayoutManager.ArrangeChildren to position native child views.
         var result = base.ArrangeOverride( bounds );
+
+        // MAUI's base ArrangeOverride passes the *stale* Frame size to LayoutManager.ArrangeChildren
+        // instead of our fresh `bounds`, so the SKCanvasView child can end up arranged at the
+        // previous size. Re-arrange explicitly using the freshly-updated Frame size (which is
+        // the actual on-screen size of this control, after centering/alignment is applied).
+        var size = Frame.Size;
+        if ( size.Width > 0 && size.Height > 0 )
+        {
+            ( (IView)MyCanvasView ).Arrange( new Rect( 0, 0, size.Width, size.Height ) );
+        }
 
         InvalidateSurface();
 
@@ -141,7 +143,6 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
 
     void OnPaintSurface( object sender, SKPaintSurfaceEventArgs e )
     {
-        System.Diagnostics.Debug.WriteLine( $"[SkiaSharpPickerBase] OnPaintSurface({GetType().Name}) info={e.Info.Width}x{e.Info.Height} canvasSize={MyCanvasView.CanvasSize} viewW={MyCanvasView.Width} viewH={MyCanvasView.Height} Frame={Frame}" );
         OnPaintSurface( e.Surface.Canvas, e.Info.Width, e.Info.Height );
     }
 
