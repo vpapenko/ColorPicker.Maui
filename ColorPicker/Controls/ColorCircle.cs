@@ -123,10 +123,7 @@ public class ColorCircle : SkiaSharpPickerBase
 
     protected override void OnPaintSurface( SKCanvas canvas, int width, int height )
     {
-        System.Diagnostics.Debug.WriteLine( $"[ColorCircle] OnPaintSurface width={width} height={height} CanvasSize={GetCanvasSize()} MyCanvasView.Width={MyCanvasView.Width} MyCanvasView.Height={MyCanvasView.Height}" );
-
         var canvasRadius = GetSize() / 2F;
-        System.Diagnostics.Debug.WriteLine( $"[ColorCircle] canvasRadius={canvasRadius} GetSize()={GetSize()}" );
 
         UpdateLocations( SelectedColor, canvasRadius );
         canvas.Clear();
@@ -366,10 +363,14 @@ public class ColorCircle : SkiaSharpPickerBase
         return new SKPoint( x, y );
     }
 
+    // Small margin so the picker indicator (outer stroke + antialiasing)
+    // does not get clipped at the canvas edge.
+    const float PickerEdgeMargin = 3F;
+
     float WheelHSRadius( float canvasRadius )
-       => ! ShowLuminosityWheel ? canvasRadius - GetPickerRadiusPixels() 
+       => ! ShowLuminosityWheel ? canvasRadius - GetPickerRadiusPixels() - PickerEdgeMargin
                                 : canvasRadius - ( 3 * GetPickerRadiusPixels() ) - 2;
 
     float WheelLRadius( float canvasRadius )
-       => canvasRadius - GetPickerRadiusPixels();
+       => canvasRadius - GetPickerRadiusPixels() - PickerEdgeMargin;
 }
