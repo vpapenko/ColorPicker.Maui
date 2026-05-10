@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ColorPickerTestApp.LayoutTestPage"
+             Title="Layout Test"
+             BackgroundColor="White">
+    <Grid RowDefinitions="Auto,Auto,*" Padding="0">
+        <HorizontalStackLayout Grid.Row="0" Padding="6" Spacing="6" BackgroundColor="LightGray">
+            <Entry x:Name="ScenarioEntry"
+                   AutomationId="ScenarioEntry"
+                   Text="wheel:300x300"
+                   WidthRequest="320" />
+            <Button x:Name="ApplyButton"
+                    AutomationId="ApplyScenario"
+                    Text="Apply"
+                    Clicked="OnApplyClicked" />
+            <Label x:Name="StatusLabel"
+                   AutomationId="ScenarioStatus"
+                   VerticalOptions="Center"
+                   Text="ready" />
+        </HorizontalStackLayout>
+
+        <!-- Marker label tests can poll to detect when Apply finished, plus
+             actual measured bounds (UIA size queries on a constrained Border
+             are unreliable in MAUI/WinUI). Format: "spec|hostWxH|ctrlWxH" -->
+        <Label Grid.Row="1"
+               x:Name="AppliedLabel"
+               AutomationId="ScenarioApplied"
+               Text="initial" />
+
+        <!-- Outer host: top-left aligned so screen position is predictable -->
+        <Border Grid.Row="2"
+                x:Name="HostBorder"
+                AutomationId="ScenarioHost"
+                StrokeThickness="0"
+                Stroke="Transparent"
+                BackgroundColor="White"
+                HorizontalOptions="Start"
+                VerticalOptions="Start"
+                Margin="0"
+                SizeChanged="OnHostSizeChanged">
+            <ContentView x:Name="ScenarioContent"
+                         AutomationId="ScenarioContent"
+                         SizeChanged="OnHostSizeChanged" />
+        </Border>
+    </Grid>
+</ContentPage>
