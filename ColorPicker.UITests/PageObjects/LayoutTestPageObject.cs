@@ -78,8 +78,38 @@ public sealed class LayoutTestPageObject
         entry.SendKeys(text);
     }
 
-    private AppiumElement Find(string automationId) =>
+    /// <summary>Read the current applied state from the marker label without
+    /// re-applying. Useful after window-event triggered relayouts.</summary>
+    public ScenarioState GetCurrentState()
+    {
+        if (ScenarioState.TryParse(AppliedMarker.Text ?? "", out var s))
+            return s;
+        throw new InvalidOperationException("Marker label has no valid state: " + (AppliedMarker.Text ?? "<null>"));
+    }
+
+    /// <summary>Wait until the marker reports the given predicate. Useful after
+    /// async layout invalidations (e.g. window resize).</summary>
+    public ScenarioState WaitForState(Func<ScenarioState, bool> predicate, TimeSpan? timeout = null)
+    {
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(5));
+        ScenarioState last = default;
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                if (ScenarioState.TryParse(AppliedMarker.Text ?? "", out last) && predicate(last))
+                    return last;
+            }
+            catch (WebDriverException) { /* transient */ }
+            Thread.Sleep(100);
+        }
+        throw new TimeoutException("Predicate not satisfied. Last state: " + last);
+    }
+
+    public AppiumElement Find(string automationId) =>
         (AppiumElement)_driver.FindElement(MobileBy.AccessibilityId(automationId));
+
+    private AppiumElement FindInternal(string automationId) => Find(automationId);
 }
 
 /// <summary>Floating-point bounds in MAUI logical units (DPI-independent).</summary>
