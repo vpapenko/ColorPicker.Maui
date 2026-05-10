@@ -14,6 +14,8 @@ public abstract class AppFixtureBase : IDisposable
 {
     public WindowsDriver Driver { get; }
     private readonly Process _appProcess;
+    /// <summary>HWND of the launched app's top-level window.</summary>
+    public IntPtr AppHwnd { get; private set; }
 
     protected AppFixtureBase()
     {
@@ -30,6 +32,7 @@ public abstract class AppFixtureBase : IDisposable
             ?? throw new InvalidOperationException("Failed to launch " + appPath);
 
         var hwnd = WaitForTopLevelWindow(_appProcess, TimeSpan.FromSeconds(30));
+        AppHwnd = hwnd;
 
         var options = new AppiumOptions
         {
