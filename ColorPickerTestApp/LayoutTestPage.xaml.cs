@@ -1,3 +1,4 @@
+using ColorPicker.BaseClasses;
 using ColorPicker.Controls;
 
 namespace ColorPickerTestApp;
@@ -84,6 +85,17 @@ public partial class LayoutTestPage : ContentPage
             {
                 var t = o.Trim().ToLowerInvariant();
                 if (t is "norotate" or "rotate") flags.Add(t);
+            }
+            flags.Sort(StringComparer.Ordinal);
+            return string.Join(",", flags);
+        }
+        if (control == "hsl" || control == "rgb")
+        {
+            var flags = new List<string>();
+            foreach (var o in opts)
+            {
+                var t = o.Trim().ToLowerInvariant();
+                if (t is "vertical" or "noalpha") flags.Add(t);
             }
             flags.Sort(StringComparer.Ordinal);
             return string.Join(",", flags);
@@ -217,8 +229,8 @@ public partial class LayoutTestPage : ContentPage
             {
                 "wheel"    => MakeWheel(opts),
                 "triangle" => MakeTriangle(opts),
-                "hsl"      => new HSLSliders       { AutomationId = "ScenarioControl", HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill },
-                "rgb"      => new RGBSliders       { AutomationId = "ScenarioControl", HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill },
+                "hsl"      => MakeSliders<HSLSliders>(opts),
+                "rgb"      => MakeSliders<RGBSliders>(opts),
                 _          => throw new ArgumentException($"Unknown control '{control}'"),
             };
             T($"BUILT-CHILD type={child.GetType().Name}");
@@ -282,9 +294,48 @@ public partial class LayoutTestPage : ContentPage
             }
             return true;
         }
+        if ((control == "hsl" || control == "rgb") && existing is SliderPickerWithAlpha s)
+        {
+            s.Vertical        = false;
+            s.ShowAlphaSlider = true;
+            foreach (var opt in opts)
+            {
+                if (IsKvOpt(opt, out _, out _)) continue;
+                switch (opt.Trim().ToLowerInvariant())
+                {
+                    case "vertical": s.Vertical        = true;  break;
+                    case "noalpha":  s.ShowAlphaSlider = false; break;
+                    case "":         break;
+                    default:         throw new ArgumentException("Unknown option: " + opt);
+                }
+            }
+            return true;
+        }
         // Other control types have no toggleable flags supported yet — fall
         // through and let the caller rebuild when bare.
-        return opts.Length == 0 && (control == "hsl" || control == "rgb");
+        return opts.Length == 0;
+    }
+
+    static T MakeSliders<T>(string[] opts) where T : SliderPickerWithAlpha, new()
+    {
+        var s = new T
+        {
+            AutomationId      = "ScenarioControl",
+            HorizontalOptions = LayoutOptions.Fill,
+            VerticalOptions   = LayoutOptions.Fill,
+        };
+        foreach (var opt in opts)
+        {
+            if (IsKvOpt(opt, out _, out _)) continue;
+            switch (opt.Trim().ToLowerInvariant())
+            {
+                case "vertical": s.Vertical        = true;  break;
+                case "noalpha":  s.ShowAlphaSlider = false; break;
+                case "":         break;
+                default:         throw new ArgumentException("Unknown option: " + opt);
+            }
+        }
+        return s;
     }
 
     static ColorWheel MakeWheel(string[] opts)

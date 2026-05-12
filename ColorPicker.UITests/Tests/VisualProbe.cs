@@ -73,9 +73,25 @@ public class VisualProbe
         // Triangle ring modes (rotate-with-hue vs. fixed-triangle rotating ring)
         foreach (var sz in new[] { "400x400", "300x600", "600x300" })
         {
-            Emit($"triangle-rotate-{sz}",   $"triangle:{sz}");          // default: RotateTriangleByHue=true
-            Emit($"triangle-norotate-{sz}", $"triangle:{sz}:norotate"); // ring rotates around fixed triangle
+            Emit($"triangle-rotate-{sz}",   $"triangle:{sz}");
+            Emit($"triangle-norotate-{sz}", $"triangle:{sz}:norotate");
         }
+
+        // Slider orientation + alpha visibility
+        foreach (var ctrl in new[] { "hsl", "rgb" })
+        foreach (var sz   in new[] { "400x400", "300x600", "600x300" })
+        {
+            Emit($"slider-{ctrl}-vertical-{sz}", $"{ctrl}:{sz}:vertical");
+            Emit($"slider-{ctrl}-noalpha-{sz}",  $"{ctrl}:{sz}:noalpha");
+        }
+
+        // Control-internal background (wbg=) — distinct from host bg=
+        foreach (var s in new[] {
+            "wheel:400x400:wbg=red",
+            "wheel:400x400:wbg=yellow",
+            "triangle:400x400:wbg=red",
+            "triangle:400x400:wbg=blue" })
+            Emit("wbg-" + s.Replace(":","-").Replace("=","-").Replace("#",""), s);
 
         // Background
         foreach (var s in new[] {
