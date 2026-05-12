@@ -182,6 +182,43 @@ public partial class LayoutTestPage : ContentPage
             $"{_lastSpec}|{hX:0.##},{hY:0.##},{hW:0.##}x{hH:0.##}" +
             $"|{cX:0.##},{cY:0.##},{cW:0.##}x{cH:0.##}" +
             $"|{vX:0.##},{vY:0.##},{vW:0.##}x{vH:0.##}";
+
+        // Deep diagnostics: enumerate every layer's bounds + each SKCanvasView's
+        // absolute position. Useful for tracking where natural-size shrinkwrap
+        // breaks down (e.g. slider bleeding past parent bounds).
+        try
+        {
+            var sb = new System.Text.StringBuilder();
+            void Add(string name, View v) =>
+                sb.Append($"{name}=[{v.X:0.#},{v.Y:0.#} {v.Width:0.#}x{v.Height:0.#} ds={v.DesiredSize.Width:0.#}x{v.DesiredSize.Height:0.#}] ");
+            Add("HC", HostContainer);
+            Add("HB", HostBorder);
+            Add("PO", PickerOutline);
+            Add("SC", ScenarioContent);
+            if (ScenarioContent.Content is View inner)
+            {
+                Add("CTRL", inner);
+                if (inner is Microsoft.Maui.Controls.Layout layout)
+                {
+                    int i = 0;
+                    foreach (var ch in layout.Children)
+                        if (ch is View vch) Add($"CH{i++}({vch.GetType().Name})", vch);
+                }
+            }
+            // SKCanvasView absolute positions as the capture computes them
+            sb.Append("|SKCV: ");
+            void Walk(IView v, double x, double y)
+            {
+                if (v is SkiaSharp.Views.Maui.Controls.SKCanvasView cv)
+                    sb.Append($"{cv.GetType().Name}@({x:0.#},{y:0.#}) cs={cv.CanvasSize.Width:0.#}x{cv.CanvasSize.Height:0.#} fr={cv.Width:0.#}x{cv.Height:0.#} ");
+                if (v is Microsoft.Maui.ILayout l)
+                    foreach (var c in l) if (c is View vc) Walk(vc, x + vc.X, y + vc.Y);
+                if (v is Microsoft.Maui.IContentView cv2 && cv2.PresentedContent is View pv) Walk(pv, x + pv.X, y + pv.Y);
+            }
+            Walk(HostContainer, 0, 0);
+            DebugTraceLabel.Text = sb.ToString();
+        }
+        catch (Exception ex) { DebugTraceLabel.Text = "diag err: " + ex.Message; }
     }
 
     /// <summary>

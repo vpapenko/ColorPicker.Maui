@@ -145,8 +145,11 @@ public class VisualProbe
         File.Copy(capturedPath, dest, overwrite: true);
 
         var markerText = page.AppliedMarker.Text ?? "";
+        var traceText  = page.Find("DebugTrace").Text ?? "";
         File.AppendAllText(Path.Combine(outDir, "_manifest.tsv"),
             $"{id}\t{scenario}\tcanvas={capturedPath}\tmarker={markerText}\n");
+        File.AppendAllText(Path.Combine(outDir, "_diag.txt"),
+            $"\n=== {id} ({scenario}) ===\nMARKER={markerText}\nTRACE={traceText}\n");
 
         _log.WriteLine($"saved {dest}");
     }
