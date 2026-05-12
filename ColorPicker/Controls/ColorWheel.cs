@@ -184,65 +184,78 @@ public class ColorWheel : ColorPickerViewBase
 
     protected override Size ArrangeLayoutChildren( Rect bounds )
     {
-        var width = bounds.Width;
+        var width  = bounds.Width;
         var height = bounds.Height;
 
-        var sliderCount = ( ShowLuminositySlider ? 1 : 0 ) + ( ShowAlphaSlider ? 1 : 0 );
+        var sliderCount    = ( ShowLuminositySlider ? 1 : 0 ) + ( ShowAlphaSlider ? 1 : 0 );
         var sliderFraction = 0.1 * sliderCount;
 
+        // Pick the largest circle that fits both the perpendicular axis and the
+        // (1 - sliderFraction) share of the slider axis. Slider thickness then
+        // stays at its natural proportion (10% of the circle per slider) rather
+        // than stretching to fill leftover host space.
         double circleSize;
         double sliderThickness;
+        double totalWidth;
+        double totalHeight;
 
         if ( Vertical )
         {
-            circleSize      = sliderCount > 0 ? width * ( 1.0 - sliderFraction ) : width;
-            circleSize      = Math.Min( circleSize, height );
-            sliderThickness = sliderCount > 0 ? ( width - circleSize ) / sliderCount : 0;
+            circleSize      = Math.Min( height,
+                                        sliderCount > 0 ? ( 1.0 - sliderFraction ) * width : width );
+            sliderThickness = sliderCount > 0
+                            ? ( sliderFraction * circleSize ) / ( ( 1.0 - sliderFraction ) * sliderCount )
+                            : 0;
+            totalWidth      = circleSize + sliderCount * sliderThickness;
+            totalHeight     = circleSize;
         }
         else
         {
-            circleSize      = sliderCount > 0 ? height * ( 1.0 - sliderFraction ) : height;
-            circleSize      = Math.Min( circleSize, width );
-            sliderThickness = sliderCount > 0 ? ( height - circleSize ) / sliderCount : 0;
+            circleSize      = Math.Min( width,
+                                        sliderCount > 0 ? ( 1.0 - sliderFraction ) * height : height );
+            sliderThickness = sliderCount > 0
+                            ? ( sliderFraction * circleSize ) / ( ( 1.0 - sliderFraction ) * sliderCount )
+                            : 0;
+            totalWidth      = circleSize;
+            totalHeight     = circleSize + sliderCount * sliderThickness;
         }
+
+        var offX = Math.Max( 0, ( width  - totalWidth  ) / 2 );
+        var offY = Math.Max( 0, ( height - totalHeight ) / 2 );
 
         // Measure children with their actual sizes so SkiaSharp renders correctly
         ( (IView)_colorCircle ).Measure( circleSize, circleSize );
-        ( (IView)_colorCircle ).Arrange( new Rect( 0, 0, circleSize, circleSize ) );
+        ( (IView)_colorCircle ).Arrange( new Rect( offX, offY, circleSize, circleSize ) );
 
-        var offset = circleSize;
-
-        if ( ShowLuminositySlider )
+        if ( Vertical )
         {
-            Rect lumRect;
-            if ( Vertical )
+            var x = offX + circleSize;
+            if ( ShowLuminositySlider )
             {
                 ( (IView)_luminositySlider ).Measure( sliderThickness, circleSize );
-                lumRect = new Rect( offset, 0, sliderThickness, circleSize );
+                ( (IView)_luminositySlider ).Arrange( new Rect( x, offY, sliderThickness, circleSize ) );
+                x += sliderThickness;
             }
-            else
-            {
-                ( (IView)_luminositySlider ).Measure( circleSize, sliderThickness );
-                lumRect = new Rect( 0, offset, circleSize, sliderThickness );
-            }
-            ( (IView)_luminositySlider ).Arrange( lumRect );
-            offset += sliderThickness;
-        }
-
-        if ( ShowAlphaSlider )
-        {
-            Rect alphaRect;
-            if ( Vertical )
+            if ( ShowAlphaSlider )
             {
                 ( (IView)_alphaSlider ).Measure( sliderThickness, circleSize );
-                alphaRect = new Rect( offset, 0, sliderThickness, circleSize );
+                ( (IView)_alphaSlider ).Arrange( new Rect( x, offY, sliderThickness, circleSize ) );
             }
-            else
+        }
+        else
+        {
+            var y = offY + circleSize;
+            if ( ShowLuminositySlider )
+            {
+                ( (IView)_luminositySlider ).Measure( circleSize, sliderThickness );
+                ( (IView)_luminositySlider ).Arrange( new Rect( offX, y, circleSize, sliderThickness ) );
+                y += sliderThickness;
+            }
+            if ( ShowAlphaSlider )
             {
                 ( (IView)_alphaSlider ).Measure( circleSize, sliderThickness );
-                alphaRect = new Rect( 0, offset, circleSize, sliderThickness );
+                ( (IView)_alphaSlider ).Arrange( new Rect( offX, y, circleSize, sliderThickness ) );
             }
-            ( (IView)_alphaSlider ).Arrange( alphaRect );
         }
 
         return bounds.Size;

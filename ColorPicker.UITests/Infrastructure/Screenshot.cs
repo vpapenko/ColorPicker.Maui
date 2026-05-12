@@ -73,5 +73,11 @@ public readonly record struct PixelRect(int X, int Y, int W, int H, double DpiSc
     public int Bottom  => Y + H;
     public int CenterX => X + W / 2;
     public int CenterY => Y + H / 2;
+
+    /// <summary>
+    /// Returns a copy expanded by <paramref name="px"/> physical pixels on each side
+    /// (used to include the 1px picker outline drawn just outside the host rectangle).
+    /// </summary>
+    public PixelRect Inflate(int px) => new(X - px, Y - px, W + 2 * px, H + 2 * px, DpiScale);
 }
 

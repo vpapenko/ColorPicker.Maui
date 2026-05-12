@@ -65,19 +65,13 @@ public class BackgroundTests
 
     private (Rgba32 corner, Rgba32 center) SampleCornerAndCenter(string scenario)
     {
-        var page  = _fixture.Page;
-        var state = page.Apply(scenario);
+        var page = _fixture.Page;
+        page.Apply(scenario);
 
-        var hostAbs = new LogicalBounds(
-            state.ViewportBounds.X + state.HostBounds.X,
-            state.ViewportBounds.Y + state.HostBounds.Y,
-            state.HostBounds.W, state.HostBounds.H);
-        var hostPx = Screenshot.ToPixels(hostAbs, state, page.AppliedMarker);
-
-        using var img = Screenshot.Capture(_fixture.Driver);
+        using var img = page.CaptureCanvasImage();
         const int Inset = 5;
-        var corner = Screenshot.SampleBox(img, hostPx.X + Inset, hostPx.Y + Inset);
-        var center = Screenshot.SampleBox(img, hostPx.CenterX,   hostPx.CenterY);
+        var corner = Screenshot.SampleBox(img, Inset, Inset);
+        var center = Screenshot.SampleBox(img, img.Width / 2, img.Height / 2);
         return (corner, center);
     }
 

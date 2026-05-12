@@ -1,6 +1,8 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace ColorPicker.UITests.PageObjects;
 
@@ -13,6 +15,8 @@ public sealed class LayoutTestPageObject
 
     public AppiumElement ScenarioEntry  => Find("ScenarioEntry");
     public AppiumElement ApplyButton    => Find("ApplyScenario");
+    public AppiumElement CaptureButton  => Find("CaptureCanvas");
+    public AppiumElement CapturePath    => Find("CapturePath");
     public AppiumElement Host           => Find("ScenarioHost");
     public AppiumElement Control        => Find("ScenarioControl");
     public AppiumElement AppliedMarker  => Find("ScenarioApplied");
@@ -74,17 +78,92 @@ public sealed class LayoutTestPageObject
     private void SetEntryText(AppiumElement entry, string text)
     {
         entry.Click();
-        try { entry.Clear(); } catch { /* fallback below */ }
+        // Reliable path: Clear + per-character SendKeys. (We previously tried a
+        // clipboard-paste fast path here, but Ctrl+A / Ctrl+V proved unreliable
+        // — modifier keys leak into subsequent keystrokes when running long
+        // probe suites, which caused every test after the first ~30 to time out
+        // because the Entry never got the new scenario text.)
+        try { entry.Clear(); } catch { /* tolerate */ }
         entry.SendKeys(text);
+
+        // Verify the text actually made it in. If the entry value diverges from
+        // the requested text (rare, but happens when focus is briefly stolen),
+        // retry once after re-clicking.
+        try
+        {
+            var actual = entry.Text ?? "";
+            if (actual != text)
+            {
+                entry.Click();
+                try { entry.Clear(); } catch { }
+                entry.SendKeys(text);
+            }
+        }
+        catch (WebDriverException) { /* tolerate */ }
     }
 
-    /// <summary>Read the current applied state from the marker label without
+    /// <summary>Read the current applied statefrom the marker label without
     /// re-applying. Useful after window-event triggered relayouts.</summary>
     public ScenarioState GetCurrentState()
     {
         if (ScenarioState.TryParse(AppliedMarker.Text ?? "", out var s))
             return s;
         throw new InvalidOperationException("Marker label has no valid state: " + (AppliedMarker.Text ?? "<null>"));
+    }
+
+    /// <summary>
+    /// Triggers the in-process Skia canvas capture in the running test app
+    /// and returns the path to the resulting PNG. The image contains the
+    /// composited output of every SKCanvasView inside the picker, at the
+    /// raw SkiaSharp render resolution (deterministic, free of Windows
+    /// compositor / DPI-stretching artifacts).
+    /// </summary>
+    public string CaptureCanvas(TimeSpan? timeout = null)
+    {
+        // Snapshot the current sequence so we can wait for it to advance.
+        int beforeSeq = TryReadSeq(SafeText(CapturePath));
+        CaptureButton.Click();
+
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(8));
+        while (DateTime.UtcNow < deadline)
+        {
+            var current = SafeText(CapturePath);
+            int? seq = TryReadSeq(current);
+            if (seq.HasValue && seq.Value > beforeSeq)
+            {
+                if (current.Contains("ERROR:", StringComparison.Ordinal))
+                    throw new InvalidOperationException("Canvas capture failed: " + current);
+                var idx = current.LastIndexOf(": ", StringComparison.Ordinal);
+                if (idx >= 0 && current.Contains("saved", StringComparison.Ordinal))
+                    return current[(idx + 2)..].Trim();
+            }
+            Thread.Sleep(80);
+        }
+        throw new TimeoutException("Canvas capture did not complete within timeout. Last label: " + SafeText(CapturePath));
+    }
+
+    /// <summary>
+    /// Drives a canvas capture and returns the result as a loaded
+    /// <see cref="Image{Rgba32}"/> ready for pixel sampling / diffing.
+    /// </summary>
+    public Image<Rgba32> CaptureCanvasImage(TimeSpan? timeout = null)
+    {
+        var path = CaptureCanvas(timeout);
+        return SixLabors.ImageSharp.Image.Load<Rgba32>(path);
+    }
+
+    static string SafeText(AppiumElement e) { try { return e.Text ?? ""; } catch { return ""; } }
+
+    static int TryReadSeq(string text)
+    {
+        // Label format: "#{seq} <message>" or "capturing #{seq}".
+        var hash = text.IndexOf('#');
+        if (hash < 0) return 0;
+        int i = hash + 1;
+        int start = i;
+        while (i < text.Length && char.IsDigit(text[i])) i++;
+        if (i == start) return 0;
+        return int.Parse(text.AsSpan(start, i - start));
     }
 
     /// <summary>Wait until the marker reports the given predicate. Useful after

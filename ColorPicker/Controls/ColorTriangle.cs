@@ -70,8 +70,11 @@ public class ColorTriangle : SkiaSharpPickerBase
 
     protected override void OnTouchActionPressed( ColorPickerTouchActionEventArgs args )
     {
-        var canvasRadius = GetCanvasSize().Width / 2F;
+        var canvasRadius = GetSize() / 2F;
+        var (offX, offY) = GetDrawingOffset();
         var point = ConvertToPixel(args.Location);
+        point.X -= offX;
+        point.Y -= offY;
 
         if (_locationSVProgressId is null && IsInSVArea( point, canvasRadius ))
         {
@@ -89,8 +92,11 @@ public class ColorTriangle : SkiaSharpPickerBase
 
     protected override void OnTouchActionMoved( ColorPickerTouchActionEventArgs args )
     {
-        var canvasRadius = GetCanvasSize().Width / 2F;
+        var canvasRadius = GetSize() / 2F;
+        var (offX, offY) = GetDrawingOffset();
         var point = ConvertToPixel(args.Location);
+        point.X -= offX;
+        point.Y -= offY;
 
         if (_locationSVProgressId == args.Id)
         {
@@ -106,8 +112,11 @@ public class ColorTriangle : SkiaSharpPickerBase
 
     protected override void OnTouchActionReleased( ColorPickerTouchActionEventArgs args )
     {
-        var canvasRadius = GetCanvasSize().Width / 2F;
+        var canvasRadius = GetSize() / 2F;
+        var (offX, offY) = GetDrawingOffset();
         var point = ConvertToPixel(args.Location);
+        point.X -= offX;
+        point.Y -= offY;
 
         if (_locationSVProgressId == args.Id)
         {
@@ -134,9 +143,13 @@ public class ColorTriangle : SkiaSharpPickerBase
     protected override void OnPaintSurface( SKCanvas canvas, int width, int height )
     {
         var canvasRadius = GetSize() / 2F;
+        var (offX, offY) = GetDrawingOffset();
 
         UpdateLocations( SelectedColor, canvasRadius );
         canvas.Clear();
+
+        canvas.Save();
+        canvas.Translate( offX, offY );
 
         PaintBackground( canvas, canvasRadius );
         PaintHGradient( canvas, canvasRadius );
@@ -148,6 +161,8 @@ public class ColorTriangle : SkiaSharpPickerBase
 
         PaintSVTriangle( canvas, canvasRadius );
         PaintPicker( canvas, _locationSV );
+
+        canvas.Restore();
     }
 
     protected override void OnSelectedColorChanging( Color color )
@@ -179,8 +194,15 @@ public class ColorTriangle : SkiaSharpPickerBase
         return new SizeRequest( new Size( size, size ) );
     }
 
-    protected override float GetSize( SKSize canvasSize ) => canvasSize.Width;
+    protected override float GetSize( SKSize canvasSize ) => Math.Min( canvasSize.Width, canvasSize.Height );
     protected override float GetSize() => GetSize( GetCanvasSize() );
+
+    (float offsetX, float offsetY) GetDrawingOffset()
+    {
+        var canvas = GetCanvasSize();
+        var size   = Math.Min( canvas.Width, canvas.Height );
+        return ( ( canvas.Width - size ) / 2F, ( canvas.Height - size ) / 2F );
+    }
 
     void UpdateLocations( Color color, float canvasRadius )
     {
@@ -288,7 +310,7 @@ public class ColorTriangle : SkiaSharpPickerBase
 
         if ( RotateTriangleByHue )
         {
-            canvas.SetMatrix( rotationHue );
+            canvas.Concat( ref rotationHue );
         }
 
         var point1 = new SKPoint( canvasRadius, canvasRadius - WheelSVRadius(canvasRadius) );
@@ -307,12 +329,10 @@ public class ColorTriangle : SkiaSharpPickerBase
             canvas.ClipPath( pathTriangle, SKClipOperation.Intersect, true );
         }
 
-        var matrix = SKMatrix.CreateRotation(-(float)Math.PI / 3F, point3.X, point3.Y);
+        canvas.Save();
 
-        if (RotateTriangleByHue)
-        {
-            SKMatrix.Concat( ref matrix, rotationHue, matrix );
-        }
+        var gradientRotation = SKMatrix.CreateRotation(-(float)Math.PI / 3F, point3.X, point3.Y);
+        canvas.Concat( ref gradientRotation );
 
         var shader = SKShader.CreateSweepGradient(point3,
                                                    new SKColor[]
@@ -333,17 +353,9 @@ public class ColorTriangle : SkiaSharpPickerBase
             Style       = SKPaintStyle.Fill
         };
 
-        canvas.SetMatrix( matrix );
         canvas.DrawCircle( point3, WheelSVRadius( canvasRadius ) * 2, paint );
 
-        if (RotateTriangleByHue)
-        {
-            canvas.SetMatrix( rotationHue );
-        }
-        else
-        {
-            canvas.ResetMatrix();
-        }
+        canvas.Restore();
 
         var colors = new SKColor[]
         {
@@ -353,7 +365,6 @@ public class ColorTriangle : SkiaSharpPickerBase
 
         PaintGradient( canvas, canvasRadius, colors, point3 );
 
-        canvas.ResetMatrix();
         canvas.Restore();
     }
 

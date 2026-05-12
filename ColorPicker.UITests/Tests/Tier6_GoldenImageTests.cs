@@ -45,39 +45,30 @@ public class Tier6_GoldenImageTests
     [InlineData("wheel-400-nolumwheel",      "wheel:400x400:nolumwheel",       30, 0.015)]
     public void Matches_Reference(string id, string scenario, int perPixelTol, double maxBadFrac)
     {
-        var page  = _fixture.Page;
-        var state = page.Apply(scenario);
+        var page = _fixture.Page;
+        page.Apply(scenario);
 
-        var hostAbs = new LogicalBounds(
-            state.ViewportBounds.X + state.HostBounds.X,
-            state.ViewportBounds.Y + state.HostBounds.Y,
-            state.HostBounds.W, state.HostBounds.H);
-        var hostPx = Screenshot.ToPixels(hostAbs, state, page.AppliedMarker);
+        using var crop = page.CaptureCanvasImage();
 
-        using var full = Screenshot.Capture(_fixture.Driver);
-        using var crop = ReferenceImage.Crop(full, hostPx);
-
+        // References are keyed by DPI; canvas-capture output is logical
+        // pixels × the runtime DPI scale, so the dpi key here remains valid
+        // (different DPI → different reference file).
         int dpi = GetDpiForWindow(_fixture.AppHwnd);
         var refPath = ReferenceImage.ResolvePath(dpi, id);
 
         if (ReferenceImage.RegenRequested || !File.Exists(refPath))
         {
             ReferenceImage.Save(crop, refPath);
-            // First-time/regen: pass and document.
             return;
         }
 
         using var golden = ReferenceImage.Load(refPath);
-        // Tolerate ±1 px size drift from the anchor maths by aligning to
-        // the smaller bounds (very rare in practice but harmless).
         if (golden.Width != crop.Width || golden.Height != crop.Height)
         {
             int w = Math.Min(golden.Width,  crop.Width);
             int h = Math.Min(golden.Height, crop.Height);
-            using var goldenAdj = ReferenceImage.Crop(golden,
-                new PixelRect(0, 0, w, h, hostPx.DpiScale));
-            using var cropAdj   = ReferenceImage.Crop(crop,
-                new PixelRect(0, 0, w, h, hostPx.DpiScale));
+            using var goldenAdj = ReferenceImage.Crop(golden, new PixelRect(0, 0, w, h, 1));
+            using var cropAdj   = ReferenceImage.Crop(crop,   new PixelRect(0, 0, w, h, 1));
             AssertWithin(goldenAdj, cropAdj, perPixelTol, maxBadFrac, id, refPath);
             return;
         }

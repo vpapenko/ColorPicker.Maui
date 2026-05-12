@@ -14,11 +14,68 @@ public partial class LayoutTestPage : ContentPage
 
     void OnApplyClicked(object sender, EventArgs e) => ApplyScenario(ScenarioEntry.Text);
 
+    static int _captureSeq;
+
+    async void OnCaptureClicked(object sender, EventArgs e) => await CaptureAsync(null);
+
+    async Task CaptureAsync(string? outPath)
+    {
+        var seq = Interlocked.Increment(ref _captureSeq);
+        try
+        {
+            outPath ??= Path.Combine(Path.GetTempPath(), "colorpicker-capture.png");
+            CapturePathLabel.Text = $"capturing #{seq}";
+            await Task.Yield();
+            await Task.Delay(50);
+            View? root = ScenarioContent.Content as View;
+            if (root is null)
+            {
+                CapturePathLabel.Text = $"#{seq} no content";
+                return;
+            }
+            // Scene-composite mode: paint HostBorder's background color into the
+            // composite first, sized to HostBorder's logical pixels (scaled by DPI).
+            var bg = HostBorder.BackgroundColor ?? Colors.White;
+            var skBg = new SkiaSharp.SKColor(
+                (byte)(bg.Red   * 255),
+                (byte)(bg.Green * 255),
+                (byte)(bg.Blue  * 255),
+                (byte)(bg.Alpha * 255));
+            var result = await CanvasCapture.CaptureAsync(
+                root, outPath,
+                backgroundColor: skBg,
+                sceneWidth: HostBorder.Width,
+                sceneHeight: HostBorder.Height);
+            CapturePathLabel.Text = $"#{seq} saved {result.PixelWidth}x{result.PixelHeight} ({result.CanvasCount} canvases): {outPath}";
+        }
+        catch (Exception ex)
+        {
+            CapturePathLabel.Text = $"#{seq} ERROR: " + ex.Message;
+        }
+    }
+
     void OnHostSizeChanged(object sender, EventArgs e) => UpdateAppliedMarker();
 
     string _lastSpec = "";
     string _lastControl = "";
     string _lastSizeKey = "";
+    string _lastFeatureKey = "";
+
+    static string MakeFeatureKey(string control, string[] opts)
+    {
+        // Only feature flags that affect the wheel's children list matter for
+        // the rebuild decision. bg/wbg/etc. are safe to mutate at runtime.
+        if (control != "wheel") return "";
+        var flags = new List<string>();
+        foreach (var o in opts)
+        {
+            var t = o.Trim().ToLowerInvariant();
+            if (t is "alpha" or "lumslider" or "nolumwheel" or "vertical")
+                flags.Add(t);
+        }
+        flags.Sort(StringComparer.Ordinal);
+        return string.Join(",", flags);
+    }
 
     void ApplyHostSizing(SizeMode wMode, double wValue, SizeMode hMode, double hValue)
     {
@@ -28,14 +85,17 @@ public partial class LayoutTestPage : ContentPage
             case SizeMode.Fixed:
                 HostBorder.WidthRequest    = wValue;
                 HostBorder.HorizontalOptions = LayoutOptions.Start;
+                PickerOutline.HorizontalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Auto:
-                HostBorder.WidthRequest    = -1;        // -1 == unset
+                HostBorder.WidthRequest    = -1;
                 HostBorder.HorizontalOptions = LayoutOptions.Start;
+                PickerOutline.HorizontalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Fill:
                 HostBorder.WidthRequest    = -1;
                 HostBorder.HorizontalOptions = LayoutOptions.Fill;
+                PickerOutline.HorizontalOptions = LayoutOptions.Fill;
                 break;
         }
         // Height
@@ -44,17 +104,22 @@ public partial class LayoutTestPage : ContentPage
             case SizeMode.Fixed:
                 HostBorder.HeightRequest    = hValue;
                 HostBorder.VerticalOptions  = LayoutOptions.Start;
+                PickerOutline.VerticalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Auto:
                 HostBorder.HeightRequest    = -1;
                 HostBorder.VerticalOptions  = LayoutOptions.Start;
+                PickerOutline.VerticalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Fill:
                 HostBorder.HeightRequest    = -1;
                 HostBorder.VerticalOptions  = LayoutOptions.Fill;
+                PickerOutline.VerticalOptions = LayoutOptions.Fill;
                 break;
         }
     }
+
+    void OnPickerOutlineSizeChanged(object sender, EventArgs e) => UpdateAppliedMarker();
 
     void UpdateAppliedMarker()
     {
@@ -86,15 +151,22 @@ public partial class LayoutTestPage : ContentPage
 
     void ApplyScenario(string spec)
     {
+        var trace = new System.Text.StringBuilder();
+        void T(string s) { trace.Append(s); trace.Append(" | "); DebugTraceLabel.Text = trace.ToString(); }
         try
         {
+            T($"RECV:{spec}");
+            T($"PRE:entry='{ScenarioEntry.Text}' hb.WR={HostBorder.WidthRequest:0} hb.HR={HostBorder.HeightRequest:0} hb.HO={HostBorder.HorizontalOptions.Alignment} hb.VO={HostBorder.VerticalOptions.Alignment} hb.W={HostBorder.Width:0} hb.H={HostBorder.Height:0}");
+
             var (control, wMode, wValue, hMode, hValue, opts) = Parse(spec);
+            T($"PARSED:{control} {wMode}={wValue} x {hMode}={hValue} opts=[{string.Join(",", opts)}]");
 
             // Update _lastSpec FIRST so SizeChanged events triggered by the
             // WidthRequest/HeightRequest assignments below report the new spec.
             _lastSpec = spec;
 
             ApplyHostSizing(wMode, wValue, hMode, hValue);
+            T($"SIZED:hb.WR={HostBorder.WidthRequest:0} hb.HR={HostBorder.HeightRequest:0} hb.HO={HostBorder.HorizontalOptions.Alignment} hb.VO={HostBorder.VerticalOptions.Alignment} po.HO={PickerOutline.HorizontalOptions.Alignment} po.VO={PickerOutline.VerticalOptions.Alignment}");
 
             // Per-scenario host bg (the canvas behind the picker). Applied
             // unconditionally so the runtime-toggle path picks up bg= changes.
@@ -105,13 +177,25 @@ public partial class LayoutTestPage : ContentPage
             // instead of replacing the view. This is what exercises the
             // runtime-invalidation code path (the bug class that broke when
             // ShowAlpha was toggled on a live wheel).
-            var sizeKey = $"{wMode}:{wValue}x{hMode}:{hValue}";
+            //
+            // Exception: changing slider-visibility flags via runtime mutation
+            // hits a MAUI handler-lifecycle race (newly-added slider Children
+            // sometimes render at zero size). For wheel scenarios where the
+            // alpha/lumslider/vertical/lumwheel flags differ from the last
+            // applied set, force a full rebuild. The runtime-toggle path is
+            // still exercised by RuntimeInvarianceTests via single-flag toggles
+            // and by tests that re-apply the same scenario.
+            var sizeKey    = $"{wMode}:{wValue}x{hMode}:{hValue}";
+            var featureKey = MakeFeatureKey(control, opts);
             if (control == _lastControl && sizeKey == _lastSizeKey
+                && featureKey == _lastFeatureKey
                 && ScenarioContent.Content is View existing
                 && TryReconfigure(existing, control, opts))
             {
+                T($"RECONFIGURED (same control+size+features)");
                 StatusLabel.Text = $"toggled: {spec}";
                 UpdateAppliedMarker();
+                T($"DONE marker={AppliedLabel.Text}");
                 return;
             }
 
@@ -123,14 +207,18 @@ public partial class LayoutTestPage : ContentPage
                 "rgb"      => new RGBSliders       { AutomationId = "ScenarioControl", HorizontalOptions = LayoutOptions.Fill, VerticalOptions = LayoutOptions.Fill },
                 _          => throw new ArgumentException($"Unknown control '{control}'"),
             };
+            T($"BUILT-CHILD type={child.GetType().Name}");
             ScenarioContent.Content = child;
-            _lastControl = control; _lastSizeKey = sizeKey;
+            T($"CONTENT-SET; hb.W={HostBorder.Width:0} hb.H={HostBorder.Height:0} sc.W={ScenarioContent.Width:0} sc.H={ScenarioContent.Height:0}");
+            _lastControl = control; _lastSizeKey = sizeKey; _lastFeatureKey = featureKey;
 
             StatusLabel.Text  = $"applied: {spec}";
             UpdateAppliedMarker();
+            T($"DONE marker={AppliedLabel.Text}");
         }
         catch (Exception ex)
         {
+            T($"EXCEPTION:{ex.GetType().Name}:{ex.Message}");
             StatusLabel.Text  = "error: " + ex.Message;
             AppliedLabel.Text = "ERROR:" + ex.Message;
         }

@@ -45,8 +45,20 @@ public abstract class AppFixtureBase : IDisposable
             TimeSpan.FromSeconds(120));
         Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
 
-        // Maximize so layout scenarios up to 800×800 fit inside the client area.
-        try { Driver.Manage().Window.Maximize(); } catch { /* best effort */ }
+        // For the LayoutTest harness we pin the window to a fixed logical
+        // size in App.CreateWindow so every machine / CI runner produces
+        // identical layouts. Maximizing here would override that pin. We
+        // therefore skip Maximize when LAYOUT_TEST=1 is in our env (the
+        // env we propagated to the child app).
+        bool layoutTest = false;
+        var envDict = new System.Collections.Specialized.StringDictionary();
+        ConfigureEnvironment(envDict);
+        if (envDict.ContainsKey("LAYOUT_TEST") && envDict["LAYOUT_TEST"] == "1")
+            layoutTest = true;
+        if (!layoutTest)
+        {
+            try { Driver.Manage().Window.Maximize(); } catch { /* best effort */ }
+        }
     }
 
     /// <summary>Override to add env vars (e.g. LAYOUT_TEST=1).</summary>

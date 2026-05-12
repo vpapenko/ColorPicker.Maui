@@ -14,19 +14,35 @@
                     AutomationId="ApplyScenario"
                     Text="Apply"
                     Clicked="OnApplyClicked" />
+            <Button x:Name="CaptureButton"
+                    AutomationId="CaptureCanvas"
+                    Text="Capture"
+                    Clicked="OnCaptureClicked" />
             <Label x:Name="StatusLabel"
                    AutomationId="ScenarioStatus"
                    VerticalOptions="Center"
                    Text="ready" />
+            <Label x:Name="CapturePathLabel"
+                   AutomationId="CapturePath"
+                   VerticalOptions="Center"
+                   Text="" />
         </HorizontalStackLayout>
 
         <!-- Marker label tests can poll to detect when Apply finished, plus
              actual measured bounds (UIA size queries on a constrained Border
              are unreliable in MAUI/WinUI). Format: "spec|hostWxH|ctrlWxH" -->
-        <Label Grid.Row="1"
-               x:Name="AppliedLabel"
-               AutomationId="ScenarioApplied"
-               Text="initial" />
+        <VerticalStackLayout Grid.Row="1">
+            <Label x:Name="AppliedLabel"
+                   AutomationId="ScenarioApplied"
+                   Text="initial" />
+            <!-- DEBUG: step-by-step trace of the last ApplyScenario call.
+                 Drives the regression-isolation tests. -->
+            <Label x:Name="DebugTraceLabel"
+                   AutomationId="DebugTrace"
+                   Text=""
+                   FontSize="6"
+                   LineBreakMode="WordWrap" />
+        </VerticalStackLayout>
 
         <!-- Outer host: top-left aligned so screen position is predictable.
              Wrapped in HostContainer (a Grid filling row 2) so tests can
@@ -35,18 +51,41 @@
               x:Name="HostContainer"
               AutomationId="HostContainer"
               SizeChanged="OnHostSizeChanged">
-            <Border x:Name="HostBorder"
-                    AutomationId="ScenarioHost"
-                    StrokeThickness="0"
-                    Stroke="Transparent"
-                    BackgroundColor="White"
+            <!-- 2px container outline: drawn over the HostContainer viewport,
+                 doesn't intercept input or affect layout of the picker. -->
+            <Border x:Name="ContainerOutline"
+                    StrokeThickness="2"
+                    Stroke="Blue"
+                    BackgroundColor="Transparent"
+                    InputTransparent="True"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Fill" />
+            <!-- 1px picker outline: wraps HostBorder so the stroke sits
+                 OUTSIDE the picker's W×H area (Border stroke expands layout).
+                 LayoutOptions mirror HostBorder's so Fill scenarios can
+                 actually fill the available viewport. -->
+            <Border x:Name="PickerOutline"
+                    StrokeThickness="1"
+                    Stroke="Red"
+                    BackgroundColor="Transparent"
                     HorizontalOptions="Start"
                     VerticalOptions="Start"
+                    Padding="0"
                     Margin="0"
-                    SizeChanged="OnHostSizeChanged">
-                <ContentView x:Name="ScenarioContent"
-                             AutomationId="ScenarioContent"
-                             SizeChanged="OnHostSizeChanged" />
+                    SizeChanged="OnPickerOutlineSizeChanged">
+                <Border x:Name="HostBorder"
+                        AutomationId="ScenarioHost"
+                        StrokeThickness="0"
+                        Stroke="Transparent"
+                        BackgroundColor="White"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Start"
+                        Margin="0"
+                        SizeChanged="OnHostSizeChanged">
+                    <ContentView x:Name="ScenarioContent"
+                                 AutomationId="ScenarioContent"
+                                 SizeChanged="OnHostSizeChanged" />
+                </Border>
             </Border>
         </Grid>
     </Grid>
