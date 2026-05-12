@@ -70,6 +70,13 @@ public class VisualProbe
         foreach (var s in new[] {"wheel:300x300","wheel:600x600","triangle:300x300"})
             Emit("padding-" + s.Replace(":","-"), s);
 
+        // Triangle ring modes (rotate-with-hue vs. fixed-triangle rotating ring)
+        foreach (var sz in new[] { "400x400", "300x600", "600x300" })
+        {
+            Emit($"triangle-rotate-{sz}",   $"triangle:{sz}");          // default: RotateTriangleByHue=true
+            Emit($"triangle-norotate-{sz}", $"triangle:{sz}:norotate"); // ring rotates around fixed triangle
+        }
+
         // Background
         foreach (var s in new[] {
             "wheel:400x400:bg=red","wheel:400x400:bg=blue","wheel:400x400:bg=yellow",

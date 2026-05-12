@@ -63,18 +63,32 @@ public partial class LayoutTestPage : ContentPage
 
     static string MakeFeatureKey(string control, string[] opts)
     {
-        // Only feature flags that affect the wheel's children list matter for
+        // Only feature flags that affect the picker's children list matter for
         // the rebuild decision. bg/wbg/etc. are safe to mutate at runtime.
-        if (control != "wheel") return "";
-        var flags = new List<string>();
-        foreach (var o in opts)
+        if (control == "wheel")
         {
-            var t = o.Trim().ToLowerInvariant();
-            if (t is "alpha" or "lumslider" or "nolumwheel" or "vertical")
-                flags.Add(t);
+            var flags = new List<string>();
+            foreach (var o in opts)
+            {
+                var t = o.Trim().ToLowerInvariant();
+                if (t is "alpha" or "lumslider" or "nolumwheel" or "vertical")
+                    flags.Add(t);
+            }
+            flags.Sort(StringComparer.Ordinal);
+            return string.Join(",", flags);
         }
-        flags.Sort(StringComparer.Ordinal);
-        return string.Join(",", flags);
+        if (control == "triangle")
+        {
+            var flags = new List<string>();
+            foreach (var o in opts)
+            {
+                var t = o.Trim().ToLowerInvariant();
+                if (t is "norotate" or "rotate") flags.Add(t);
+            }
+            flags.Sort(StringComparer.Ordinal);
+            return string.Join(",", flags);
+        }
+        return "";
     }
 
     void ApplyHostSizing(SizeMode wMode, double wValue, SizeMode hMode, double hValue)
@@ -254,7 +268,19 @@ public partial class LayoutTestPage : ContentPage
         if (control == "triangle" && existing is ColorTriangle t)
         {
             t.WheelBackgroundColor = ParseColorOpt(opts, "wbg") ?? Colors.Transparent;
-            return opts.All(o => IsKvOpt(o, out _, out _));
+            t.RotateTriangleByHue  = true;
+            foreach (var opt in opts)
+            {
+                if (IsKvOpt(opt, out _, out _)) continue;
+                switch (opt.Trim().ToLowerInvariant())
+                {
+                    case "norotate": t.RotateTriangleByHue = false; break;
+                    case "rotate":   t.RotateTriangleByHue = true;  break;
+                    case "":         break;
+                    default:         throw new ArgumentException("Unknown option: " + opt);
+                }
+            }
+            return true;
         }
         // Other control types have no toggleable flags supported yet — fall
         // through and let the caller rebuild when bare.
@@ -295,6 +321,17 @@ public partial class LayoutTestPage : ContentPage
             HorizontalOptions = LayoutOptions.Fill,
             VerticalOptions   = LayoutOptions.Fill,
         };
+        foreach (var opt in opts)
+        {
+            if (IsKvOpt(opt, out _, out _)) continue;
+            switch (opt.Trim().ToLowerInvariant())
+            {
+                case "norotate": t.RotateTriangleByHue = false; break;
+                case "rotate":   t.RotateTriangleByHue = true;  break;
+                case "":         break;
+                default:         throw new ArgumentException("Unknown option: " + opt);
+            }
+        }
         var wbg = ParseColorOpt(opts, "wbg");
         if (wbg is not null) t.WheelBackgroundColor = wbg;
         return t;
