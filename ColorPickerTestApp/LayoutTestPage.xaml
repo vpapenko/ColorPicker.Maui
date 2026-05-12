@@ -50,6 +50,7 @@
         <Grid Grid.Row="2"
               x:Name="HostContainer"
               AutomationId="HostContainer"
+              BackgroundColor="Yellow"
               SizeChanged="OnHostSizeChanged">
             <!-- 2px container outline: drawn over the HostContainer viewport,
                  doesn't intercept input or affect layout of the picker. -->
@@ -60,19 +61,6 @@
                     InputTransparent="True"
                     HorizontalOptions="Fill"
                     VerticalOptions="Fill" />
-            <!-- 1px picker outline: wraps HostBorder so the stroke sits
-                 OUTSIDE the picker's W×H area (Border stroke expands layout).
-                 LayoutOptions mirror HostBorder's so Fill scenarios can
-                 actually fill the available viewport. -->
-            <Border x:Name="PickerOutline"
-                    StrokeThickness="1"
-                    Stroke="Red"
-                    BackgroundColor="Transparent"
-                    HorizontalOptions="Start"
-                    VerticalOptions="Start"
-                    Padding="0"
-                    Margin="0"
-                    SizeChanged="OnPickerOutlineSizeChanged">
                 <Border x:Name="HostBorder"
                         AutomationId="ScenarioHost"
                         StrokeThickness="0"
@@ -80,13 +68,31 @@
                         BackgroundColor="White"
                         HorizontalOptions="Start"
                         VerticalOptions="Start"
+                        Padding="0"
                         Margin="0"
                         SizeChanged="OnHostSizeChanged">
-                    <ContentView x:Name="ScenarioContent"
-                                 AutomationId="ScenarioContent"
-                                 SizeChanged="OnHostSizeChanged" />
+                    <!-- 1px picker outline: wraps just the actual control so the
+                         red stroke reflects the control's *useful* footprint
+                         (which, for aspect-locked controls, is smaller than the
+                         requested cell — e.g. a wheel asked for 300×600 has a
+                         300×300 useful area). HO/VO=Start anchors it to the
+                         top-left of the (possibly larger) HostBorder cell. -->
+                    <Border x:Name="PickerOutline"
+                            StrokeThickness="1"
+                            Stroke="Red"
+                            BackgroundColor="Transparent"
+                            HorizontalOptions="Start"
+                            VerticalOptions="Start"
+                            Padding="0"
+                            Margin="0"
+                            SizeChanged="OnPickerOutlineSizeChanged">
+                        <ContentView x:Name="ScenarioContent"
+                                     AutomationId="ScenarioContent"
+                                     HorizontalOptions="Start"
+                                     VerticalOptions="Start"
+                                     SizeChanged="OnHostSizeChanged" />
+                    </Border>
                 </Border>
-            </Border>
-        </Grid>
+            </Grid>
     </Grid>
 </ContentPage>

@@ -6,7 +6,10 @@ public abstract class SliderPicker : SkiaSharpPickerBase
 
     //	Constructor
     //
-    public SliderPicker() => UpdateSliders();
+    public SliderPicker()
+    {
+        UpdateSliders();
+    }
 
     public static readonly BindableProperty VerticalProperty 
                          = BindableProperty.Create( nameof(Vertical),
@@ -29,7 +32,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         }
     }
 
-    public override float GetPickerRadiusPixels( SKSize canvasSize )    => Math.Min( canvasSize.Width, canvasSize.Height ) / _sliders.Count / 2.2F;
+    public override float GetPickerRadiusPixels( SKSize canvasSize )    => ( Vertical ? canvasSize.Width : canvasSize.Height ) / _sliders.Count / 2.2F;
     public override float GetPickerRadiusPixels()                       => GetPickerRadiusPixels( GetCanvasSize() );
 
     protected abstract IEnumerable<SliderBase> GetSliders();

@@ -26,6 +26,7 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
                                                     typeof(ColorPickerViewBase),
                                                     null,
                                                     propertyChanged: HandleConnectedColorPicker );
+
     //  Backing store
     //
     public Color SelectedColor 

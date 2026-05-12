@@ -21,7 +21,8 @@ internal static class CanvasCapture
         int timeoutMs = 2000,
         SKColor? backgroundColor = null,
         double sceneWidth = 0,
-        double sceneHeight = 0)
+        double sceneHeight = 0,
+        IEnumerable<(double X, double Y, double W, double H, SKColor? Fill, SKColor? Stroke)>? overlays = null)
     {
         var canvases = new List<(SKCanvasView view, double logicalX, double logicalY)>();
         Collect(root, 0, 0, canvases);
@@ -116,8 +117,37 @@ internal static class CanvasCapture
         using (var canvas = new SKCanvas(composite))
         {
             canvas.Clear(backgroundColor ?? SKColors.Transparent);
+            if (overlays != null)
+            {
+                foreach (var (ox, oy, ow, oh, fill, stroke) in overlays)
+                {
+                    var rect = new SKRect(
+                        (float)(ox * dpiScale), (float)(oy * dpiScale),
+                        (float)((ox + ow) * dpiScale), (float)((oy + oh) * dpiScale));
+                    if (fill is { } f)
+                        using (var p = new SKPaint { Color = f, Style = SKPaintStyle.Fill })
+                            canvas.DrawRect(rect, p);
+                    if (stroke is { } s)
+                        using (var p = new SKPaint { Color = s, Style = SKPaintStyle.Stroke, StrokeWidth = (float)(2 * dpiScale) })
+                            canvas.DrawRect(rect, p);
+                }
+            }
             foreach (var (img, x, y) in placed)
                 canvas.DrawImage(img, x, y);
+            if (overlays != null)
+            {
+                foreach (var (ox, oy, ow, oh, _, stroke) in overlays)
+                {
+                    if (stroke is { } s)
+                    {
+                        var rect = new SKRect(
+                            (float)(ox * dpiScale), (float)(oy * dpiScale),
+                            (float)((ox + ow) * dpiScale), (float)((oy + oh) * dpiScale));
+                        using var p = new SKPaint { Color = s, Style = SKPaintStyle.Stroke, StrokeWidth = (float)(2 * dpiScale) };
+                        canvas.DrawRect(rect, p);
+                    }
+                }
+            }
         }
 
         try

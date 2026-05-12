@@ -28,25 +28,47 @@ public partial class LayoutTestPage : ContentPage
             CapturePathLabel.Text = $"capturing #{seq}";
             await Task.Yield();
             await Task.Delay(50);
-            View? root = ScenarioContent.Content as View;
+            View? root = HostContainer;
             if (root is null)
             {
                 CapturePathLabel.Text = $"#{seq} no content";
                 return;
             }
-            // Scene-composite mode: paint HostBorder's background color into the
-            // composite first, sized to HostBorder's logical pixels (scaled by DPI).
-            var bg = HostBorder.BackgroundColor ?? Colors.White;
+            // Scene-composite mode: paint HostContainer's BG (yellow in debug) so
+            // we see the whole viewport with all 3 borders (yellow > white > red).
+            var bg = HostContainer.BackgroundColor ?? Colors.White;
             var skBg = new SkiaSharp.SKColor(
                 (byte)(bg.Red   * 255),
                 (byte)(bg.Green * 255),
                 (byte)(bg.Blue  * 255),
                 (byte)(bg.Alpha * 255));
+            // Compute HostBorder + PickerOutline positions in HostContainer coords.
+            Point Loc(View v)
+            {
+                double x = 0, y = 0;
+                Element? e = v;
+                while (e is View vv && e != (Element)HostContainer)
+                {
+                    x += vv.X; y += vv.Y;
+                    e = vv.Parent as Element;
+                }
+                return new Point(x, y);
+            }
+            var hbLoc = Loc(HostBorder);
+            var poLoc = Loc(PickerOutline);
+            var overlays = new[]
+            {
+                ((double)hbLoc.X, (double)hbLoc.Y, HostBorder.Width, HostBorder.Height,
+                 (SkiaSharp.SKColor?)new SkiaSharp.SKColor(255,255,255), (SkiaSharp.SKColor?)null),
+                ((double)poLoc.X, (double)poLoc.Y, PickerOutline.Width, PickerOutline.Height,
+                 (SkiaSharp.SKColor?)null, (SkiaSharp.SKColor?)new SkiaSharp.SKColor(255,0,0)),
+            };
             var result = await CanvasCapture.CaptureAsync(
                 root, outPath,
                 backgroundColor: skBg,
-                sceneWidth: HostBorder.Width,
-                sceneHeight: HostBorder.Height);
+                sceneWidth: HostContainer.Width,
+                sceneHeight: HostContainer.Height,
+                overlays: overlays);
             CapturePathLabel.Text = $"#{seq} saved {result.PixelWidth}x{result.PixelHeight} ({result.CanvasCount} canvases): {outPath}";
         }
         catch (Exception ex)
@@ -105,23 +127,26 @@ public partial class LayoutTestPage : ContentPage
 
     void ApplyHostSizing(SizeMode wMode, double wValue, SizeMode hMode, double hValue)
     {
+        // HostBorder = the requested cell. The control sits inside it (via
+        // PickerOutline + ScenarioContent) and reports its own DesiredSize;
+        // for aspect-locked controls (wheel, triangle) that DesiredSize is
+        // the natural square so PickerOutline auto-wraps to just the useful
+        // area. For free-aspect controls (sliders) DesiredSize == the cell.
+        //
         // Width
         switch (wMode)
         {
             case SizeMode.Fixed:
-                HostBorder.WidthRequest    = wValue;
+                HostBorder.WidthRequest      = wValue;
                 HostBorder.HorizontalOptions = LayoutOptions.Start;
-                PickerOutline.HorizontalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Auto:
-                HostBorder.WidthRequest    = -1;
+                HostBorder.WidthRequest      = -1;
                 HostBorder.HorizontalOptions = LayoutOptions.Start;
-                PickerOutline.HorizontalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Fill:
-                HostBorder.WidthRequest    = -1;
+                HostBorder.WidthRequest      = -1;
                 HostBorder.HorizontalOptions = LayoutOptions.Fill;
-                PickerOutline.HorizontalOptions = LayoutOptions.Fill;
                 break;
         }
         // Height
@@ -130,17 +155,14 @@ public partial class LayoutTestPage : ContentPage
             case SizeMode.Fixed:
                 HostBorder.HeightRequest    = hValue;
                 HostBorder.VerticalOptions  = LayoutOptions.Start;
-                PickerOutline.VerticalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Auto:
                 HostBorder.HeightRequest    = -1;
                 HostBorder.VerticalOptions  = LayoutOptions.Start;
-                PickerOutline.VerticalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Fill:
                 HostBorder.HeightRequest    = -1;
                 HostBorder.VerticalOptions  = LayoutOptions.Fill;
-                PickerOutline.VerticalOptions = LayoutOptions.Fill;
                 break;
         }
     }
@@ -150,7 +172,6 @@ public partial class LayoutTestPage : ContentPage
     void UpdateAppliedMarker()
     {
         // Format: "spec|hostX,Y,WxH|ctrlX,Y,WxH|viewportX,Y,WxH"
-        // Coordinates are MAUI logical units (the test fixture knows DPI scale).
         var hX = HostBorder.X;       var hY = HostBorder.Y;
         var hW = HostBorder.Width;   var hH = HostBorder.Height;
         var cX = ScenarioContent.X;  var cY = ScenarioContent.Y;
@@ -318,12 +339,7 @@ public partial class LayoutTestPage : ContentPage
 
     static T MakeSliders<T>(string[] opts) where T : SliderPickerWithAlpha, new()
     {
-        var s = new T
-        {
-            AutomationId      = "ScenarioControl",
-            HorizontalOptions = LayoutOptions.Fill,
-            VerticalOptions   = LayoutOptions.Fill,
-        };
+        var s = new T { AutomationId = "ScenarioControl" };
         foreach (var opt in opts)
         {
             if (IsKvOpt(opt, out _, out _)) continue;
@@ -340,12 +356,7 @@ public partial class LayoutTestPage : ContentPage
 
     static ColorWheel MakeWheel(string[] opts)
     {
-        var wheel = new ColorWheel
-        {
-            AutomationId      = "ScenarioControl",
-            HorizontalOptions = LayoutOptions.Fill,
-            VerticalOptions   = LayoutOptions.Fill,
-        };
+        var wheel = new ColorWheel { AutomationId = "ScenarioControl" };
         foreach (var opt in opts)
         {
             if (IsKvOpt(opt, out _, out _)) continue;
@@ -366,12 +377,7 @@ public partial class LayoutTestPage : ContentPage
     }
     static ColorTriangle MakeTriangle(string[] opts)
     {
-        var t = new ColorTriangle
-        {
-            AutomationId      = "ScenarioControl",
-            HorizontalOptions = LayoutOptions.Fill,
-            VerticalOptions   = LayoutOptions.Fill,
-        };
+        var t = new ColorTriangle { AutomationId = "ScenarioControl" };
         foreach (var opt in opts)
         {
             if (IsKvOpt(opt, out _, out _)) continue;

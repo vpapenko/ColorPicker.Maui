@@ -58,6 +58,8 @@ public class ColorTriangle : SkiaSharpPickerBase
     /// </summary>
     public ColorTriangle() : base()
     {
+        HorizontalOptions = LayoutOptions.Center;
+        VerticalOptions   = LayoutOptions.Center;
         PickerRadiusScale = 0.035F;
         for (var i = 128; i >= -127; i--)
         {
