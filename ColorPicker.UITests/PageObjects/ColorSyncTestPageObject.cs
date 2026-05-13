@@ -1,8 +1,10 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
+using OpenQA.Selenium.Interactions;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using PointerInputDevice = OpenQA.Selenium.Appium.Interactions.PointerInputDevice;
 
 namespace ColorPicker.UITests.PageObjects;
 
@@ -159,4 +161,53 @@ public sealed class ColorSyncTestPageObject
     }
 
     private static string SafeText(AppiumElement e) { try { return e.Text ?? ""; } catch { return ""; } }
+
+    /// <summary>Tap at absolute screen coordinates (uses a touch pointer with a
+    /// short dwell so SkiaSharp gesture recognizers register the press).</summary>
+    public void TapAt(int x, int y)
+    {
+        var finger = new PointerInputDevice(PointerKind.Touch, "finger");
+        var seq = new ActionSequence(finger, 0);
+        seq.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, x, y, TimeSpan.Zero));
+        seq.AddAction(finger.CreatePointerDown(MouseButton.Left));
+        seq.AddAction(finger.CreatePause(TimeSpan.FromMilliseconds(120)));
+        seq.AddAction(finger.CreatePointerUp(MouseButton.Left));
+        _driver.PerformActions(new List<ActionSequence> { seq });
+    }
+
+    /// <summary>Tap inside a cell's wheel-area at a polar position relative to its
+    /// centered square. <paramref name="hue"/> is 0..1 (0 = right / 3 o'clock, going
+    /// counter-clockwise to match ColorWheel paint), <paramref name="sat"/> is 0..1
+    /// (0 = center, 1 = edge of disc). <paramref name="discFraction"/> is the
+    /// fraction of the half-square that the disc occupies.</summary>
+    public void TapPolar(string cellAutomationId, double hue, double sat, double discFraction = 0.32)
+    {
+        var b = GetWheelAreaBounds(cellAutomationId);
+        var side = Math.Min(b.Width, b.Height);
+        var cx = b.X + (b.Width  - side) / 2.0 + side / 2.0;
+        var cy = b.Y + (b.Height - side) / 2.0 + side / 2.0;
+        var radius = side / 2.0 * discFraction * sat * 2.0;
+        // ColorCircle convention: angleHS = (0.5 - hue) * 2π = π - hue*2π
+        // (tested against ColorCircle.cs line 167 — hue=0/red is at 9 o'clock).
+        var theta = Math.PI - hue * 2 * Math.PI;
+        TapAt((int)Math.Round(cx + radius * Math.Cos(theta)),
+              (int)Math.Round(cy + radius * Math.Sin(theta)));
+    }
+
+    /// <summary>Wait until OutputHex changes to something different from
+    /// <paramref name="previousHex"/>. Returns the new value, or throws on timeout.</summary>
+    public string WaitForOutputHexChange(string previousHex, TimeSpan? timeout = null)
+    {
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(3));
+        string last = previousHex;
+        while (DateTime.UtcNow < deadline)
+        {
+            last = OutputHexText;
+            if (!string.Equals(last, previousHex, StringComparison.OrdinalIgnoreCase))
+                return last;
+            Thread.Sleep(50);
+        }
+        throw new TimeoutException(
+            $"OutputHex never changed from '{previousHex}' (last value: '{last}').");
+    }
 }

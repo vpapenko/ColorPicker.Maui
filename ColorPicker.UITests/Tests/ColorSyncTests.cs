@@ -130,9 +130,9 @@ public sealed class ColorSyncTests : IClassFixture<SyncTestAppFixture>
         var cx = ox + side / 2.0;
         var cy = oy + side / 2.0;
         var radius = side / 2.0 * innerFraction * sat * 2.0; // sat*2 cancels the 0.5 factor
-        // Hue angle: 0 = right (3 o'clock), increasing counter-clockwise.
-        // ColorWheel paints hue starting at 3 o'clock going clockwise (matches HSL convention).
-        var theta = -hue * 2 * Math.PI;
+        // Hue angle: ColorCircle paints angleHS = (0.5 - hue) * 2π so hue=0/red
+        // sits at 9 o'clock (left), increasing clockwise. See ColorCircle.cs:167.
+        var theta = Math.PI - hue * 2 * Math.PI;
         var px = (int)Math.Round(cx + radius * Math.Cos(theta));
         var py = (int)Math.Round(cy + radius * Math.Sin(theta));
 
