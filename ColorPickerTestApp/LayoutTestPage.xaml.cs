@@ -56,10 +56,18 @@ public partial class LayoutTestPage : ContentPage
             }
             var hbLoc = Loc(HostBorder);
             var poLoc = Loc(PickerOutline);
+            // Use HostBorder.BackgroundColor (tracked from bg= option) so
+            // capture matches the visible cell color.
+            var hbBg = HostBorder.BackgroundColor ?? Colors.Yellow;
+            var hbSk = new SkiaSharp.SKColor(
+                (byte)(hbBg.Red   * 255),
+                (byte)(hbBg.Green * 255),
+                (byte)(hbBg.Blue  * 255),
+                (byte)(hbBg.Alpha * 255));
             var overlays = new[]
             {
                 ((double)hbLoc.X, (double)hbLoc.Y, HostBorder.Width, HostBorder.Height,
-                 (SkiaSharp.SKColor?)new SkiaSharp.SKColor(255,255,0), (SkiaSharp.SKColor?)new SkiaSharp.SKColor(0,0,255)),
+                 (SkiaSharp.SKColor?)hbSk, (SkiaSharp.SKColor?)new SkiaSharp.SKColor(0,0,255)),
                 ((double)poLoc.X, (double)poLoc.Y, PickerOutline.Width, PickerOutline.Height,
                  (SkiaSharp.SKColor?)null, (SkiaSharp.SKColor?)new SkiaSharp.SKColor(255,0,0)),
             };
@@ -256,7 +264,11 @@ public partial class LayoutTestPage : ContentPage
 
             // Per-scenario host bg (the canvas behind the picker). Applied
             // unconditionally so the runtime-toggle path picks up bg= changes.
-            HostBorder.BackgroundColor = ParseColorOpt(opts, "bg") ?? Colors.White;
+            // NOTE: MAUI Border ignores BackgroundColor — must use Background brush.
+            // Default is yellow (debug visual marker).
+            var hostBg = ParseColorOpt(opts, "bg") ?? Colors.Yellow;
+            HostBorder.Background = new SolidColorBrush(hostBg);
+            HostBorder.BackgroundColor = hostBg; // tracked for overlay code
 
             // Runtime-toggle path: if neither the control type nor the host
             // spec changed, mutate the *existing* instance's feature flags
