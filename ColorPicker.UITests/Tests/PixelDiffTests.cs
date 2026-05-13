@@ -8,13 +8,13 @@ using Xunit;
 namespace ColorPicker.UITests.Tests;
 
 /// <summary>
-/// Tier 6 — Layer 2 golden-image regression tests.
+/// Pixel-by-pixel regression tests against committed reference images.
 ///
-/// Each scenario captures the host rectangle, crops it from the desktop
-/// screenshot, and compares against a committed reference PNG (per DPI).
-/// Catches subtle rendering regressions (gradient direction, picker dot
-/// position, anti-aliasing changes, blend mode shifts) that the bounds-
-/// based tiers can't see.
+/// Each scenario captures the host rectangle and compares against a
+/// reference PNG stored at <c>References/dpi-{N}/{id}.png</c>. Catches
+/// subtle rendering regressions (gradient direction, picker dot position,
+/// anti-aliasing changes, blend mode shifts) that the bounds-based tests
+/// can't see.
 ///
 /// Workflow when visuals change intentionally:
 ///   1. Set <c>REGEN_REFS=1</c> and run the suite.
@@ -26,11 +26,11 @@ namespace ColorPicker.UITests.Tests;
 /// up to 1.5% of pixels may exceed that (covers edge AA + cursor drift).
 /// </summary>
 [Collection(ColorPicker.UITests.Infrastructure.AppiumServerCollection.Name)]
-public class Tier6_GoldenImageTests
+public class PixelDiffTests
     : IClassFixture<AppiumServerFixture>, IClassFixture<LayoutTestAppFixture>
 {
     private readonly LayoutTestAppFixture _fixture;
-    public Tier6_GoldenImageTests(LayoutTestAppFixture fixture) => _fixture = fixture;
+    public PixelDiffTests(LayoutTestAppFixture fixture) => _fixture = fixture;
 
     [DllImport("user32.dll")] private static extern int GetDpiForWindow(IntPtr hwnd);
 
@@ -81,7 +81,7 @@ public class Tier6_GoldenImageTests
     {
         double bad = ReferenceImage.FractionMismatched(golden, actual, perPixelTol);
         Assert.True(bad <= maxBadFrac,
-            $"Golden mismatch for '{id}': {bad:P2} of pixels exceed Δ={perPixelTol} " +
+            $"Pixel diff for '{id}': {bad:P2} of pixels exceed Δ={perPixelTol} " +
             $"(allowed: {maxBadFrac:P2}). Reference: {refPath}. " +
             $"Re-run with {ReferenceImage.RegenEnvVar}=1 to regenerate if change is intentional.");
     }
