@@ -57,13 +57,15 @@ public sealed class ColorSyncTests : IClassFixture<SyncTestAppFixture>
     // ============================== B: VISUAL REFERENCE POINTS ==============================
 
     /// <summary>
-    /// For each test color, capture the window and assert that:
-    ///   - MasterWheel disc has a dark dot at the expected (hue,sat) location
-    ///     (proves the master wheel itself drew its picker correctly), AND
-    ///   - C_TriRotate's outer rim has a dark mark at the expected hue angle
-    ///     (proves a non-master, attached-via-AttachedColorPicker control synced).
-    /// We use a coarse darkness threshold so the test tolerates AA / DPI variation;
-    /// the goal is "picker indicator is roughly where it should be", not pixel-perfect.
+    /// For each test color, capture the window and assert that the picker
+    /// indicators on MasterWheel and C_TriRotate are at the EXACT positions
+    /// captured in <see cref="ColorSyncExpectedPickerOffsets"/>. Positions are
+    /// stored as (relX, relY) inside each cell's wheel-area bounds, so this
+    /// test contains zero hue/sat/angle math — just lookup + sample.
+    ///
+    /// Desaturated colors (gray/white/black) skip the visual check because the
+    /// picker sits at the desaturated center where there is no reliable dark
+    /// pixel to detect; the programmatic test above already covers them.
     /// </summary>
     [Theory]
     [MemberData(nameof(SyncColors))]
@@ -73,75 +75,40 @@ public sealed class ColorSyncTests : IClassFixture<SyncTestAppFixture>
         _ = a; _ = label;
 
         _fx.Page.SetHex(hex);
-        // Allow a frame for the SkiaSharp surfaces to redraw.
-        Thread.Sleep(200);
-
+        Thread.Sleep(200); // SkiaSharp redraw flush
         using var img = _fx.Page.CaptureWindow();
 
-        var (h, s, _) = RgbToHsl(r, g, b);
+        var (_, s, _) = RgbToHsl(r, g, b);
+        if (s < 0.20) return; // see XML doc
 
-        // For desaturated colors (gray, white, black) the wheel picker sits at the
-        // center where the disc is itself near-white -> the dark dot detection isn't
-        // reliable. The programmatic test above already covers those cases; here we
-        // only do the visual check for clearly saturated colors.
-        if (s < 0.20) return;
-
-        // --- 1. MasterWheel: picker on the inner color circle at polar (hue, sat) ---
-        // ColorWheel paints the hue-sat disc inside the outer luminosity ring.
-        // The disc occupies roughly the inner 70% of the square element. We sample
-        // a generous neighbourhood (radius 8 px) around the predicted point and
-        // accept if ANY pixel in that neighbourhood is "dark enough" to be the
-        // picker outline — this tolerates the exact disc-vs-ring fraction that
-        // the wheel's MeasureOverride happens to produce.
-        AssertWheelPickerDarkSpot(img, "C_WheelDefault", h, s,
-            innerFraction: 0.32, // sat-axis fraction of the half-square
-            tolerancePx:  18,
-            darkLuma:    200);
-
-        // --- 2. C_TriRotate: line picker on outer hue ring at angle = hue ---
-        // The triangle's hue ring matches the wheel's outer ring. The picker is a
-        // short black line crossing the rim at the hue's angle.
-        AssertWheelPickerDarkSpot(img, "C_TriRotate", h, sat: 1.0,
-            innerFraction: 0.46, // sample on the rim (just inside outer edge)
-            tolerancePx:  18,
-            darkLuma:    200);
+        AssertPickerAt(img, "C_WheelDefault", hex);
+        AssertPickerAt(img, "C_TriRotate",    hex);
     }
 
     /// <summary>
-    /// Sample a small neighbourhood inside the bounds of <paramref name="automationId"/>
-    /// at the polar location implied by hue/sat (relative to the centered square of
-    /// the element) and assert at least one pixel is darker than <paramref name="darkLuma"/>.
-    ///
-    /// hue is 0..1 (0=red), sat is 0..1 (0=center, 1=edge). innerFraction is the
-    /// fraction of the half-square that defines the picker radius.
+    /// Look up the empirical (relX, relY) for this (cell, color) and assert the
+    /// rendered picker dark spot is within <see cref="TolerancePx"/> of it.
     /// </summary>
-    private void AssertWheelPickerDarkSpot(
-        Image<Rgba32> img, string automationId,
-        double hue, double sat,
-        double innerFraction,
-        int tolerancePx,
-        int darkLuma)
+    private void AssertPickerAt(Image<Rgba32> img, string cellId, string hex)
     {
-        var b = _fx.Page.GetWheelAreaBounds(automationId);
-        // Centered square inside the element's bounds.
-        var side = Math.Min(b.Width, b.Height);
-        var ox = b.X + (b.Width  - side) / 2;
-        var oy = b.Y + (b.Height - side) / 2;
-        var cx = ox + side / 2.0;
-        var cy = oy + side / 2.0;
-        var radius = side / 2.0 * innerFraction * sat * 2.0; // sat*2 cancels the 0.5 factor
-        // Hue angle: ColorCircle paints angleHS = (0.5 - hue) * 2π so hue=0/red
-        // sits at 9 o'clock (left), increasing clockwise. See ColorCircle.cs:167.
-        var theta = Math.PI - hue * 2 * Math.PI;
-        var px = (int)Math.Round(cx + radius * Math.Cos(theta));
-        var py = (int)Math.Round(cy + radius * Math.Sin(theta));
+        if (!ColorSyncExpectedPickerOffsets.Offsets.TryGetValue((cellId, hex), out var rel))
+            throw new InvalidOperationException(
+                $"No empirical picker offset recorded for ({cellId}, {hex}). " +
+                "Re-run ColorSyncDataGenerator with GEN_PICKER_DATA=1.");
 
-        var (found, minLuma, foundX, foundY) = ScanForDarkPixel(img, px, py, tolerancePx, darkLuma);
+        var b = _fx.Page.GetWheelAreaBounds(cellId);
+        int px = b.X + (int)Math.Round(rel.Rx * b.Width);
+        int py = b.Y + (int)Math.Round(rel.Ry * b.Height);
+
+        var (found, minLuma, fx, fy) = ScanForDarkPixel(img, px, py, TolerancePx, DarkLuma);
         Assert.True(found,
-            $"No picker-dark pixel near ({px},{py}) for {automationId} " +
-            $"(hue={hue:F2}, sat={sat:F2}, radius={radius:F1}px in bounds {b}). " +
-            $"Min luma in {tolerancePx}px window: {minLuma} at ({foundX},{foundY}).");
+            $"No picker-dark pixel near ({px},{py}) for {cellId} {hex} " +
+            $"(expected rel=({rel.Rx:F4},{rel.Ry:F4}) in bounds {b}). " +
+            $"Min luma in {TolerancePx}px window: {minLuma} at ({fx},{fy}).");
     }
+
+    private const int TolerancePx = 18;
+    private const int DarkLuma    = 200;
 
     private static (bool found, int minLuma, int foundX, int foundY)
         ScanForDarkPixel(Image<Rgba32> img, int cx, int cy, int radius, int darkLuma)

@@ -175,6 +175,16 @@ public sealed class ColorSyncTestPageObject
         _driver.PerformActions(new List<ActionSequence> { seq });
     }
 
+    /// <summary>Tap inside a cell at normalized (rx, ry) ∈ [0,1] of its
+    /// <see cref="GetWheelAreaBounds"/> rectangle. Pre-computed offsets for
+    /// known colors live in <c>ColorSyncExpectedPickerOffsets</c>.</summary>
+    public void TapAtRel(string cellAutomationId, double rx, double ry)
+    {
+        var b = GetWheelAreaBounds(cellAutomationId);
+        TapAt(b.X + (int)Math.Round(rx * b.Width),
+              b.Y + (int)Math.Round(ry * b.Height));
+    }
+
     /// <summary>Tap inside a cell's wheel-area at a polar position relative to its
     /// centered square. <paramref name="hue"/> is 0..1 (0 = right / 3 o'clock, going
     /// counter-clockwise to match ColorWheel paint), <paramref name="sat"/> is 0..1
