@@ -57,7 +57,7 @@
                         AutomationId="ScenarioHost"
                         StrokeThickness="2"
                         Stroke="Blue"
-                        BackgroundColor="Yellow"
+                        Background="Yellow"
                         HorizontalOptions="Start"
                         VerticalOptions="Start"
                         Padding="0"
