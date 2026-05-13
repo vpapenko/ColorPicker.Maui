@@ -74,8 +74,8 @@
                     Text="Luminosity Wheel"
                     VerticalOptions="Center" />
                 <Switch
-                    x:Name="ShowLuminosityWheel"
-                    AutomationId="ShowLuminosityWheel"
+                    x:Name="ShowLuminosityRing"
+                    AutomationId="ShowLuminosityRing"
                     Margin="6,0,0,0"
                     HorizontalOptions="Start"
                     IsToggled="True"
@@ -161,7 +161,7 @@
                 Padding="5"
                 ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}"
                 ShowLuminositySlider="{Binding Source={x:Reference ShowLuminositySlider}, Path=IsToggled}"
-                ShowLuminosityWheel="{Binding Source={x:Reference ShowLuminosityWheel}, Path=IsToggled}"
+                ShowLuminosityRing="{Binding Source={x:Reference ShowLuminosityRing}, Path=IsToggled}"
                 Vertical="{Binding Source={x:Reference ShowVerticalSlider}, Path=IsToggled}" />
         </Border>
 

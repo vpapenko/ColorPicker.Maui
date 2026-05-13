@@ -1,16 +1,16 @@
-﻿namespace ColorPicker.Controls;
+namespace ColorPicker.Controls;
 
 public class ColorWheel : ColorPickerViewBase
 {
-    readonly ColorCircle        _colorCircle        = new();
+    readonly ColorDisc        _colorCircle        = new();
     readonly AlphaSlider        _alphaSlider        = new();
     readonly LuminositySlider   _luminositySlider   = new();
 
     protected const double LuminositySliderRowHeight    = 12;
     protected const double AlphaSliderRowHeight         = 12;
 
-    public static readonly BindableProperty ShowLuminosityWheelProperty 
-                         = BindableProperty.Create( nameof(ShowLuminosityWheel),
+    public static readonly BindableProperty ShowLuminosityRingProperty 
+                         = BindableProperty.Create( nameof(ShowLuminosityRing),
                                                     typeof(bool),
                                                     typeof(ColorWheel),
                                                     true,
@@ -30,15 +30,15 @@ public class ColorWheel : ColorPickerViewBase
                                                     false,
                                                     propertyChanged: HandleShowAlphaSlider );
 
-    public static readonly BindableProperty WheelBackgroundColorProperty 
-                         = BindableProperty.Create( nameof(WheelBackgroundColor),
+    public static readonly BindableProperty CanvasBackgroundColorProperty 
+                         = BindableProperty.Create( nameof(CanvasBackgroundColor),
                                                     typeof(Color),
                                                     typeof(ColorWheel),
                                                     Colors.Transparent,
                                                     propertyChanged: HandleWheelBackgroundColor );
 
-    public static readonly BindableProperty PickerRadiusScaleProperty 
-                         = BindableProperty.Create( nameof(PickerRadiusScale),
+    public static readonly BindableProperty IndicatorRadiusScaleProperty 
+                         = BindableProperty.Create( nameof(IndicatorRadiusScale),
                                                     typeof(float),
                                                     typeof(ColorWheel),
                                                     0.05F,
@@ -51,13 +51,13 @@ public class ColorWheel : ColorPickerViewBase
                                                     false,
                                                     propertyChanged: HandleVertical );
 
-    public bool ShowLuminosityWheel
+    public bool ShowLuminosityRing
     {
-        get => (bool)GetValue( ShowLuminosityWheelProperty );
-        set => SetValue( ShowLuminosityWheelProperty, value );
+        get => (bool)GetValue( ShowLuminosityRingProperty );
+        set => SetValue( ShowLuminosityRingProperty, value );
     }
     static void HandleShowLuminosity( BindableObject bindable, object oldValue, object newValue )
-            => ( (ColorWheel)bindable )._colorCircle.ShowLuminosityWheel = (bool)newValue;
+            => ( (ColorWheel)bindable )._colorCircle.ShowLuminosityRing = (bool)newValue;
 
 
     public bool ShowLuminositySlider
@@ -78,34 +78,34 @@ public class ColorWheel : ColorPickerViewBase
             => ( (ColorWheel)bindable ).UpdateAlphaSlider( (bool)newValue );
 
 
-    public Color WheelBackgroundColor
+    public Color CanvasBackgroundColor
     {
-        get => (Color)GetValue( WheelBackgroundColorProperty );
-        set => SetValue( WheelBackgroundColorProperty, value );
+        get => (Color)GetValue( CanvasBackgroundColorProperty );
+        set => SetValue( CanvasBackgroundColorProperty, value );
     }
     static void HandleWheelBackgroundColor( BindableObject bindable, object oldValue, object newValue )
     {
         if ( newValue != oldValue )
-            ( (ColorWheel)bindable )._colorCircle.WheelBackgroundColor = (Color)newValue;
+            ( (ColorWheel)bindable )._colorCircle.CanvasBackgroundColor = (Color)newValue;
     }
 
-    public float PickerRadiusScale
+    public float IndicatorRadiusScale
     {
-        get => (float)GetValue( PickerRadiusScaleProperty );
-        set => SetValue( PickerRadiusScaleProperty, value );
+        get => (float)GetValue( IndicatorRadiusScaleProperty );
+        set => SetValue( IndicatorRadiusScaleProperty, value );
     }
     static void HandlePickerRadiusScale( BindableObject bindable, object oldValue, object newValue )
     {
         if ( newValue != oldValue )
         {
             // Only propagate to the disc/ring. The embedded sliders use
-            // SliderPicker's auto-fill behavior (PickerRadiusScale = 0): their
+            // SliderPicker's auto-fill behavior (IndicatorRadiusScale = 0): their
             // picker radius is derived from the slim strip the wheel allots
             // them in ArrangeLayoutChildren, which already produces a picker
             // size visually consistent with the wheel's own picker. Forwarding
             // a non-zero scale here would force the slider into aspect-locked
             // mode and break the wheel's manual layout.
-            ( (ColorWheel)bindable )._colorCircle.PickerRadiusScale = (float)newValue;
+            ( (ColorWheel)bindable )._colorCircle.IndicatorRadiusScale = (float)newValue;
         }
     }
 

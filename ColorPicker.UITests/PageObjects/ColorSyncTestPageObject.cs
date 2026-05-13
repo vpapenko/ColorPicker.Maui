@@ -197,8 +197,8 @@ public sealed class ColorSyncTestPageObject
         var cx = b.X + (b.Width  - side) / 2.0 + side / 2.0;
         var cy = b.Y + (b.Height - side) / 2.0 + side / 2.0;
         var radius = side / 2.0 * discFraction * sat * 2.0;
-        // ColorCircle convention: angleHS = (0.5 - hue) * 2π = π - hue*2π
-        // (tested against ColorCircle.cs line 167 — hue=0/red is at 9 o'clock).
+        // ColorDisc convention: angleHS = (0.5 - hue) * 2π = π - hue*2π
+        // (tested against ColorDisc.cs line 167 — hue=0/red is at 9 o'clock).
         var theta = Math.PI - hue * 2 * Math.PI;
         TapAt((int)Math.Round(cx + radius * Math.Cos(theta)),
               (int)Math.Round(cy + radius * Math.Sin(theta)));

@@ -1,4 +1,4 @@
-﻿namespace ColorPicker.BaseClasses;
+namespace ColorPicker.BaseClasses;
 
 using ColorPicker.Behaviors;
 #if WINDOWS
@@ -13,16 +13,16 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
 {
     protected readonly SKCanvasView     MyCanvasView;
 
-    public static readonly BindableProperty PickerRadiusScaleProperty
-                         = BindableProperty.Create( nameof(PickerRadiusScale),
+    public static readonly BindableProperty IndicatorRadiusScaleProperty
+                         = BindableProperty.Create( nameof(IndicatorRadiusScale),
                                                     typeof(float),
                                                     typeof(SkiaSharpPickerBase),
                                                     0.05F,
                                                     propertyChanged: HandlePickerRadiusScaleSet );
-    public float PickerRadiusScale
+    public float IndicatorRadiusScale
     {
-        get => (float)GetValue( PickerRadiusScaleProperty );
-        set => SetValue( PickerRadiusScaleProperty, value );
+        get => (float)GetValue( IndicatorRadiusScaleProperty );
+        set => SetValue( IndicatorRadiusScaleProperty, value );
     }
 
     static void HandlePickerRadiusScaleSet( BindableObject bindable, object oldValue, object newValue )
@@ -58,8 +58,8 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         Children.Add( MyCanvasView );
     }
 
-    public abstract     float       GetPickerRadiusPixels();
-    public abstract     float       GetPickerRadiusPixels( SKSize canvasSize );
+    public abstract     float       GetIndicatorRadiusPixels();
+    public abstract     float       GetIndicatorRadiusPixels( SKSize canvasSize );
 
     protected abstract  SizeRequest GetMeasure( double widthConstraint, double heightConstraint );
     protected abstract  float       GetSize();
@@ -123,7 +123,7 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         InvalidateSurface();
     }
 
-    protected void PaintPicker( SKCanvas canvas, SKPoint point )
+    protected void PaintIndicator( SKCanvas canvas, SKPoint point )
     {
         var paint = new SKPaint
         {
@@ -133,12 +133,12 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
 
         paint.Color         = Colors.White.ToSKColor();
         paint.StrokeWidth   = 2;
-        canvas.DrawCircle( point, GetPickerRadiusPixels() - 2, paint );
+        canvas.DrawCircle( point, GetIndicatorRadiusPixels() - 2, paint );
 
         paint.Color         = Colors.Black.ToSKColor();
         paint.StrokeWidth   = 1;
-        canvas.DrawCircle( point, GetPickerRadiusPixels() - 4, paint );
-        canvas.DrawCircle( point, GetPickerRadiusPixels(), paint );
+        canvas.DrawCircle( point, GetIndicatorRadiusPixels() - 4, paint );
+        canvas.DrawCircle( point, GetIndicatorRadiusPixels(), paint );
     }
 
     void OnPaintSurface( object sender, SKPaintSurfaceEventArgs e )

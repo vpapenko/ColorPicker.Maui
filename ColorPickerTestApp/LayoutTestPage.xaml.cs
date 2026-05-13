@@ -126,7 +126,7 @@ public partial class LayoutTestPage : ContentPage
             {
                 var t = o.Trim().ToLowerInvariant();
                 if (t is "vertical" or "noalpha") flags.Add(t);
-                // PickerRadiusScale change affects measure; rebuild to be safe.
+                // IndicatorRadiusScale change affects measure; rebuild to be safe.
                 else if (t.StartsWith("prs=")) flags.Add(t);
             }
             flags.Sort(StringComparer.Ordinal);
@@ -329,9 +329,9 @@ public partial class LayoutTestPage : ContentPage
             // Reset to defaults then apply opts.
             w.ShowAlphaSlider     = false;
             w.ShowLuminositySlider= false;
-            w.ShowLuminosityWheel = true;
+            w.ShowLuminosityRing = true;
             w.Vertical            = false;
-            w.WheelBackgroundColor = Colors.Transparent;
+            w.CanvasBackgroundColor = Colors.Transparent;
             foreach (var opt in opts)
             {
                 if (IsKvOpt(opt, out _, out _)) continue; // handled separately
@@ -339,19 +339,19 @@ public partial class LayoutTestPage : ContentPage
                 {
                     case "alpha":     w.ShowAlphaSlider     = true;  break;
                     case "lumslider": w.ShowLuminositySlider= true;  break;
-                    case "nolumwheel":w.ShowLuminosityWheel = false; break;
+                    case "nolumwheel":w.ShowLuminosityRing = false; break;
                     case "vertical":  w.Vertical            = true;  break;
                     case "":          break;
                     default:          throw new ArgumentException("Unknown option: " + opt);
                 }
             }
             var wbg = ParseColorOpt(opts, "wbg");
-            if (wbg is not null) w.WheelBackgroundColor = wbg;
+            if (wbg is not null) w.CanvasBackgroundColor = wbg;
             return true;
         }
         if (control == "triangle" && existing is ColorTriangle t)
         {
-            t.WheelBackgroundColor = ParseColorOpt(opts, "wbg") ?? Colors.Transparent;
+            t.CanvasBackgroundColor = ParseColorOpt(opts, "wbg") ?? Colors.Transparent;
             t.RotateTriangleByHue  = true;
             foreach (var opt in opts)
             {
@@ -370,7 +370,7 @@ public partial class LayoutTestPage : ContentPage
         {
             s.Vertical        = false;
             s.ShowAlphaSlider = true;
-            s.PickerRadiusScale = 0F;
+            s.IndicatorRadiusScale = 0F;
             foreach (var opt in opts)
             {
                 if (IsKvOpt(opt, out _, out _)) continue;
@@ -383,7 +383,7 @@ public partial class LayoutTestPage : ContentPage
                 }
             }
             var prs = ParseFloatOpt(opts, "prs");
-            if (prs is float v) s.PickerRadiusScale = v;
+            if (prs is float v) s.IndicatorRadiusScale = v;
             return true;
         }
         // Other control types have no toggleable flags supported yet — fall
@@ -406,7 +406,7 @@ public partial class LayoutTestPage : ContentPage
             }
         }
         var prs = ParseFloatOpt(opts, "prs");
-        if (prs is float v) s.PickerRadiusScale = v;
+        if (prs is float v) s.IndicatorRadiusScale = v;
         return s;
     }
 
@@ -421,14 +421,14 @@ public partial class LayoutTestPage : ContentPage
                 case "alpha":     wheel.ShowAlphaSlider     = true;  break;
                 case "lumslider": wheel.ShowLuminositySlider = true; break;
                 case "noLumWheel":
-                case "nolumwheel":wheel.ShowLuminosityWheel  = false; break;
+                case "nolumwheel":wheel.ShowLuminosityRing  = false; break;
                 case "vertical":  wheel.Vertical            = true;  break;
                 case "":          break;
                 default:          throw new ArgumentException("Unknown option: " + opt);
             }
         }
         var wbg = ParseColorOpt(opts, "wbg");
-        if (wbg is not null) wheel.WheelBackgroundColor = wbg;
+        if (wbg is not null) wheel.CanvasBackgroundColor = wbg;
         return wheel;
     }
     static ColorTriangle MakeTriangle(string[] opts)
@@ -446,7 +446,7 @@ public partial class LayoutTestPage : ContentPage
             }
         }
         var wbg = ParseColorOpt(opts, "wbg");
-        if (wbg is not null) t.WheelBackgroundColor = wbg;
+        if (wbg is not null) t.CanvasBackgroundColor = wbg;
         return t;
     }
 

@@ -94,7 +94,7 @@
                 <Grid RowDefinitions="*,Auto">
                     <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelLumSliderHoriz_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
-                                         ShowLuminosityWheel="False"
+                                         ShowLuminosityRing="False"
                                          ShowLuminositySlider="True"
                                          ShowAlphaSlider="True" />
                     <Label Grid.Row="1" AutomationId="C_WheelLumSliderHoriz_label" Text="Wheel: lumSlider +α horiz" />
@@ -104,7 +104,7 @@
                 <Grid RowDefinitions="*,Auto">
                     <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelAll_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
-                                         ShowLuminosityWheel="True"
+                                         ShowLuminosityRing="True"
                                          ShowLuminositySlider="True"
                                          ShowAlphaSlider="True" />
                     <Label Grid.Row="1" AutomationId="C_WheelAll_label" Text="Wheel: all (ring + lumSlider + α)" />
@@ -116,7 +116,7 @@
                 <Grid RowDefinitions="*,Auto">
                     <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelLumSliderVert_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
-                                         ShowLuminosityWheel="False"
+                                         ShowLuminosityRing="False"
                                          ShowLuminositySlider="True"
                                          ShowAlphaSlider="True"
                                          Vertical="True" />
@@ -127,7 +127,7 @@
                 <Grid RowDefinitions="*,Auto">
                     <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelNoLum_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
-                                         ShowLuminosityWheel="False"
+                                         ShowLuminosityRing="False"
                                          ShowLuminositySlider="False" />
                     <Label Grid.Row="1" AutomationId="C_WheelNoLum_label" Text="Wheel: noLum" />
                 </Grid>
@@ -152,7 +152,7 @@
                 <Grid RowDefinitions="*,Auto">
                     <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelNoLumAlphaHoriz_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
-                                         ShowLuminosityWheel="False"
+                                         ShowLuminosityRing="False"
                                          ShowLuminositySlider="False"
                                          ShowAlphaSlider="True" />
                     <Label Grid.Row="1" AutomationId="C_WheelNoLumAlphaHoriz_label" Text="Wheel: noLum +α horiz" />
@@ -197,7 +197,7 @@
                 <Grid RowDefinitions="*,Auto">
                     <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelNoLumAlphaVert_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
-                                         ShowLuminosityWheel="False"
+                                         ShowLuminosityRing="False"
                                          ShowLuminositySlider="False"
                                          ShowAlphaSlider="True"
                                          Vertical="True" />
@@ -243,7 +243,7 @@
                 <Grid RowDefinitions="*,Auto">
                     <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelLumSliderNoAlpha_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
-                                         ShowLuminosityWheel="False"
+                                         ShowLuminosityRing="False"
                                          ShowLuminositySlider="True"
                                          ShowAlphaSlider="False" />
                     <Label Grid.Row="1" AutomationId="C_WheelLumSliderNoAlpha_label" Text="Wheel: lumSlider no-α" />

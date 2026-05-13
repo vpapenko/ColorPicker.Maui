@@ -58,7 +58,7 @@
                     AutomationId="ColorWheel1"
                     ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}"
                     ShowLuminositySlider="{Binding Source={x:Reference ShowLumSliderSwitch}, Path=IsToggled}"
-                    ShowLuminosityWheel="{Binding Source={x:Reference ShowLumWheelSwitch}, Path=IsToggled}"
+                    ShowLuminosityRing="{Binding Source={x:Reference ShowLumWheelSwitch}, Path=IsToggled}"
                     Vertical="{Binding Source={x:Reference VerticalSwitch}, Path=IsToggled}" />
             </Border>
         </Border>

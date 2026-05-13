@@ -85,7 +85,7 @@ public class VisualProbe
             Emit($"slider-{ctrl}-noalpha-{sz}",  $"{ctrl}:{sz}:noalpha");
         }
 
-        // Tier — fixed PickerRadiusScale on standalone sliders. Without prs the
+        // Tier — fixed IndicatorRadiusScale on standalone sliders. Without prs the
         // slider stack fills the whole cell; with prs > 0 the orthogonal axis
         // becomes fixed (thickness = count * 2.2 * prs * length) and only the
         // length axis still fills.

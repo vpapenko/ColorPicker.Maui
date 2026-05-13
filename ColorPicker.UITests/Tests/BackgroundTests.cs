@@ -23,7 +23,7 @@ namespace ColorPicker.UITests.Tests;
 /// Spec syntax: append <c>bg=&lt;color&gt;</c> to the opts list. Colours
 /// can be named (red, blue, …) or hex (#RRGGBB / #AARRGGBB).
 ///
-/// Note: <c>WheelBackgroundColor</c> on ColorWheel/ColorTriangle paints a
+/// Note: <c>CanvasBackgroundColor</c> on ColorWheel/ColorTriangle paints a
 /// disc-shaped backdrop INSIDE the picker (not the corners), so it isn't
 /// observable from the corner samples used here. A dedicated, more
 /// targeted test for that property is intentionally deferred.

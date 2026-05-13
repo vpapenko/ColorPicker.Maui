@@ -1,4 +1,4 @@
-﻿namespace ColorPicker.BaseClasses;
+namespace ColorPicker.BaseClasses;
 
 public abstract class SliderPicker : SkiaSharpPickerBase
 {
@@ -9,10 +9,10 @@ public abstract class SliderPicker : SkiaSharpPickerBase
     public SliderPicker()
     {
         // Default to 0 (sentinel: "auto-fill"). Standalone sliders fill all
-        // available space when picker radius is unset; explicit PickerRadiusScale
+        // available space when picker radius is unset; explicit IndicatorRadiusScale
         // > 0 makes the slider stack aspect-locked (thickness derived from
         // radius, length still fills).
-        PickerRadiusScale = 0F;
+        IndicatorRadiusScale = 0F;
         UpdateSliders();
     }
 
@@ -37,21 +37,21 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         }
     }
 
-    public override float GetPickerRadiusPixels( SKSize canvasSize )
+    public override float GetIndicatorRadiusPixels( SKSize canvasSize )
     {
-        // Explicit PickerRadiusScale > 0: derive picker radius from the LENGTH
+        // Explicit IndicatorRadiusScale > 0: derive picker radius from the LENGTH
         // axis (parallel to the slider's value direction). Thickness then becomes
         // a fixed function of radius (see GetMeasure), making the slider
         // aspect-locked.
-        if ( PickerRadiusScale > 0F )
+        if ( IndicatorRadiusScale > 0F )
         {
             var length = Vertical ? canvasSize.Height : canvasSize.Width;
-            return PickerRadiusScale * length;
+            return IndicatorRadiusScale * length;
         }
         // Auto: thickness fills available orthogonal space; picker scales to fit.
         return ( Vertical ? canvasSize.Width : canvasSize.Height ) / _sliders.Count / 2.2F;
     }
-    public override float GetPickerRadiusPixels()                       => GetPickerRadiusPixels( GetCanvasSize() );
+    public override float GetIndicatorRadiusPixels()                       => GetIndicatorRadiusPixels( GetCanvasSize() );
 
     protected abstract IEnumerable<SliderBase> GetSliders();
 
@@ -81,7 +81,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         foreach ( var slider in _sliders )
         {
             PaintSlider( canvas, slider, canvasSize );
-            PaintPicker( canvas, slider.Location );
+            PaintIndicator( canvas, slider.Location );
         }
     }
 
@@ -94,7 +94,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
 
         foreach ( var slider in _sliders )
         {
-            var slidersOffset = slider.GetSliderOffset(GetPickerRadiusPixels());
+            var slidersOffset = slider.GetSliderOffset(GetIndicatorRadiusPixels());
             if ( slider.LocationProgressId is null && IsInSliderArea( point, slidersOffset ) )
             {
                 slider.LocationProgressId = args.Id;
@@ -113,7 +113,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         {
             if ( slider.LocationProgressId == args.Id )
             {
-                var slidersOffset = slider.GetSliderOffset(GetPickerRadiusPixels());
+                var slidersOffset = slider.GetSliderOffset(GetIndicatorRadiusPixels());
                 slider.Location = LimitToSliderLocation( point, slidersOffset, canvasSize );
                 UpdateColors( slider, canvasSize );
             }
@@ -130,7 +130,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
             if ( slider.LocationProgressId == args.Id )
             {
                 slider.LocationProgressId = null;
-                var slidersOffset = slider.GetSliderOffset(GetPickerRadiusPixels());
+                var slidersOffset = slider.GetSliderOffset(GetIndicatorRadiusPixels());
                 slider.Location = LimitToSliderLocation( point, slidersOffset, canvasSize );
                 UpdateColors( slider, canvasSize );
             }
@@ -150,17 +150,17 @@ public abstract class SliderPicker : SkiaSharpPickerBase
 
     protected override SizeRequest GetMeasure( double widthConstraint, double heightConstraint )
     {
-        // When PickerRadiusScale is explicitly set, the slider stack becomes
+        // When IndicatorRadiusScale is explicitly set, the slider stack becomes
         // aspect-locked: the LENGTH axis fills, the THICKNESS axis is derived
         // from the picker radius. thickness = count * 2.2 * pickerRadius
         //                                   = count * 2.2 * scale * length.
-        if ( PickerRadiusScale > 0F )
+        if ( IndicatorRadiusScale > 0F )
         {
             if ( Vertical )
             {
                 // length = height, thickness = width
                 var length = double.IsInfinity( heightConstraint ) ? 200 : heightConstraint;
-                var thickness = _sliders.Count * 2.2 * PickerRadiusScale * length;
+                var thickness = _sliders.Count * 2.2 * IndicatorRadiusScale * length;
                 if ( !double.IsInfinity( widthConstraint ) && thickness > widthConstraint )
                     thickness = widthConstraint;
                 return new SizeRequest( new Size( thickness, length ) );
@@ -169,7 +169,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
             {
                 // length = width, thickness = height
                 var length = double.IsInfinity( widthConstraint ) ? 200 : widthConstraint;
-                var thickness = _sliders.Count * 2.2 * PickerRadiusScale * length;
+                var thickness = _sliders.Count * 2.2 * IndicatorRadiusScale * length;
                 if ( !double.IsInfinity( heightConstraint ) && thickness > heightConstraint )
                     thickness = heightConstraint;
                 return new SizeRequest( new Size( length, thickness ) );
@@ -217,7 +217,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         {
             if ( slider.LocationProgressId is null )
             {
-                var pr = GetPickerRadiusPixels();
+                var pr = GetIndicatorRadiusPixels();
                 var left = ( pr * 1.1F ) + (SlidersWidht(canvasSize) * slider.Slider.NewValue(color));
                 slider.Location = Vertical
                     ? new SKPoint( slider.GetSliderOffset( pr ), left )
@@ -227,13 +227,13 @@ public abstract class SliderPicker : SkiaSharpPickerBase
     }
 
     float SlidersWidht( SKSize canvasSize ) 
-       => Vertical ? canvasSize.Height - ( GetPickerRadiusPixels() * 2.2F )
-                   : canvasSize.Width - ( GetPickerRadiusPixels() * 2.2F );
+       => Vertical ? canvasSize.Height - ( GetIndicatorRadiusPixels() * 2.2F )
+                   : canvasSize.Width - ( GetIndicatorRadiusPixels() * 2.2F );
 
     void UpdateColors( SliderLocation slider, SKSize canvasSize )
     {
         var newColor = SelectedColor;
-        var pr = GetPickerRadiusPixels();
+        var pr = GetIndicatorRadiusPixels();
         var newValue = Vertical ? ( slider.Location.Y - ( pr * 1.1F ) ) / SlidersWidht( canvasSize )
                                 : ( slider.Location.X - ( pr * 1.1F ) ) / SlidersWidht( canvasSize );
 
@@ -245,7 +245,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
 
     void PaintSlider( SKCanvas canvas, SliderLocation slider, SKSize canvasSize )
     {
-        var pickerRadiusPixels = GetPickerRadiusPixels();
+        var pickerRadiusPixels = GetIndicatorRadiusPixels();
         var sliderTop = slider.GetSliderOffset(pickerRadiusPixels);
 
         SKPoint startPoint;
@@ -275,7 +275,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
 
     void PaintChessPattern( SKCanvas canvas, SliderLocation slider, SKSize canvasSize )
     {
-        var pickerRadiusPixels  = GetPickerRadiusPixels();
+        var pickerRadiusPixels  = GetIndicatorRadiusPixels();
         var sliderTop           = slider.GetSliderOffset(pickerRadiusPixels);
         var scale               = pickerRadiusPixels / 3;
         var path                = new SKPath();
@@ -330,13 +330,13 @@ public abstract class SliderPicker : SkiaSharpPickerBase
     }
 
     bool IsInSliderArea( SKPoint point, float slidersHeight ) 
-            => Vertical ? point.X >= slidersHeight - GetPickerRadiusPixels() && point.X <= slidersHeight + GetPickerRadiusPixels()
-                        : point.Y >= slidersHeight - GetPickerRadiusPixels() && point.Y <= slidersHeight + GetPickerRadiusPixels();
+            => Vertical ? point.X >= slidersHeight - GetIndicatorRadiusPixels() && point.X <= slidersHeight + GetIndicatorRadiusPixels()
+                        : point.Y >= slidersHeight - GetIndicatorRadiusPixels() && point.Y <= slidersHeight + GetIndicatorRadiusPixels();
 
     SKPoint LimitToSliderLocation( SKPoint point, float slidersOffset, SKSize canvasSize )
     {
         var result = new SKPoint( point.X, point.Y );
-        var endMargin = GetPickerRadiusPixels() * 1.1F;
+        var endMargin = GetIndicatorRadiusPixels() * 1.1F;
 
         if ( Vertical )
         {

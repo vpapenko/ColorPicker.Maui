@@ -1,6 +1,6 @@
-﻿namespace ColorPicker.Controls;
+namespace ColorPicker.Controls;
 
-public class ColorCircle : SkiaSharpPickerBase
+public class ColorDisc : SkiaSharpPickerBase
 {
     long?   _locationHSProgressId    = null;
     long?   _locationLProgressId     = null;
@@ -10,53 +10,53 @@ public class ColorCircle : SkiaSharpPickerBase
 
     readonly SKColor[] _sweepGradientColors = new SKColor[256];
 
-    public static readonly BindableProperty ShowLuminosityWheelProperty 
-                         = BindableProperty.Create( nameof(ShowLuminosityWheel),
+    public static readonly BindableProperty ShowLuminosityRingProperty 
+                         = BindableProperty.Create( nameof(ShowLuminosityRing),
                                                     typeof(bool),
                                                     typeof(SkiaSharpPickerBase),
                                                     true,
                                                     propertyChanged: HandleShowLuminosity );
-    public bool ShowLuminosityWheel
+    public bool ShowLuminosityRing
     {
-        get => (bool)GetValue( ShowLuminosityWheelProperty );
-        set => SetValue( ShowLuminosityWheelProperty, value );
+        get => (bool)GetValue( ShowLuminosityRingProperty );
+        set => SetValue( ShowLuminosityRingProperty, value );
     }
     static void HandleShowLuminosity( BindableObject bindable, object oldValue, object newValue )
     {
         if ( newValue != oldValue )
-            ( (ColorCircle)bindable ).InvalidateSurface();
+            ( (ColorDisc)bindable ).InvalidateSurface();
     }
 
-    public static readonly BindableProperty WheelBackgroundColorProperty 
-                         = BindableProperty.Create( nameof(WheelBackgroundColor),
+    public static readonly BindableProperty CanvasBackgroundColorProperty 
+                         = BindableProperty.Create( nameof(CanvasBackgroundColor),
                                                     typeof(Color),
                                                     typeof(IColorPicker),
                                                     Colors.Transparent,
                                                     propertyChanged: HandleWheelBackgroundColor );
-    public Color WheelBackgroundColor
+    public Color CanvasBackgroundColor
     {
-        get => (Color)GetValue( WheelBackgroundColorProperty );
-        set => SetValue( WheelBackgroundColorProperty, value );
+        get => (Color)GetValue( CanvasBackgroundColorProperty );
+        set => SetValue( CanvasBackgroundColorProperty, value );
     }
     static void HandleWheelBackgroundColor( BindableObject bindable, object oldValue, object newValue )
     {
         if ( newValue != oldValue )
         {
-            ( (ColorCircle)bindable ).InvalidateSurface();
+            ( (ColorDisc)bindable ).InvalidateSurface();
         }
     }
 
     /// <summary>
     /// Constuctor
     /// </summary>
-    public ColorCircle()
+    public ColorDisc()
     {
         for ( var i = 128; i >= -127; i-- )
             _sweepGradientColors[ 255 - ( i + 127 ) ] = Color.FromHsla( ( i < 0 ? 255 + i : i ) / 255D, 1, 0.5 ).ToSKColor();
     }
 
-    public override float GetPickerRadiusPixels() => GetPickerRadiusPixels( GetCanvasSize() );
-    public override float GetPickerRadiusPixels( SKSize canvasSize ) => GetSize( canvasSize ) * PickerRadiusScale;
+    public override float GetIndicatorRadiusPixels() => GetIndicatorRadiusPixels( GetCanvasSize() );
+    public override float GetIndicatorRadiusPixels( SKSize canvasSize ) => GetSize( canvasSize ) * IndicatorRadiusScale;
 
     protected override void OnTouchActionPressed( ColorPickerTouchActionEventArgs args )
     {
@@ -129,15 +129,15 @@ public class ColorCircle : SkiaSharpPickerBase
         canvas.Clear();
         PaintBackground( canvas, canvasRadius );
 
-        if ( ShowLuminosityWheel )
+        if ( ShowLuminosityRing )
         {
             PaintLGradient( canvas, canvasRadius );
-            PaintPicker( canvas, _locationL );
+            PaintIndicator( canvas, _locationL );
         }
 
         PaintColorSweepGradient( canvas, canvasRadius );
         PaintGrayRadialGradient( canvas, canvasRadius );
-        PaintPicker( canvas, _locationHS );
+        PaintIndicator( canvas, _locationHS );
     }
 
     protected override void OnSelectedColorChanging( Color color ) 
@@ -201,13 +201,13 @@ public class ColorCircle : SkiaSharpPickerBase
 
     bool IsInLArea( SKPoint point, float canvasRadius )
     {
-        if ( !ShowLuminosityWheel )
+        if ( !ShowLuminosityRing )
             return false;
 
         var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
 
-        return polar.Radius <= WheelLRadius( canvasRadius ) + ( GetPickerRadiusPixels() / 2F )
-            && polar.Radius >= WheelLRadius( canvasRadius ) - ( GetPickerRadiusPixels() / 2F );
+        return polar.Radius <= WheelLRadius( canvasRadius ) + ( GetIndicatorRadiusPixels() / 2F )
+            && polar.Radius >= WheelLRadius( canvasRadius ) - ( GetIndicatorRadiusPixels() / 2F );
     }
 
     void PaintBackground( SKCanvas canvas, float canvasRadius )
@@ -217,10 +217,10 @@ public class ColorCircle : SkiaSharpPickerBase
         var paint = new SKPaint
         {
             IsAntialias = true,
-            Color = WheelBackgroundColor.ToSKColor()
+            Color = CanvasBackgroundColor.ToSKColor()
         };
 
-        canvas.DrawCircle( center, canvasRadius - GetPickerRadiusPixels(), paint );
+        canvas.DrawCircle( center, canvasRadius - GetIndicatorRadiusPixels(), paint );
     }
 
     void PaintLGradient( SKCanvas canvas, float canvasRadius )
@@ -243,7 +243,7 @@ public class ColorCircle : SkiaSharpPickerBase
             IsAntialias = true,
             Shader      = shader,
             Style       = SKPaintStyle.Stroke,
-            StrokeWidth = GetPickerRadiusPixels()
+            StrokeWidth = GetIndicatorRadiusPixels()
         };
         canvas.DrawCircle( center, WheelLRadius( canvasRadius ), paint );
     }
@@ -368,9 +368,9 @@ public class ColorCircle : SkiaSharpPickerBase
     const float PickerEdgeMargin = 3F;
 
     float WheelHSRadius( float canvasRadius )
-       => ! ShowLuminosityWheel ? canvasRadius - GetPickerRadiusPixels() - PickerEdgeMargin
-                                : canvasRadius - ( 3 * GetPickerRadiusPixels() ) - 2;
+       => ! ShowLuminosityRing ? canvasRadius - GetIndicatorRadiusPixels() - PickerEdgeMargin
+                                : canvasRadius - ( 3 * GetIndicatorRadiusPixels() ) - 2;
 
     float WheelLRadius( float canvasRadius )
-       => canvasRadius - GetPickerRadiusPixels() - PickerEdgeMargin;
+       => canvasRadius - GetIndicatorRadiusPixels() - PickerEdgeMargin;
 }

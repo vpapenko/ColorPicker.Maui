@@ -19,7 +19,7 @@ public sealed class MainPage
     public AppiumElement ShowTriangleSwitch         => Find("ShowTriangleSwitch");
     public AppiumElement ShowAlphaSwitch            => Find("ShowAlphaSwitch");
     public AppiumElement ShowLuminositySliderSwitch => Find("ShowLuminositySlider");
-    public AppiumElement ShowLuminosityWheelSwitch  => Find("ShowLuminosityWheel");
+    public AppiumElement ShowLuminosityWheelSwitch  => Find("ShowLuminosityRing");
     public AppiumElement ShowVerticalSliderSwitch   => Find("ShowVerticalSlider");
     public AppiumElement RotateTriangleByHueSwitch  => Find("RotateTriangleByHue");
 
