@@ -98,9 +98,14 @@ public class ColorWheel : ColorPickerViewBase
     {
         if ( newValue != oldValue )
         {
+            // Only propagate to the disc/ring. The embedded sliders use
+            // SliderPicker's auto-fill behavior (PickerRadiusScale = 0): their
+            // picker radius is derived from the slim strip the wheel allots
+            // them in ArrangeLayoutChildren, which already produces a picker
+            // size visually consistent with the wheel's own picker. Forwarding
+            // a non-zero scale here would force the slider into aspect-locked
+            // mode and break the wheel's manual layout.
             ( (ColorWheel)bindable )._colorCircle.PickerRadiusScale = (float)newValue;
-            ( (ColorWheel)bindable )._alphaSlider.PickerRadiusScale = (float)newValue;
-            ( (ColorWheel)bindable )._luminositySlider.PickerRadiusScale = (float)newValue;
         }
     }
 

@@ -85,6 +85,18 @@ public class VisualProbe
             Emit($"slider-{ctrl}-noalpha-{sz}",  $"{ctrl}:{sz}:noalpha");
         }
 
+        // Tier — fixed PickerRadiusScale on standalone sliders. Without prs the
+        // slider stack fills the whole cell; with prs > 0 the orthogonal axis
+        // becomes fixed (thickness = count * 2.2 * prs * length) and only the
+        // length axis still fills.
+        foreach (var ctrl in new[] { "hsl", "rgb" })
+        foreach (var sz   in new[] { "400x400", "600x300", "300x600" })
+        foreach (var scale in new[] { "0.04", "0.08" })
+        {
+            Emit($"prs-{ctrl}-{sz}-prs{scale.Replace(".","")}",            $"{ctrl}:{sz}:prs={scale}");
+            Emit($"prs-{ctrl}-{sz}-vertical-prs{scale.Replace(".","")}",   $"{ctrl}:{sz}:vertical,prs={scale}");
+        }
+
         // Control-internal background (wbg=) — distinct from host bg=
         foreach (var s in new[] {
             "wheel:400x400:wbg=red",

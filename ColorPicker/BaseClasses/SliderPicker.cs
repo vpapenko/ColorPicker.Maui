@@ -8,6 +8,11 @@ public abstract class SliderPicker : SkiaSharpPickerBase
     //
     public SliderPicker()
     {
+        // Default to 0 (sentinel: "auto-fill"). Standalone sliders fill all
+        // available space when picker radius is unset; explicit PickerRadiusScale
+        // > 0 makes the slider stack aspect-locked (thickness derived from
+        // radius, length still fills).
+        PickerRadiusScale = 0F;
         UpdateSliders();
     }
 
@@ -32,7 +37,20 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         }
     }
 
-    public override float GetPickerRadiusPixels( SKSize canvasSize )    => ( Vertical ? canvasSize.Width : canvasSize.Height ) / _sliders.Count / 2.2F;
+    public override float GetPickerRadiusPixels( SKSize canvasSize )
+    {
+        // Explicit PickerRadiusScale > 0: derive picker radius from the LENGTH
+        // axis (parallel to the slider's value direction). Thickness then becomes
+        // a fixed function of radius (see GetMeasure), making the slider
+        // aspect-locked.
+        if ( PickerRadiusScale > 0F )
+        {
+            var length = Vertical ? canvasSize.Height : canvasSize.Width;
+            return PickerRadiusScale * length;
+        }
+        // Auto: thickness fills available orthogonal space; picker scales to fit.
+        return ( Vertical ? canvasSize.Width : canvasSize.Height ) / _sliders.Count / 2.2F;
+    }
     public override float GetPickerRadiusPixels()                       => GetPickerRadiusPixels( GetCanvasSize() );
 
     protected abstract IEnumerable<SliderBase> GetSliders();
@@ -132,6 +150,32 @@ public abstract class SliderPicker : SkiaSharpPickerBase
 
     protected override SizeRequest GetMeasure( double widthConstraint, double heightConstraint )
     {
+        // When PickerRadiusScale is explicitly set, the slider stack becomes
+        // aspect-locked: the LENGTH axis fills, the THICKNESS axis is derived
+        // from the picker radius. thickness = count * 2.2 * pickerRadius
+        //                                   = count * 2.2 * scale * length.
+        if ( PickerRadiusScale > 0F )
+        {
+            if ( Vertical )
+            {
+                // length = height, thickness = width
+                var length = double.IsInfinity( heightConstraint ) ? 200 : heightConstraint;
+                var thickness = _sliders.Count * 2.2 * PickerRadiusScale * length;
+                if ( !double.IsInfinity( widthConstraint ) && thickness > widthConstraint )
+                    thickness = widthConstraint;
+                return new SizeRequest( new Size( thickness, length ) );
+            }
+            else
+            {
+                // length = width, thickness = height
+                var length = double.IsInfinity( widthConstraint ) ? 200 : widthConstraint;
+                var thickness = _sliders.Count * 2.2 * PickerRadiusScale * length;
+                if ( !double.IsInfinity( heightConstraint ) && thickness > heightConstraint )
+                    thickness = heightConstraint;
+                return new SizeRequest( new Size( length, thickness ) );
+            }
+        }
+
         if ( double.IsPositiveInfinity( widthConstraint ) &&
              double.IsPositiveInfinity( heightConstraint ) )
         {

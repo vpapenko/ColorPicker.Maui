@@ -118,6 +118,8 @@ public partial class LayoutTestPage : ContentPage
             {
                 var t = o.Trim().ToLowerInvariant();
                 if (t is "vertical" or "noalpha") flags.Add(t);
+                // PickerRadiusScale change affects measure; rebuild to be safe.
+                else if (t.StartsWith("prs=")) flags.Add(t);
             }
             flags.Sort(StringComparer.Ordinal);
             return string.Join(",", flags);
@@ -356,6 +358,7 @@ public partial class LayoutTestPage : ContentPage
         {
             s.Vertical        = false;
             s.ShowAlphaSlider = true;
+            s.PickerRadiusScale = 0F;
             foreach (var opt in opts)
             {
                 if (IsKvOpt(opt, out _, out _)) continue;
@@ -367,6 +370,8 @@ public partial class LayoutTestPage : ContentPage
                     default:         throw new ArgumentException("Unknown option: " + opt);
                 }
             }
+            var prs = ParseFloatOpt(opts, "prs");
+            if (prs is float v) s.PickerRadiusScale = v;
             return true;
         }
         // Other control types have no toggleable flags supported yet — fall
@@ -388,6 +393,8 @@ public partial class LayoutTestPage : ContentPage
                 default:         throw new ArgumentException("Unknown option: " + opt);
             }
         }
+        var prs = ParseFloatOpt(opts, "prs");
+        if (prs is float v) s.PickerRadiusScale = v;
         return s;
     }
 
@@ -450,6 +457,19 @@ public partial class LayoutTestPage : ContentPage
         {
             if (IsKvOpt(opt, out var k, out var v) && k == key)
                 return ParseColor(v);
+        }
+        return null;
+    }
+
+    static float? ParseFloatOpt(string[] opts, string key)
+    {
+        foreach (var opt in opts)
+        {
+            if (IsKvOpt(opt, out var k, out var v) && k == key
+                && float.TryParse(v, System.Globalization.NumberStyles.Float,
+                                  System.Globalization.CultureInfo.InvariantCulture,
+                                  out var f))
+                return f;
         }
         return null;
     }
