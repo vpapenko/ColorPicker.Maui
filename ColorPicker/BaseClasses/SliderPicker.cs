@@ -302,20 +302,24 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         SKRect clipRect;
         SKRoundRect clipRoundRect;
 
+        // Slider line center spans [pr*1.1, length - pr*1.1] but its round-cap stroke
+        // (thickness = 1.3*pr) extends 0.65*pr beyond each endpoint, so the visible
+        // pill spans [pr*0.45, length - pr*0.45]. Chess clip must match that pill.
+        float endInset = pickerRadiusPixels * 0.45F;
         if ( Vertical )
         {
-            patternRect = new SKRect( sliderTop - pickerRadiusPixels, pickerRadiusPixels * 1.1F
-                   , sliderTop + pickerRadiusPixels, canvasSize.Height - ( pickerRadiusPixels * 1.1F ) );
-            clipRect = new SKRect( sliderTop - ( pickerRadiusPixels * 0.65f ), pickerRadiusPixels * 1.1F
-                 , sliderTop + ( pickerRadiusPixels * 0.65f ), canvasSize.Height - ( pickerRadiusPixels * 1.1F ) );
+            patternRect = new SKRect( sliderTop - pickerRadiusPixels, endInset
+                   , sliderTop + pickerRadiusPixels, canvasSize.Height - endInset );
+            clipRect = new SKRect( sliderTop - ( pickerRadiusPixels * 0.65f ), endInset
+                 , sliderTop + ( pickerRadiusPixels * 0.65f ), canvasSize.Height - endInset );
             clipRoundRect = new SKRoundRect( clipRect, pickerRadiusPixels * 0.65f, pickerRadiusPixels * 0.65f );
         }
         else
         {
-            patternRect = new SKRect( pickerRadiusPixels * 1.1F, sliderTop - pickerRadiusPixels
-               , canvasSize.Width - ( pickerRadiusPixels * 1.1F ), sliderTop + pickerRadiusPixels );
-            clipRect = new SKRect( pickerRadiusPixels * 1.1F, sliderTop - ( pickerRadiusPixels * 0.65f )
-               , canvasSize.Width - ( pickerRadiusPixels * 1.1F ), sliderTop + ( pickerRadiusPixels * 0.65f ) );
+            patternRect = new SKRect( endInset, sliderTop - pickerRadiusPixels
+               , canvasSize.Width - endInset, sliderTop + pickerRadiusPixels );
+            clipRect = new SKRect( endInset, sliderTop - ( pickerRadiusPixels * 0.65f )
+               , canvasSize.Width - endInset, sliderTop + ( pickerRadiusPixels * 0.65f ) );
             clipRoundRect = new SKRoundRect( clipRect, pickerRadiusPixels * 0.65f, pickerRadiusPixels * 0.65f );
         }
 
