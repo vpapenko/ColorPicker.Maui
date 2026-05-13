@@ -59,7 +59,7 @@ public partial class LayoutTestPage : ContentPage
             var overlays = new[]
             {
                 ((double)hbLoc.X, (double)hbLoc.Y, HostBorder.Width, HostBorder.Height,
-                 (SkiaSharp.SKColor?)new SkiaSharp.SKColor(255,255,255), (SkiaSharp.SKColor?)null),
+                 (SkiaSharp.SKColor?)new SkiaSharp.SKColor(255,255,0), (SkiaSharp.SKColor?)new SkiaSharp.SKColor(0,0,255)),
                 ((double)poLoc.X, (double)poLoc.Y, PickerOutline.Width, PickerOutline.Height,
                  (SkiaSharp.SKColor?)null, (SkiaSharp.SKColor?)new SkiaSharp.SKColor(255,0,0)),
             };
