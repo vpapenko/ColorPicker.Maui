@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:ColorPicker.Controls;assembly=ColorPicker"
+             xmlns:cvt="clr-namespace:ColorPickerTestApp.Converters"
+             x:Class="ColorPickerTestApp.ColorSyncTestPage"
+             Title="Color Sync"
+             BackgroundColor="White">
+
+    <ContentPage.Resources>
+        <cvt:ColorToHexStringConverter  x:Key="HexCv" />
+        <cvt:ColorToRGBAStringConverter x:Key="RgbaCv" />
+        <Style TargetType="Label">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="HorizontalOptions" Value="Center" />
+        </Style>
+        <Style x:Key="CellHost" TargetType="Border">
+            <Setter Property="Stroke" Value="LightGray" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="Padding" Value="2" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="8">
+
+        <!-- ============== INPUT ============== -->
+        <Border Grid.Row="0" Stroke="Blue" StrokeThickness="1" Padding="8" Margin="0,0,0,4">
+            <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                <Label Text="Input:" VerticalOptions="Center" FontAttributes="Bold" />
+                <Label Text="Hex" VerticalOptions="Center" />
+                <Entry x:Name="InputHexEntry" AutomationId="InputHex"
+                       WidthRequest="100" Text="#FF0000FF"
+                       Completed="OnInputHexCompleted" />
+                <Button x:Name="InputApplyButton" AutomationId="InputApply"
+                        Text="Apply" Clicked="OnInputApplyClicked" />
+                <Label Text="Preset" VerticalOptions="Center" />
+                <Picker x:Name="InputPresetPicker" AutomationId="InputPreset"
+                        WidthRequest="120" SelectedIndexChanged="OnInputPresetChanged">
+                    <Picker.Items>
+                        <x:String>Red</x:String>
+                        <x:String>Green</x:String>
+                        <x:String>Blue</x:String>
+                        <x:String>Yellow</x:String>
+                        <x:String>Cyan</x:String>
+                        <x:String>Magenta</x:String>
+                        <x:String>White</x:String>
+                        <x:String>Black</x:String>
+                        <x:String>Gray50</x:String>
+                        <x:String>Orange</x:String>
+                        <x:String>Purple</x:String>
+                        <x:String>Teal</x:String>
+                    </Picker.Items>
+                </Picker>
+                <Label Text="Input swatch:" VerticalOptions="Center" />
+                <BoxView x:Name="InputSwatch" AutomationId="InputSwatch"
+                         WidthRequest="40" HeightRequest="20" Color="Red" />
+            </HorizontalStackLayout>
+        </Border>
+
+        <!-- ============== CONTROLS GRID (4 cols × 4 rows = 16 controls) ============== -->
+        <Grid Grid.Row="1" x:Name="ControlsGrid"
+              ColumnDefinitions="*,*,*,*,*"
+              RowDefinitions="*,*,*,*"
+              ColumnSpacing="4" RowSpacing="4">
+
+            <!-- Row 0: Wheel variants (all 4 visually distinct) -->
+            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorWheel Grid.Row="0" x:Name="MasterWheel"
+                                         AutomationId="C_WheelDefault" />
+                    <Label Grid.Row="1" Text="Wheel: lumWheel" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelAlphaHoriz"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowAlphaSlider="True" />
+                    <Label Grid.Row="1" Text="Wheel: lumWheel +α horiz" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelAlphaVert"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         Vertical="True" ShowAlphaSlider="True" />
+                    <Label Grid.Row="1" Text="Wheel: lumWheel +α vert" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="0" Grid.Column="3" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelLumSliderHoriz"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowLuminosityWheel="False"
+                                         ShowLuminositySlider="True"
+                                         ShowAlphaSlider="True" />
+                    <Label Grid.Row="1" Text="Wheel: lumSlider +α horiz" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="0" Grid.Column="4" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelAll"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowLuminosityWheel="True"
+                                         ShowLuminositySlider="True"
+                                         ShowAlphaSlider="True" />
+                    <Label Grid.Row="1" Text="Wheel: all (ring + lumSlider + α)" />
+                </Grid>
+            </Border>
+
+            <!-- Row 1: more wheel variants + Triangles -->
+            <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelLumSliderVert"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowLuminosityWheel="False"
+                                         ShowLuminositySlider="True"
+                                         ShowAlphaSlider="True"
+                                         Vertical="True" />
+                    <Label Grid.Row="1" Text="Wheel: lumSlider +α vert" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelNoLum"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowLuminosityWheel="False"
+                                         ShowLuminositySlider="False" />
+                    <Label Grid.Row="1" Text="Wheel: noLum" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorTriangle Grid.Row="0" AutomationId="C_TriFixed"
+                                            AttachedColorPicker="{x:Reference MasterWheel}"
+                                            RotateTriangleByHue="False" />
+                    <Label Grid.Row="1" Text="Triangle: fixed" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="1" Grid.Column="3" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorTriangle Grid.Row="0" AutomationId="C_TriRotate"
+                                            AttachedColorPicker="{x:Reference MasterWheel}"
+                                            RotateTriangleByHue="True" />
+                    <Label Grid.Row="1" Text="Triangle: rotate (default)" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="1" Grid.Column="4" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelNoLumAlphaHoriz"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowLuminosityWheel="False"
+                                         ShowLuminositySlider="False"
+                                         ShowAlphaSlider="True" />
+                    <Label Grid.Row="1" Text="Wheel: noLum +α horiz" />
+                </Grid>
+            </Border>
+
+            <!-- Row 2: HSL sliders -->
+            <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:HSLSliders Grid.Row="0" AutomationId="C_HSL"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowAlphaSlider="False" />
+                    <Label Grid.Row="1" Text="HSL: horiz" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:HSLSliders Grid.Row="0" AutomationId="C_HSLAlpha"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowAlphaSlider="True" />
+                    <Label Grid.Row="1" Text="HSL: horiz +α" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:HSLSliders Grid.Row="0" AutomationId="C_HSLVert"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         Vertical="True"
+                                         ShowAlphaSlider="False" />
+                    <Label Grid.Row="1" Text="HSL: vert" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:HSLSliders Grid.Row="0" AutomationId="C_HSLVertAlpha"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         Vertical="True" ShowAlphaSlider="True" />
+                    <Label Grid.Row="1" Text="HSL: vert +α" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="2" Grid.Column="4" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelNoLumAlphaVert"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowLuminosityWheel="False"
+                                         ShowLuminositySlider="False"
+                                         ShowAlphaSlider="True"
+                                         Vertical="True" />
+                    <Label Grid.Row="1" Text="Wheel: noLum +α vert" />
+                </Grid>
+            </Border>
+
+            <!-- Row 3: RGB sliders -->
+            <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:RGBSliders Grid.Row="0" AutomationId="C_RGB"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowAlphaSlider="False" />
+                    <Label Grid.Row="1" Text="RGB: horiz" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:RGBSliders Grid.Row="0" AutomationId="C_RGBAlpha"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowAlphaSlider="True" />
+                    <Label Grid.Row="1" Text="RGB: horiz +α" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:RGBSliders Grid.Row="0" AutomationId="C_RGBVert"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         Vertical="True"
+                                         ShowAlphaSlider="False" />
+                    <Label Grid.Row="1" Text="RGB: vert" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="3" Grid.Column="3" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:RGBSliders Grid.Row="0" AutomationId="C_RGBVertAlpha"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         Vertical="True" ShowAlphaSlider="True" />
+                    <Label Grid.Row="1" Text="RGB: vert +α" />
+                </Grid>
+            </Border>
+            <Border Grid.Row="3" Grid.Column="4" Style="{StaticResource CellHost}">
+                <Grid RowDefinitions="*,Auto">
+                    <controls:ColorWheel Grid.Row="0" AutomationId="C_WheelLumSliderNoAlpha"
+                                         AttachedColorPicker="{x:Reference MasterWheel}"
+                                         ShowLuminosityWheel="False"
+                                         ShowLuminositySlider="True"
+                                         ShowAlphaSlider="False" />
+                    <Label Grid.Row="1" Text="Wheel: lumSlider no-α" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ============== OUTPUT ============== -->
+        <Border Grid.Row="2" Stroke="Green" StrokeThickness="1" Padding="8" Margin="0,4,0,0">
+            <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                <Label Text="Output:" VerticalOptions="Center" FontAttributes="Bold" />
+                <BoxView x:Name="OutputSwatch" AutomationId="OutputSwatch"
+                         WidthRequest="40" HeightRequest="20"
+                         Color="{Binding Source={x:Reference MasterWheel}, Path=SelectedColor}" />
+                <Label x:Name="OutputHexLabel" AutomationId="OutputHex"
+                       VerticalOptions="Center"
+                       Text="{Binding Source={x:Reference MasterWheel}, Path=SelectedColor, Converter={StaticResource HexCv}}" />
+                <Label x:Name="OutputRgbaLabel" AutomationId="OutputRgba"
+                       VerticalOptions="Center"
+                       Text="{Binding Source={x:Reference MasterWheel}, Path=SelectedColor, Converter={StaticResource RgbaCv}}" />
+            </HorizontalStackLayout>
+        </Border>
+
+    </Grid>
+</ContentPage>
