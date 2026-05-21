@@ -5,29 +5,48 @@ One-time GitHub configuration required to activate the
 
 ---
 
-## 1. Branch protection on `main`
+## 1. Branch protection on `main` (two-phase setup)
+
+Required-status-check names only appear in GitHub's dropdown **after they've
+run at least once on the default branch**. So we set up in two passes.
+
+### Phase A — before merging this PR
 
 **Settings → Branches → Add rule**, branch name pattern: `main`.
 
 - ✅ **Require a pull request before merging**
   - Require approvals: **0**  (solo-friendly; raise to 1 once you have co-maintainers)
-  - ✅ Require review from Code Owners (CODEOWNERS auto-requests review from @vpapenko)
-- ✅ **Require status checks to pass before merging**
-  - ✅ Require branches to be up to date before merging
-  - Required checks (add after first PR run completes so they appear in the dropdown):
-    - `Build and test (reusable) / Build Android`
-    - `Build and test (reusable) / Build Windows`
-    - `Build and test (reusable) / UI Tests (Windows)`
-    - `Build and test (reusable) / Pack NuGet`
+  - ✅ Require review from Code Owners
 - ✅ **Require linear history**
-- ✅ **Restrict who can push to matching branches**
-  - Allow only: **vpapenko**
+- ✅ **Restrict who can push to matching branches** → allow only **vpapenko**
 - ✅ **Block force pushes**
 - ✅ **Block deletions**
-- ❌ "Do not allow bypassing the above settings" — leave OFF so you can break-glass if needed.
+- ❌ "Do not allow bypassing the above settings" — leave OFF (break-glass).
+
+Save. Now nobody else can push directly to `main`, and you still get the
+green merge button on PR #3.
+
+### Phase B — after first push to `main`
+
+Merging PR #3 triggers `ci.yml` on `main`, which runs `build-and-test.yml`.
+Once it finishes (success or failure), the job names are registered with
+GitHub and become selectable.
+
+Re-open the `main` branch rule and add:
+
+- ✅ **Require status checks to pass before merging**
+  - ✅ Require branches to be up to date before merging
+  - Required checks:
+    - `Build Android`
+    - `Build Windows`
+    - `UI Tests (Windows)`
+    - `Pack NuGet`
+
+Save. From now on every PR must pass all four jobs before its merge button
+turns green.
 
 External contributors can fork and open PRs freely; CI runs on every PR;
-only you can hit the merge button.
+only you can hit merge.
 
 ---
 
