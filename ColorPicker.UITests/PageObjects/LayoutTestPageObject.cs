@@ -44,28 +44,53 @@ public sealed class LayoutTestPageObject
     /// </summary>
     public ScenarioState Apply(string scenario)
     {
-        SetEntryText(ScenarioEntry, scenario);
-        ApplyButton.Click();
-
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-        while (DateTime.UtcNow < deadline)
+        // One outer retry: SendKeys on WinAppDriver occasionally drops the
+        // shifted ':' character (modifier-key race), which causes the page
+        // to report "ERROR:missing size". Re-typing the scenario and clicking
+        // Apply again reliably recovers.
+        for (var attempt = 0; attempt < 2; attempt++)
         {
-            try
-            {
-                var text = AppliedMarker.Text ?? "";
-                if (text.StartsWith("ERROR:", StringComparison.Ordinal))
-                    throw new InvalidOperationException("Page reported: " + text);
+            SetEntryText(ScenarioEntry, scenario);
+            ApplyButton.Click();
 
-                if (ScenarioState.TryParse(text, out var state) &&
-                    state.Spec == scenario &&
-                    state.HostBounds.W > 0 && state.HostBounds.H > 0)
-                    return state;
+            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+            string? errorSeen = null;
+            while (DateTime.UtcNow < deadline)
+            {
+                try
+                {
+                    var text = AppliedMarker.Text ?? "";
+                    if (text.StartsWith("ERROR:", StringComparison.Ordinal))
+                    {
+                        errorSeen = text;
+                        break;
+                    }
+
+                    if (ScenarioState.TryParse(text, out var state) &&
+                        state.Spec == scenario &&
+                        state.HostBounds.W > 0 && state.HostBounds.H > 0)
+                        return state;
+                }
+                catch (WebDriverException) { /* element may briefly disappear */ }
+                Thread.Sleep(150);
             }
-            catch (WebDriverException) { /* element may briefly disappear */ }
-            Thread.Sleep(150);
+
+            if (errorSeen != null && attempt == 0)
+            {
+                Thread.Sleep(250);
+                continue;
+            }
+            if (errorSeen != null)
+                throw new InvalidOperationException("Page reported: " + errorSeen);
+
+            if (attempt == 1)
+            {
+                var last = AppliedMarker.Text ?? "<none>";
+                throw new TimeoutException($"Scenario '{scenario}' did not finish applying within 10s. Last marker: {last}");
+            }
         }
-        var last = AppliedMarker.Text ?? "<none>";
-        throw new TimeoutException($"Scenario '{scenario}' did not finish applying within 10s. Last marker: {last}");
+
+        throw new InvalidOperationException("unreachable");
     }
 
     public Bounds GetBounds(AppiumElement element)
