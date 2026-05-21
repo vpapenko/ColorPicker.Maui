@@ -10,7 +10,8 @@ One-time GitHub configuration required to activate the
 Required-status-check names only appear in GitHub's dropdown **after they've
 run at least once on the default branch**. Easiest order:
 
-1. Add the secret + environment (section 2 + 3 below).
+1. Create the Trusted Publishing policy on nuget.org (section 2 below) and
+   the `nuget-prod` GitHub environment (section 3).
 2. Merge PR #3 as-is — you're the only one with push rights anyway.
 3. Wait for `ci.yml` to finish on `main` (success or failure both register
    the job names).
@@ -43,14 +44,37 @@ only you can hit merge.
 
 ---
 
-## 2. Secrets
+## 2. NuGet.org Trusted Publishing (OIDC — no API key)
 
-**Settings → Secrets and variables → Actions**:
+nuget.org supports Trusted Publishing: GitHub Actions exchanges a short-lived
+OIDC token for a one-hour API key at publish time. No long-lived secret in
+the repo, nothing to rotate.
 
-- `NUGET_API_KEY` — repository secret. Generate at
-  https://www.nuget.org/account/apikeys with scope:
-  - **Push** → Glob: `ColorPicker.Maui` (one package only)
-  - Expires in 365 days; calendar-reminder to rotate.
+1. Sign in at https://www.nuget.org → top-right avatar → **Trusted Publishing**.
+2. **Add new policy** with these exact values:
+
+   | Field                | Value                                                |
+   |----------------------|------------------------------------------------------|
+   | Policy Name          | `ColorPicker.Maui — GitHub Actions release`          |
+   | Package Owner        | `VictorPapenko`                                      |
+   | Repository Owner     | `vpapenko`                                           |
+   | Repository           | `ColorPicker.Maui`                                   |
+   | Workflow File        | `release.yml`                                        |
+   | Environment          | `nuget-prod`                                         |
+   | Package Glob / IDs   | `ColorPicker.Maui`                                   |
+
+3. Save. First push from `release.yml` (after the package exists) will
+   bind the policy to the package owner — that's normal.
+
+If the package doesn't exist on nuget.org yet, the **very first** publish
+still needs a one-shot API key:
+- Generate at https://www.nuget.org/account/apikeys
+  scope **Push new packages and package versions**, Glob `ColorPicker.Maui`,
+  expires in **1 day**.
+- Add as repo secret `NUGET_API_KEY` temporarily.
+- Temporarily change `release.yml` to use `${{ secrets.NUGET_API_KEY }}`
+  instead of the Trusted-Publishing step, run release once, then revert
+  and delete the secret + revoke the key.
 
 `GITHUB_TOKEN` is built-in; nothing to configure.
 
@@ -63,6 +87,9 @@ only you can hit merge.
 - ✅ Required reviewers: **vpapenko**
   → Manual approval gate before any push to nuget.org.
 - ✅ Deployment branches and tags: only allow tags matching `v*`.
+
+The environment name **must** match the `Environment` field in the
+Trusted Publishing policy above, otherwise OIDC exchange will be rejected.
 
 ---
 

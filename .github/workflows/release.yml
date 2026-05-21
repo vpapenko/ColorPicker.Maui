@@ -26,6 +26,9 @@ jobs:
     name: Publish to nuget.org
     needs: [ build-and-test ]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for NuGet Trusted Publishing (OIDC)
+      contents: read
     environment:
       name: nuget-prod
       url: https://www.nuget.org/packages/ColorPicker.Maui
@@ -42,22 +45,26 @@ jobs:
         run: |
           tag="${GITHUB_REF#refs/tags/v}"
           ver="${{ needs.build-and-test.outputs.package-version }}"
-          # Strip the .nupkg suffix MinVer doesn't include but pack file does.
           ver="${ver%.nupkg}"
           if [ "$tag" != "$ver" ]; then
             echo "::error::Tag '$tag' does not match packed version '$ver'."
             exit 1
           fi
           echo "Tag and package version match: $ver"
+      - name: NuGet login (OIDC -> short-lived API key)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: VictorPapenko
       - name: Push to nuget.org
         run: |
           dotnet nuget push "nupkgs/*.nupkg" \
             --source https://api.nuget.org/v3/index.json \
-            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
             --skip-duplicate
           dotnet nuget push "nupkgs/*.snupkg" \
             --source https://api.nuget.org/v3/index.json \
-            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
             --skip-duplicate
 
   github-release:
