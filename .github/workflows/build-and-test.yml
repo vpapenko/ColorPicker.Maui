@@ -96,6 +96,19 @@ jobs:
           $msi = Join-Path $env:RUNNER_TEMP "WindowsApplicationDriver.msi"
           Invoke-WebRequest -Uri $url -OutFile $msi
           Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /qn /norestart" -Wait
+      - name: Set screen resolution (GH Windows runner defaults to 1024x768)
+        shell: pwsh
+        run: |
+          # MAUI test app pins window to 1280x1024 in LAYOUT_TEST/SYNC_TEST
+          # mode; default monitor clamps to 1024x768. Force a real 1920x1080
+          # session so the pinned window is honored and Maximize() in the
+          # main fixture gives us a useful viewport.
+          try {
+            Set-DisplayResolution -Width 1920 -Height 1080 -Force
+            Write-Host "Display set to 1920x1080"
+          } catch {
+            Write-Warning "Set-DisplayResolution failed: $($_.Exception.Message)"
+          }
       - name: Install Appium
         run: |
           npm install -g appium@2
@@ -105,7 +118,10 @@ jobs:
         run: |
           $log = Join-Path $env:RUNNER_TEMP "appium.log"
           $appiumCmd = (Get-Command appium).Source
-          Start-Process -FilePath "cmd.exe" -ArgumentList "/c",$appiumCmd,"--address","127.0.0.1","--port","4723" -RedirectStandardOutput $log -RedirectStandardError "$log.err" -PassThru | Out-Null
+          # Use cmd.exe's own >/2>&1 redirection so the appium.cmd shim's
+          # output is actually captured (Start-Process -Redirect* doesn't
+          # follow children spawned by the .cmd wrapper).
+          Start-Process -FilePath "cmd.exe" -ArgumentList "/c","`"$appiumCmd`" --address 127.0.0.1 --port 4723 > `"$log`" 2>&1" -PassThru | Out-Null
           $deadline = (Get-Date).AddSeconds(60)
           while ((Get-Date) -lt $deadline) {
             try { (Invoke-WebRequest -Uri http://127.0.0.1:4723/status -UseBasicParsing).StatusCode; break } catch { Start-Sleep -Seconds 1 }
