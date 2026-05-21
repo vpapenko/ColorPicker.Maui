@@ -169,4 +169,7 @@ public sealed class MainPage
 
     private AppiumElement Find(string automationId) =>
         (AppiumElement)_driver.FindElement(MobileBy.AccessibilityId(automationId));
+
+    /// <summary>Capture the full window screenshot as raw bytes (PNG).</summary>
+    public byte[] CaptureWindowBytes() => _driver.GetScreenshot().AsByteArray;
 }

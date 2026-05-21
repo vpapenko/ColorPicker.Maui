@@ -181,17 +181,27 @@ public partial class LayoutTestPage : ContentPage
 
     void UpdateAppliedMarker()
     {
-        // Format: "spec|hostX,Y,WxH|ctrlX,Y,WxH|viewportX,Y,WxH"
+        // Format: "spec|hostX,Y,WxH|ctrlX,Y,WxH|viewportX,Y,WxH|desired=WxH"
+        // The trailing "desired=" segment carries the inner control's
+        // measured DesiredSize so tests can detect MeasureOverride regressions
+        // even when the parent host clamps the arranged bounds.
         var hX = HostBorder.X;       var hY = HostBorder.Y;
         var hW = HostBorder.Width;   var hH = HostBorder.Height;
         var cX = ScenarioContent.X;  var cY = ScenarioContent.Y;
         var cW = ScenarioContent.Width; var cH = ScenarioContent.Height;
         var vX = HostContainer.X;    var vY = HostContainer.Y;
         var vW = HostContainer.Width;var vH = HostContainer.Height;
+        double dW = 0, dH = 0;
+        if (ScenarioContent.Content is View innerCtrl)
+        {
+            dW = innerCtrl.DesiredSize.Width;
+            dH = innerCtrl.DesiredSize.Height;
+        }
         AppliedLabel.Text =
             $"{_lastSpec}|{hX:0.##},{hY:0.##},{hW:0.##}x{hH:0.##}" +
             $"|{cX:0.##},{cY:0.##},{cW:0.##}x{cH:0.##}" +
-            $"|{vX:0.##},{vY:0.##},{vW:0.##}x{vH:0.##}";
+            $"|{vX:0.##},{vY:0.##},{vW:0.##}x{vH:0.##}" +
+            $"|desired={dW:0.##}x{dH:0.##}";
 
         // Deep diagnostics: enumerate every layer's bounds + each SKCanvasView's
         // absolute position. Useful for tracking where natural-size shrinkwrap

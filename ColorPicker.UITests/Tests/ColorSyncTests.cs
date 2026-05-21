@@ -87,7 +87,12 @@ public sealed class ColorSyncTests : IClassFixture<SyncTestAppFixture>
 
     /// <summary>
     /// Look up the empirical (relX, relY) for this (cell, color) and assert the
-    /// rendered picker dark spot is within <see cref="TolerancePx"/> of it.
+    /// rendered picker indicator is at that position. We require both a near-WHITE
+    /// pixel (the indicator's outer 2px white ring) AND a near-BLACK pixel (its
+    /// 1px black inner/outer rings) inside a tight window. Saturated wheel/triangle
+    /// pixels (which can be dark on their own) cannot satisfy BOTH at once, so this
+    /// rejects "indicator missing / on wrong cell" mutations that a single dark-pixel
+    /// scan was missing (see PaintIndicator in SkiaSharpPickerBase).
     /// </summary>
     private void AssertPickerAt(Image<Rgba32> img, string cellId, string hex)
     {
@@ -100,21 +105,24 @@ public sealed class ColorSyncTests : IClassFixture<SyncTestAppFixture>
         int px = b.X + (int)Math.Round(rel.Rx * b.Width);
         int py = b.Y + (int)Math.Round(rel.Ry * b.Height);
 
-        var (found, minLuma, fx, fy) = ScanForDarkPixel(img, px, py, TolerancePx, DarkLuma);
-        Assert.True(found,
-            $"No picker-dark pixel near ({px},{py}) for {cellId} {hex} " +
+        var r = ScanForIndicatorRing(img, px, py, TolerancePx, WhiteLuma, BlackLuma);
+        Assert.True(r.found,
+            $"No picker indicator near ({px},{py}) for {cellId} {hex} " +
             $"(expected rel=({rel.Rx:F4},{rel.Ry:F4}) in bounds {b}). " +
-            $"Min luma in {TolerancePx}px window: {minLuma} at ({fx},{fy}).");
+            $"Window {TolerancePx}px: maxLuma={r.maxLuma} minLuma={r.minLuma} " +
+            $"hadWhite={r.hadWhite} hadBlack={r.hadBlack}.");
     }
 
-    private const int TolerancePx = 18;
-    private const int DarkLuma    = 200;
+    // Tight window because indicator radius is ~3.5% of canvas size (~7-12 px).
+    private const int TolerancePx = 10;
+    private const int WhiteLuma   = 235; // outer 2px white ring
+    private const int BlackLuma   = 60;  // 1px black inner/outer rings
 
-    private static (bool found, int minLuma, int foundX, int foundY)
-        ScanForDarkPixel(Image<Rgba32> img, int cx, int cy, int radius, int darkLuma)
+    private static (bool found, bool hadWhite, bool hadBlack, int maxLuma, int minLuma)
+        ScanForIndicatorRing(Image<Rgba32> img, int cx, int cy, int radius, int whiteLuma, int blackLuma)
     {
-        int minLuma = 255, fx = cx, fy = cy;
-        bool found = false;
+        bool hadWhite = false, hadBlack = false;
+        int maxLuma = 0, minLuma = 255;
         for (int dy = -radius; dy <= radius; dy++)
         {
             int y = cy + dy;
@@ -125,11 +133,13 @@ public sealed class ColorSyncTests : IClassFixture<SyncTestAppFixture>
                 if (x < 0 || x >= img.Width) continue;
                 var p = img[x, y];
                 int luma = (p.R * 299 + p.G * 587 + p.B * 114) / 1000;
-                if (luma < minLuma) { minLuma = luma; fx = x; fy = y; }
-                if (luma < darkLuma) found = true;
+                if (luma > maxLuma) maxLuma = luma;
+                if (luma < minLuma) minLuma = luma;
+                if (luma >= whiteLuma) hadWhite = true;
+                if (luma <= blackLuma) hadBlack = true;
             }
         }
-        return (found, minLuma, fx, fy);
+        return (hadWhite && hadBlack, hadWhite, hadBlack, maxLuma, minLuma);
     }
 
     // ============================== Color math ==============================

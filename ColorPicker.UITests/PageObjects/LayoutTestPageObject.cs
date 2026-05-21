@@ -198,12 +198,17 @@ public readonly record struct LogicalBounds(double X, double Y, double W, double
 }
 
 /// <summary>Snapshot of a scenario's resolved layout, parsed from the page's
-/// AppliedLabel marker. Bounds are in MAUI logical units.</summary>
+/// AppliedLabel marker. Bounds are in MAUI logical units. ControlDesiredSize
+/// is the inner control's measured DesiredSize (pre-clamp), used to detect
+/// MeasureOverride regressions that the host's arrange step would otherwise
+/// hide.</summary>
 public readonly record struct ScenarioState(
     string Spec,
     LogicalBounds HostBounds,
     LogicalBounds ControlBounds,
-    LogicalBounds ViewportBounds = default)
+    LogicalBounds ViewportBounds = default,
+    double ControlDesiredW = 0,
+    double ControlDesiredH = 0)
 {
     public static bool TryParse(string text, out ScenarioState state)
     {
@@ -211,17 +216,34 @@ public readonly record struct ScenarioState(
         if (string.IsNullOrEmpty(text)) return false;
 
         var parts = text.Split('|');
-        // Accept legacy 3-segment markers (Tier 1/2 pages) plus the new
-        // 4-segment marker that includes viewport bounds.
-        if (parts.Length != 3 && parts.Length != 4) return false;
+        // 3-segment markers (legacy), 4-segment (with viewport), or 5-segment
+        // (with viewport + desired-size).
+        if (parts.Length < 3 || parts.Length > 5) return false;
 
         if (!TryParseBounds(parts[1], out var host)) return false;
         if (!TryParseBounds(parts[2], out var ctrl)) return false;
         var viewport = default(LogicalBounds);
-        if (parts.Length == 4 && !TryParseBounds(parts[3], out viewport))
+        if (parts.Length >= 4 && !TryParseBounds(parts[3], out viewport))
+            return false;
+        double dW = 0, dH = 0;
+        if (parts.Length == 5 && !TryParseDesired(parts[4], out dW, out dH))
             return false;
 
-        state = new ScenarioState(parts[0], host, ctrl, viewport);
+        state = new ScenarioState(parts[0], host, ctrl, viewport, dW, dH);
+        return true;
+    }
+
+    static bool TryParseDesired(string s, out double w, out double h)
+    {
+        w = 0; h = 0;
+        // "desired=WxH"
+        const string prefix = "desired=";
+        if (!s.StartsWith(prefix, StringComparison.Ordinal)) return false;
+        var sz = s.Substring(prefix.Length).Split('x');
+        if (sz.Length != 2) return false;
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        if (!double.TryParse(sz[0], System.Globalization.NumberStyles.Float, ci, out w)) return false;
+        if (!double.TryParse(sz[1], System.Globalization.NumberStyles.Float, ci, out h)) return false;
         return true;
     }
 

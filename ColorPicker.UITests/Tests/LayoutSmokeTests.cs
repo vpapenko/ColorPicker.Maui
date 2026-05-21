@@ -57,6 +57,38 @@ public class LayoutSmokeTests : IClassFixture<AppiumServerFixture>, IClassFixtur
             $"Control height {state.ControlBounds.H} > host {state.HostBounds.H} ({scenario})");
     }
 
+    /// <summary>
+    /// MeasureOverride probe: the inner control's reported DesiredSize must not
+    /// exceed the host bounds (within rounding slack). Catches regressions where
+    /// MeasureOverride returns a too-large size — the parent host would clamp
+    /// the arranged ControlBounds, hiding the bug from
+    /// <see cref="Control_Fits_Within_Host"/>. We only test aspect-locked
+    /// controls (wheel, triangle) at square sizes here because slider stacks
+    /// expand to fill on their long axis by design.
+    /// </summary>
+    [Theory]
+    [InlineData("wheel:400x400")]
+    [InlineData("wheel:200x200")]
+    [InlineData("triangle:400x400")]
+    [InlineData("triangle:200x200")]
+    public void DesiredSize_Does_Not_Exceed_Host(string scenario)
+    {
+        var page  = _fixture.Page;
+        var state = page.Apply(scenario);
+
+        // DesiredSize is reported by the harness only for the new 5-segment
+        // marker; older builds will report 0. Skip if not populated rather
+        // than assert false-positive.
+        if (state.ControlDesiredW <= 0 && state.ControlDesiredH <= 0)
+            return;
+
+        Assert.True(state.ControlDesiredW <= state.HostBounds.W + 2,
+            $"Inner control DesiredSize.W={state.ControlDesiredW} exceeds host W={state.HostBounds.W} ({scenario}). " +
+            "MeasureOverride is asking for more space than the host can give.");
+        Assert.True(state.ControlDesiredH <= state.HostBounds.H + 2,
+            $"Inner control DesiredSize.H={state.ControlDesiredH} exceeds host H={state.HostBounds.H} ({scenario}).");
+    }
+
     private static (int w, int h) ParseSize(string scenario)
     {
         var parts = scenario.Split(':');
