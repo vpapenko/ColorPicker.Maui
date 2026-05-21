@@ -34,7 +34,7 @@ public class ColorPickerTouchActionBehaviorWinUI : Behavior<SkiaSharpPickerBase>
         // Get the Windows FrameworkElement corresponding to the Element that the Behavior is attached to
         _boundElement       =   bindable;
         var context         =   bindable.Handler.MauiContext ?? bindable.Parent.Handler.MauiContext;
-        _frameworkElement   =   bindable.ToNative( context );
+        _frameworkElement   =   bindable.ToPlatform( context );
 
         if ( _sharedBehavior is not null && _frameworkElement is not null )
         {

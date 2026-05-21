@@ -1,4 +1,4 @@
-﻿namespace ColorPicker.Controls;
+namespace ColorPicker.Controls;
 
 public class ColorTriangle : SkiaSharpPickerBase
 {
@@ -13,16 +13,16 @@ public class ColorTriangle : SkiaSharpPickerBase
 
     readonly SKColor[] _sweepGradientColors = new SKColor[256];
 
-    public static readonly BindableProperty WheelBackgroundColorProperty
-                         = BindableProperty.Create(nameof(WheelBackgroundColor),
+    public static readonly BindableProperty CanvasBackgroundColorProperty
+                         = BindableProperty.Create(nameof(CanvasBackgroundColor),
                                                     typeof(Color),
                                                     typeof(IColorPicker),
                                                     Colors.Transparent,
                                                     propertyChanged: HandleWheelBackgroundColorSet );
-    public Color WheelBackgroundColor
+    public Color CanvasBackgroundColor
     {
-        get => (Color)GetValue( WheelBackgroundColorProperty );
-        set => SetValue( WheelBackgroundColorProperty, value );
+        get => (Color)GetValue( CanvasBackgroundColorProperty );
+        set => SetValue( CanvasBackgroundColorProperty, value );
     }
 
     static void HandleWheelBackgroundColorSet( BindableObject bindable, object oldValue, object newValue )
@@ -58,20 +58,25 @@ public class ColorTriangle : SkiaSharpPickerBase
     /// </summary>
     public ColorTriangle() : base()
     {
-        PickerRadiusScale = 0.035F;
+        HorizontalOptions = LayoutOptions.Center;
+        VerticalOptions   = LayoutOptions.Center;
+        IndicatorRadiusScale = 0.035F;
         for (var i = 128; i >= -127; i--)
         {
             _sweepGradientColors[ 255 - (i + 127) ] = Color.FromHsla( (i < 0 ? 255 + i : i) / 255D, 1, 0.5 ).ToSKColor();
         }
     }
 
-    public override float GetPickerRadiusPixels( SKSize canvasSize ) => GetSize( canvasSize ) * PickerRadiusScale;
-    public override float GetPickerRadiusPixels() => GetPickerRadiusPixels( GetCanvasSize() );
+    public override float GetIndicatorRadiusPixels( SKSize canvasSize ) => GetSize( canvasSize ) * IndicatorRadiusScale;
+    public override float GetIndicatorRadiusPixels() => GetIndicatorRadiusPixels( GetCanvasSize() );
 
     protected override void OnTouchActionPressed( ColorPickerTouchActionEventArgs args )
     {
-        var canvasRadius = GetCanvasSize().Width / 2F;
+        var canvasRadius = GetSize() / 2F;
+        var (offX, offY) = GetDrawingOffset();
         var point = ConvertToPixel(args.Location);
+        point.X -= offX;
+        point.Y -= offY;
 
         if (_locationSVProgressId is null && IsInSVArea( point, canvasRadius ))
         {
@@ -89,8 +94,11 @@ public class ColorTriangle : SkiaSharpPickerBase
 
     protected override void OnTouchActionMoved( ColorPickerTouchActionEventArgs args )
     {
-        var canvasRadius = GetCanvasSize().Width / 2F;
+        var canvasRadius = GetSize() / 2F;
+        var (offX, offY) = GetDrawingOffset();
         var point = ConvertToPixel(args.Location);
+        point.X -= offX;
+        point.Y -= offY;
 
         if (_locationSVProgressId == args.Id)
         {
@@ -106,8 +114,11 @@ public class ColorTriangle : SkiaSharpPickerBase
 
     protected override void OnTouchActionReleased( ColorPickerTouchActionEventArgs args )
     {
-        var canvasRadius = GetCanvasSize().Width / 2F;
+        var canvasRadius = GetSize() / 2F;
+        var (offX, offY) = GetDrawingOffset();
         var point = ConvertToPixel(args.Location);
+        point.X -= offX;
+        point.Y -= offY;
 
         if (_locationSVProgressId == args.Id)
         {
@@ -134,9 +145,13 @@ public class ColorTriangle : SkiaSharpPickerBase
     protected override void OnPaintSurface( SKCanvas canvas, int width, int height )
     {
         var canvasRadius = GetSize() / 2F;
+        var (offX, offY) = GetDrawingOffset();
 
         UpdateLocations( SelectedColor, canvasRadius );
         canvas.Clear();
+
+        canvas.Save();
+        canvas.Translate( offX, offY );
 
         PaintBackground( canvas, canvasRadius );
         PaintHGradient( canvas, canvasRadius );
@@ -144,10 +159,12 @@ public class ColorTriangle : SkiaSharpPickerBase
         if (RotateTriangleByHue)
             PaintLinePicker( canvas );
         else
-            PaintPicker( canvas, _locationMiddleH );
+            PaintIndicator( canvas, _locationMiddleH );
 
         PaintSVTriangle( canvas, canvasRadius );
-        PaintPicker( canvas, _locationSV );
+        PaintIndicator( canvas, _locationSV );
+
+        canvas.Restore();
     }
 
     protected override void OnSelectedColorChanging( Color color )
@@ -179,8 +196,15 @@ public class ColorTriangle : SkiaSharpPickerBase
         return new SizeRequest( new Size( size, size ) );
     }
 
-    protected override float GetSize( SKSize canvasSize ) => canvasSize.Width;
+    protected override float GetSize( SKSize canvasSize ) => Math.Min( canvasSize.Width, canvasSize.Height );
     protected override float GetSize() => GetSize( GetCanvasSize() );
+
+    (float offsetX, float offsetY) GetDrawingOffset()
+    {
+        var canvas = GetCanvasSize();
+        var size   = Math.Min( canvas.Width, canvas.Height );
+        return ( ( canvas.Width - size ) / 2F, ( canvas.Height - size ) / 2F );
+    }
 
     void UpdateLocations( Color color, float canvasRadius )
     {
@@ -217,11 +241,11 @@ public class ColorTriangle : SkiaSharpPickerBase
         _locationMiddleH.X += canvasRadius;
         _locationMiddleH.Y += canvasRadius;
 
-        _locationH1 = FromPolar( new PolarPoint( WheelHRadius( canvasRadius ) + GetPickerRadiusPixels(), (float)(Math.PI - angleH) ) );
+        _locationH1 = FromPolar( new PolarPoint( WheelHRadius( canvasRadius ) + GetIndicatorRadiusPixels(), (float)(Math.PI - angleH) ) );
         _locationH1.X += canvasRadius;
         _locationH1.Y += canvasRadius;
 
-        _locationH2 = FromPolar( new PolarPoint( WheelHRadius( canvasRadius ) - GetPickerRadiusPixels(), (float)(Math.PI - angleH) ) );
+        _locationH2 = FromPolar( new PolarPoint( WheelHRadius( canvasRadius ) - GetIndicatorRadiusPixels(), (float)(Math.PI - angleH) ) );
         _locationH2.X += canvasRadius;
         _locationH2.Y += canvasRadius;
     }
@@ -249,7 +273,7 @@ public class ColorTriangle : SkiaSharpPickerBase
     bool IsInHArea( SKPoint point, float canvasRadius )
     {
         var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        return polar.Radius <= WheelHRadius( canvasRadius ) + GetPickerRadiusPixels() && polar.Radius >= WheelHRadius( canvasRadius ) - GetPickerRadiusPixels();
+        return polar.Radius <= WheelHRadius( canvasRadius ) + GetIndicatorRadiusPixels() && polar.Radius >= WheelHRadius( canvasRadius ) - GetIndicatorRadiusPixels();
     }
 
     void PaintBackground( SKCanvas canvas, float canvasRadius )
@@ -258,7 +282,7 @@ public class ColorTriangle : SkiaSharpPickerBase
         var paint = new SKPaint
         {
             IsAntialias = true,
-            Color = WheelBackgroundColor.ToSKColor()
+            Color = CanvasBackgroundColor.ToSKColor()
         };
 
         canvas.DrawCircle( center, canvasRadius, paint );
@@ -274,7 +298,7 @@ public class ColorTriangle : SkiaSharpPickerBase
             IsAntialias = true,
             Shader = shader,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = GetPickerRadiusPixels() * 2
+            StrokeWidth = GetIndicatorRadiusPixels() * 2
         };
         canvas.DrawCircle( center, WheelHRadius( canvasRadius ), paint );
     }
@@ -288,7 +312,7 @@ public class ColorTriangle : SkiaSharpPickerBase
 
         if ( RotateTriangleByHue )
         {
-            canvas.SetMatrix( rotationHue );
+            canvas.Concat( ref rotationHue );
         }
 
         var point1 = new SKPoint( canvasRadius, canvasRadius - WheelSVRadius(canvasRadius) );
@@ -307,12 +331,10 @@ public class ColorTriangle : SkiaSharpPickerBase
             canvas.ClipPath( pathTriangle, SKClipOperation.Intersect, true );
         }
 
-        var matrix = SKMatrix.CreateRotation(-(float)Math.PI / 3F, point3.X, point3.Y);
+        canvas.Save();
 
-        if (RotateTriangleByHue)
-        {
-            SKMatrix.Concat( ref matrix, rotationHue, matrix );
-        }
+        var gradientRotation = SKMatrix.CreateRotation(-(float)Math.PI / 3F, point3.X, point3.Y);
+        canvas.Concat( ref gradientRotation );
 
         var shader = SKShader.CreateSweepGradient(point3,
                                                    new SKColor[]
@@ -333,17 +355,9 @@ public class ColorTriangle : SkiaSharpPickerBase
             Style       = SKPaintStyle.Fill
         };
 
-        canvas.SetMatrix( matrix );
         canvas.DrawCircle( point3, WheelSVRadius( canvasRadius ) * 2, paint );
 
-        if (RotateTriangleByHue)
-        {
-            canvas.SetMatrix( rotationHue );
-        }
-        else
-        {
-            canvas.ResetMatrix();
-        }
+        canvas.Restore();
 
         var colors = new SKColor[]
         {
@@ -353,7 +367,6 @@ public class ColorTriangle : SkiaSharpPickerBase
 
         PaintGradient( canvas, canvasRadius, colors, point3 );
 
-        canvas.ResetMatrix();
         canvas.Restore();
     }
 
@@ -454,10 +467,10 @@ public class ColorTriangle : SkiaSharpPickerBase
     void LimitToHRadius( SKPoint point, float canvasRadius )
     {
         var point1 = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        point1.Radius = WheelHRadius( canvasRadius ) + GetPickerRadiusPixels();
+        point1.Radius = WheelHRadius( canvasRadius ) + GetIndicatorRadiusPixels();
 
         var point2 = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        point1.Radius = WheelHRadius( canvasRadius ) - GetPickerRadiusPixels();
+        point1.Radius = WheelHRadius( canvasRadius ) - GetIndicatorRadiusPixels();
 
         _locationH1 = FromPolar( point1 );
         _locationH2 = FromPolar( point2 );
@@ -482,8 +495,8 @@ public class ColorTriangle : SkiaSharpPickerBase
         return new SKPoint( x, y );
     }
 
-    float WheelSVRadius( float canvasRadius ) => canvasRadius - (2 * GetPickerRadiusPixels()) - 2;
-    float WheelHRadius( float canvasRadius ) => canvasRadius - GetPickerRadiusPixels();
+    float WheelSVRadius( float canvasRadius ) => canvasRadius - (2 * GetIndicatorRadiusPixels()) - 2;
+    float WheelHRadius( float canvasRadius ) => canvasRadius - GetIndicatorRadiusPixels();
 
     void PaintLinePicker( SKCanvas canvas )
     {

@@ -1,0 +1,67 @@
+<ContentPage
+    x:Class="ColorPickerTestApp.AlphaIsolationPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:ColorPicker.Controls;assembly=ColorPicker">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <VerticalStackLayout Grid.Row="0" Spacing="6" Padding="20,10">
+            <HorizontalStackLayout Spacing="10">
+                <Label Text="Show alpha" VerticalOptions="Center" WidthRequest="160" />
+                <Switch
+                    x:Name="ShowAlphaSwitch"
+                    AutomationId="ShowAlphaSwitch"
+                    IsToggled="False" />
+            </HorizontalStackLayout>
+            <HorizontalStackLayout Spacing="10">
+                <Label Text="Show lum slider" VerticalOptions="Center" WidthRequest="160" />
+                <Switch
+                    x:Name="ShowLumSliderSwitch"
+                    AutomationId="ShowLumSliderSwitch"
+                    IsToggled="False" />
+            </HorizontalStackLayout>
+            <HorizontalStackLayout Spacing="10">
+                <Label Text="Show lum wheel (ring)" VerticalOptions="Center" WidthRequest="160" />
+                <Switch
+                    x:Name="ShowLumWheelSwitch"
+                    AutomationId="ShowLumWheelSwitch"
+                    IsToggled="True" />
+            </HorizontalStackLayout>
+            <HorizontalStackLayout Spacing="10">
+                <Label Text="Vertical" VerticalOptions="Center" WidthRequest="160" />
+                <Switch
+                    x:Name="VerticalSwitch"
+                    AutomationId="VerticalSwitch"
+                    IsToggled="False" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+
+        <Border
+            Grid.Row="1"
+            AutomationId="ColorWheel1Host"
+            WidthRequest="400"
+            HeightRequest="400"
+            HorizontalOptions="Center"
+            VerticalOptions="Center"
+            Stroke="Red"
+            StrokeThickness="1">
+            <Border
+                Stroke="Blue"
+                StrokeThickness="3"
+                StrokeDashArray="4,4"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Padding="0">
+                <controls:ColorWheel
+                    x:Name="ColorWheel1"
+                    AutomationId="ColorWheel1"
+                    ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}"
+                    ShowLuminositySlider="{Binding Source={x:Reference ShowLumSliderSwitch}, Path=IsToggled}"
+                    ShowLuminosityRing="{Binding Source={x:Reference ShowLumWheelSwitch}, Path=IsToggled}"
+                    Vertical="{Binding Source={x:Reference VerticalSwitch}, Path=IsToggled}" />
+            </Border>
+        </Border>
+
+    </Grid>
+</ContentPage>

@@ -1,16 +1,16 @@
-﻿namespace ColorPicker.Controls;
+namespace ColorPicker.Controls;
 
 public class ColorWheel : ColorPickerViewBase
 {
-    readonly ColorCircle        _colorCircle        = new();
+    readonly ColorDisc        _colorCircle        = new();
     readonly AlphaSlider        _alphaSlider        = new();
     readonly LuminositySlider   _luminositySlider   = new();
 
     protected const double LuminositySliderRowHeight    = 12;
     protected const double AlphaSliderRowHeight         = 12;
 
-    public static readonly BindableProperty ShowLuminosityWheelProperty 
-                         = BindableProperty.Create( nameof(ShowLuminosityWheel),
+    public static readonly BindableProperty ShowLuminosityRingProperty 
+                         = BindableProperty.Create( nameof(ShowLuminosityRing),
                                                     typeof(bool),
                                                     typeof(ColorWheel),
                                                     true,
@@ -30,15 +30,15 @@ public class ColorWheel : ColorPickerViewBase
                                                     false,
                                                     propertyChanged: HandleShowAlphaSlider );
 
-    public static readonly BindableProperty WheelBackgroundColorProperty 
-                         = BindableProperty.Create( nameof(WheelBackgroundColor),
+    public static readonly BindableProperty CanvasBackgroundColorProperty 
+                         = BindableProperty.Create( nameof(CanvasBackgroundColor),
                                                     typeof(Color),
                                                     typeof(ColorWheel),
                                                     Colors.Transparent,
                                                     propertyChanged: HandleWheelBackgroundColor );
 
-    public static readonly BindableProperty PickerRadiusScaleProperty 
-                         = BindableProperty.Create( nameof(PickerRadiusScale),
+    public static readonly BindableProperty IndicatorRadiusScaleProperty 
+                         = BindableProperty.Create( nameof(IndicatorRadiusScale),
                                                     typeof(float),
                                                     typeof(ColorWheel),
                                                     0.05F,
@@ -51,13 +51,13 @@ public class ColorWheel : ColorPickerViewBase
                                                     false,
                                                     propertyChanged: HandleVertical );
 
-    public bool ShowLuminosityWheel
+    public bool ShowLuminosityRing
     {
-        get => (bool)GetValue( ShowLuminosityWheelProperty );
-        set => SetValue( ShowLuminosityWheelProperty, value );
+        get => (bool)GetValue( ShowLuminosityRingProperty );
+        set => SetValue( ShowLuminosityRingProperty, value );
     }
     static void HandleShowLuminosity( BindableObject bindable, object oldValue, object newValue )
-            => ( (ColorWheel)bindable )._colorCircle.ShowLuminosityWheel = (bool)newValue;
+            => ( (ColorWheel)bindable )._colorCircle.ShowLuminosityRing = (bool)newValue;
 
 
     public bool ShowLuminositySlider
@@ -78,29 +78,34 @@ public class ColorWheel : ColorPickerViewBase
             => ( (ColorWheel)bindable ).UpdateAlphaSlider( (bool)newValue );
 
 
-    public Color WheelBackgroundColor
+    public Color CanvasBackgroundColor
     {
-        get => (Color)GetValue( WheelBackgroundColorProperty );
-        set => SetValue( WheelBackgroundColorProperty, value );
+        get => (Color)GetValue( CanvasBackgroundColorProperty );
+        set => SetValue( CanvasBackgroundColorProperty, value );
     }
     static void HandleWheelBackgroundColor( BindableObject bindable, object oldValue, object newValue )
     {
         if ( newValue != oldValue )
-            ( (ColorWheel)bindable )._colorCircle.WheelBackgroundColor = (Color)newValue;
+            ( (ColorWheel)bindable )._colorCircle.CanvasBackgroundColor = (Color)newValue;
     }
 
-    public float PickerRadiusScale
+    public float IndicatorRadiusScale
     {
-        get => (float)GetValue( PickerRadiusScaleProperty );
-        set => SetValue( PickerRadiusScaleProperty, value );
+        get => (float)GetValue( IndicatorRadiusScaleProperty );
+        set => SetValue( IndicatorRadiusScaleProperty, value );
     }
     static void HandlePickerRadiusScale( BindableObject bindable, object oldValue, object newValue )
     {
         if ( newValue != oldValue )
         {
-            ( (ColorWheel)bindable )._colorCircle.PickerRadiusScale = (float)newValue;
-            ( (ColorWheel)bindable )._alphaSlider.PickerRadiusScale = (float)newValue;
-            ( (ColorWheel)bindable )._luminositySlider.PickerRadiusScale = (float)newValue;
+            // Only propagate to the disc/ring. The embedded sliders use
+            // SliderPicker's auto-fill behavior (IndicatorRadiusScale = 0): their
+            // picker radius is derived from the slim strip the wheel allots
+            // them in ArrangeLayoutChildren, which already produces a picker
+            // size visually consistent with the wheel's own picker. Forwarding
+            // a non-zero scale here would force the slider into aspect-locked
+            // mode and break the wheel's manual layout.
+            ( (ColorWheel)bindable )._colorCircle.IndicatorRadiusScale = (float)newValue;
         }
     }
 
@@ -113,8 +118,10 @@ public class ColorWheel : ColorPickerViewBase
     {
         if ( newValue != oldValue )
         {
-            ( (ColorWheel)bindable )._alphaSlider.Vertical = (bool)newValue;
-            ( (ColorWheel)bindable )._luminositySlider.Vertical = (bool)newValue;
+            var wheel = (ColorWheel)bindable;
+            wheel._alphaSlider.Vertical = (bool)newValue;
+            wheel._luminositySlider.Vertical = (bool)newValue;
+            wheel.InvalidateMeasure();
         }
     }
 
@@ -140,8 +147,14 @@ public class ColorWheel : ColorPickerViewBase
 
     protected override void OnSelectedColorChanging( Color color ) { }
 
-    protected override SizeRequest OnMeasure( double widthConstraint, double heightConstraint )
+    protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
     {
+        // Apply WidthRequest/HeightRequest as constraints
+        if ( WidthRequest >= 0 )
+            widthConstraint = Math.Min( widthConstraint, WidthRequest );
+        if ( HeightRequest >= 0 )
+            heightConstraint = Math.Min( heightConstraint, HeightRequest );
+
         if ( double.IsPositiveInfinity( widthConstraint ) &&
              double.IsPositiveInfinity( heightConstraint ) )
         {
@@ -149,59 +162,100 @@ public class ColorWheel : ColorPickerViewBase
             heightConstraint    = 200;
         }
 
-        var aspectRatio = 1.0;
+        var sliderCount = ( ShowAlphaSlider ? 1 : 0 ) + ( ShowLuminositySlider ? 1 : 0 );
+        var sliderFraction = 0.1 * sliderCount;
 
-        if ( ShowAlphaSlider )
-            aspectRatio -= 0.1;
-
-        if ( ShowLuminositySlider )
-            aspectRatio -= 0.1;
-
-        double minWidth;
-        double minHeight;
+        double circleSize;
+        double totalWidth;
+        double totalHeight;
 
         if ( Vertical )
         {
-            minHeight = Math.Min( heightConstraint, aspectRatio * widthConstraint );
-            minWidth = minHeight / aspectRatio;
+            // Circle fills height, sliders add to the right
+            circleSize  = Math.Min( heightConstraint, ( 1.0 - sliderFraction ) * widthConstraint );
+            totalHeight = circleSize;
+            totalWidth  = circleSize / ( 1.0 - sliderFraction );
         }
         else
         {
-            minWidth = Math.Min( widthConstraint, aspectRatio * heightConstraint );
-            minHeight = minWidth / aspectRatio;
+            // Circle fills width, sliders add below
+            circleSize  = Math.Min( widthConstraint, ( 1.0 - sliderFraction ) * heightConstraint );
+            totalWidth  = circleSize;
+            totalHeight = circleSize / ( 1.0 - sliderFraction );
         }
 
-        return new SizeRequest( new Size( minWidth, minHeight ) );
+        return new Size( totalWidth, totalHeight );
     }
 
-    protected override void LayoutChildren( double x, double y, double width, double height )
+    protected override Size ArrangeLayoutChildren( Rect bounds )
     {
-        var circleSize = Vertical ? height : width;
+        var width  = bounds.Width;
+        var height = bounds.Height;
 
-        _colorCircle.Layout( new Rectangle( x, y, circleSize, circleSize ) );
+        var sliderCount    = ( ShowLuminositySlider ? 1 : 0 ) + ( ShowAlphaSlider ? 1 : 0 );
+        var sliderFraction = 0.1 * sliderCount;
 
-        var bottom = Vertical ? x + circleSize 
-                              : y + width;
+        // Pick the largest circle that fits both the perpendicular axis and the
+        // (1 - sliderFraction) share of the slider axis. Slider thickness then
+        // stays at its natural proportion (10% of the circle per slider) rather
+        // than stretching to fill leftover host space.
+        double circleSize;
+        double sliderThickness;
 
-        var sliderHeight = _colorCircle.GetPickerRadiusPixels( new SkiaSharp.SKSize( (float)width, (float)height) ) * 2.4F;
-
-        if ( ShowLuminositySlider )
+        if ( Vertical )
         {
-            if ( Vertical )
-                _luminositySlider.Layout( new Rectangle( bottom, x, sliderHeight, circleSize ) );
-            else
-                _luminositySlider.Layout( new Rectangle( x, bottom, circleSize, sliderHeight ) );
-
-            bottom += sliderHeight;
+            circleSize      = Math.Min( height,
+                                        sliderCount > 0 ? ( 1.0 - sliderFraction ) * width : width );
+            sliderThickness = sliderCount > 0
+                            ? ( sliderFraction * circleSize ) / ( ( 1.0 - sliderFraction ) * sliderCount )
+                            : 0;
+        }
+        else
+        {
+            circleSize      = Math.Min( width,
+                                        sliderCount > 0 ? ( 1.0 - sliderFraction ) * height : height );
+            sliderThickness = sliderCount > 0
+                            ? ( sliderFraction * circleSize ) / ( ( 1.0 - sliderFraction ) * sliderCount )
+                            : 0;
         }
 
-        if ( ShowAlphaSlider )
+        // Bounds == natural size (parent honors our DesiredSize via HO/VO=Center),
+        // so children are placed at (0,0) with no centering offset needed.
+        ( (IView)_colorCircle ).Measure( circleSize, circleSize );
+        ( (IView)_colorCircle ).Arrange( new Rect( 0, 0, circleSize, circleSize ) );
+
+        if ( Vertical )
         {
-            if ( Vertical )
-                _alphaSlider.Layout( new Rectangle( bottom, x, sliderHeight, circleSize ) );
-            else
-                _alphaSlider.Layout( new Rectangle( x, bottom, circleSize, sliderHeight ) );
+            var x = circleSize;
+            if ( ShowLuminositySlider )
+            {
+                ( (IView)_luminositySlider ).Measure( sliderThickness, circleSize );
+                ( (IView)_luminositySlider ).Arrange( new Rect( x, 0, sliderThickness, circleSize ) );
+                x += sliderThickness;
+            }
+            if ( ShowAlphaSlider )
+            {
+                ( (IView)_alphaSlider ).Measure( sliderThickness, circleSize );
+                ( (IView)_alphaSlider ).Arrange( new Rect( x, 0, sliderThickness, circleSize ) );
+            }
         }
+        else
+        {
+            var y = circleSize;
+            if ( ShowLuminositySlider )
+            {
+                ( (IView)_luminositySlider ).Measure( circleSize, sliderThickness );
+                ( (IView)_luminositySlider ).Arrange( new Rect( 0, y, circleSize, sliderThickness ) );
+                y += sliderThickness;
+            }
+            if ( ShowAlphaSlider )
+            {
+                ( (IView)_alphaSlider ).Measure( circleSize, sliderThickness );
+                ( (IView)_alphaSlider ).Arrange( new Rect( 0, y, circleSize, sliderThickness ) );
+            }
+        }
+
+        return bounds.Size;
     }
 
     void BoundColorPicker_PropertyChanged( object sender, System.ComponentModel.PropertyChangedEventArgs e )

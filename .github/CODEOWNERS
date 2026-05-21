@@ -1,0 +1,5 @@
+# Code owners for ColorPicker.Maui.
+# Every PR auto-requests review from these users; combined with branch
+# protection on `main` (restricted push to @vpapenko), this means external
+# contributors can fork & PR freely but only the owner can merge.
+*       @vpapenko

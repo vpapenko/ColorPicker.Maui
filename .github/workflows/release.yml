@@ -1,0 +1,97 @@
+name: Release
+
+# Triggered by a `vX.Y.Z` (or `vX.Y.Z-preview.N`) tag pushed to the
+# repository. Re-runs the full gate (build + UI tests) against the tagged
+# commit, then publishes the nupkg + snupkg to nuget.org and creates a
+# GitHub Release with auto-drafted notes.
+#
+# Cutting a release:
+#   git tag v1.0.0 && git push origin v1.0.0
+#   git tag v1.1.0-preview.1 && git push origin v1.1.0-preview.1
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+    with:
+      pack: true
+
+  publish-nuget:
+    name: Publish to nuget.org
+    needs: [ build-and-test ]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for NuGet Trusted Publishing (OIDC)
+      contents: read
+    environment:
+      name: nuget-prod
+      url: https://www.nuget.org/packages/ColorPicker.Maui
+    steps:
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/download-artifact@v4
+        with:
+          name: nupkgs
+          path: nupkgs
+      - name: Verify version matches tag
+        shell: bash
+        run: |
+          tag="${GITHUB_REF#refs/tags/v}"
+          ver="${{ needs.build-and-test.outputs.package-version }}"
+          ver="${ver%.nupkg}"
+          if [ "$tag" != "$ver" ]; then
+            echo "::error::Tag '$tag' does not match packed version '$ver'."
+            exit 1
+          fi
+          echo "Tag and package version match: $ver"
+      - name: NuGet login (OIDC -> short-lived API key)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: VictorPapenko
+      - name: Push to nuget.org
+        run: |
+          dotnet nuget push "nupkgs/*.nupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
+            --skip-duplicate
+          dotnet nuget push "nupkgs/*.snupkg" \
+            --source https://api.nuget.org/v3/index.json \
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
+            --skip-duplicate
+
+  github-release:
+    name: Create GitHub Release
+    needs: [ publish-nuget ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: nupkgs
+          path: nupkgs
+      - name: Publish release-drafter draft for this tag
+        uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+          publish: true
+          tag: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Attach nupkgs to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            nupkgs/*.nupkg
+            nupkgs/*.snupkg

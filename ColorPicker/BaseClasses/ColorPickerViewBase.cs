@@ -9,7 +9,7 @@ using System.ComponentModel;
 /// ColorPicker implementation.
 /// 
 /// </summary>
-public abstract class ColorPickerViewBase : Layout<View>, IColorPicker, IRegisterable
+public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
 {
     //  Bindable objects
     //
@@ -26,6 +26,7 @@ public abstract class ColorPickerViewBase : Layout<View>, IColorPicker, IRegiste
                                                     typeof(ColorPickerViewBase),
                                                     null,
                                                     propertyChanged: HandleConnectedColorPicker );
+
     //  Backing store
     //
     public Color SelectedColor 
@@ -43,6 +44,72 @@ public abstract class ColorPickerViewBase : Layout<View>, IColorPicker, IRegiste
     //  ColorPicker Subclass must implement to intercept SelectedColor change
     //
     protected abstract void OnSelectedColorChanging( Color color );
+
+    //  Required for .NET 8 MAUI Layout - use a simple layout manager
+    //  that properly delegates measurement and arrangement to children
+    //
+    protected override ILayoutManager CreateLayoutManager()
+        => new ColorPickerLayoutManager( this );
+
+    /// <summary>
+    /// Called by the layout manager to arrange children within the layout.
+    /// The native LayoutPanel uses this to position native child views.
+    /// Override in subclasses for custom child positioning.
+    /// </summary>
+    protected virtual Size ArrangeLayoutChildren( Rect bounds )
+    {
+        // Default: arrange all children to fill bounds
+        foreach ( var child in Children )
+        {
+            ( (IView)child ).Arrange( bounds );
+        }
+        return bounds.Size;
+    }
+
+    private class ColorPickerLayoutManager : ILayoutManager
+    {
+        readonly ColorPickerViewBase _layout;
+        bool _measuring;
+
+        public ColorPickerLayoutManager( ColorPickerViewBase layout ) => _layout = layout;
+
+        public Size Measure( double widthConstraint, double heightConstraint )
+        {
+            // Apply the layout's WidthRequest/HeightRequest before measuring children.
+            // Without this, children get the raw parent constraints (e.g. 1192×∞)
+            // and SkiaSharp renders at that size, causing clipping.
+            if ( _layout.WidthRequest >= 0 )
+                widthConstraint = Math.Min( widthConstraint, _layout.WidthRequest );
+            if ( _layout.HeightRequest >= 0 )
+                heightConstraint = Math.Min( heightConstraint, _layout.HeightRequest );
+
+            // Measure all children with constrained values
+            foreach ( var child in _layout.Children )
+            {
+                ( (IView)child ).Measure( widthConstraint, heightConstraint );
+            }
+
+            // Return the same size as MeasureOverride to keep native panel
+            // and MAUI layout in sync.
+            if ( !_measuring )
+            {
+                _measuring = true;
+                var result = _layout.MeasureOverride( widthConstraint, heightConstraint );
+                _measuring = false;
+                return result;
+            }
+
+            // Fallback for recursive calls
+            var width = double.IsInfinity( widthConstraint ) ? 0 : widthConstraint;
+            var height = double.IsInfinity( heightConstraint ) ? 0 : heightConstraint;
+            return new Size( width, height );
+        }
+
+        public Size ArrangeChildren( Rect bounds )
+        {
+            return _layout.ArrangeLayoutChildren( bounds );
+        }
+    }
 
     //  Handles SelectedColor change
     //

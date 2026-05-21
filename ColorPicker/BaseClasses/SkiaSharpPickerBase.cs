@@ -1,4 +1,4 @@
-﻿namespace ColorPicker.BaseClasses;
+namespace ColorPicker.BaseClasses;
 
 using ColorPicker.Behaviors;
 #if WINDOWS
@@ -13,16 +13,16 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
 {
     protected readonly SKCanvasView     MyCanvasView;
 
-    public static readonly BindableProperty PickerRadiusScaleProperty
-                         = BindableProperty.Create( nameof(PickerRadiusScale),
+    public static readonly BindableProperty IndicatorRadiusScaleProperty
+                         = BindableProperty.Create( nameof(IndicatorRadiusScale),
                                                     typeof(float),
                                                     typeof(SkiaSharpPickerBase),
                                                     0.05F,
                                                     propertyChanged: HandlePickerRadiusScaleSet );
-    public float PickerRadiusScale
+    public float IndicatorRadiusScale
     {
-        get => (float)GetValue( PickerRadiusScaleProperty );
-        set => SetValue( PickerRadiusScaleProperty, value );
+        get => (float)GetValue( IndicatorRadiusScaleProperty );
+        set => SetValue( IndicatorRadiusScaleProperty, value );
     }
 
     static void HandlePickerRadiusScaleSet( BindableObject bindable, object oldValue, object newValue )
@@ -46,8 +46,9 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         throw new NotImplementedException( "Specified platform not yet implemented" );
 #endif
 
-        var view                    =   new SKCanvasView();  
+        var view                    =   new SKCanvasView();
         view.PaintSurface          +=   OnPaintSurface;
+        view.Loaded                +=   OnCanvasViewLoaded;
         MyCanvasView                =   view;
 
         touchBehavior.Capture       =   true;
@@ -57,8 +58,8 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         Children.Add( MyCanvasView );
     }
 
-    public abstract     float       GetPickerRadiusPixels();
-    public abstract     float       GetPickerRadiusPixels( SKSize canvasSize );
+    public abstract     float       GetIndicatorRadiusPixels();
+    public abstract     float       GetIndicatorRadiusPixels( SKSize canvasSize );
 
     protected abstract  SizeRequest GetMeasure( double widthConstraint, double heightConstraint );
     protected abstract  float       GetSize();
@@ -69,11 +70,43 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
     protected abstract  void        OnTouchActionReleased( ColorPickerTouchActionEventArgs args );
     protected abstract  void        OnTouchActionCancelled( ColorPickerTouchActionEventArgs args );
 
-    protected override SizeRequest OnMeasure( double widthConstraint, double heightConstraint )
-            => GetMeasure( widthConstraint, heightConstraint );
+    protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
+    {
+        // Apply WidthRequest/HeightRequest as constraints
+        if ( WidthRequest >= 0 )
+            widthConstraint = Math.Min( widthConstraint, WidthRequest );
+        if ( HeightRequest >= 0 )
+            heightConstraint = Math.Min( heightConstraint, HeightRequest );
 
-    protected override void LayoutChildren( double x, double y, double width, double height )
-            => MyCanvasView.Layout( new Rectangle( x, y, width, height ) );
+        var sizeRequest = GetMeasure( widthConstraint, heightConstraint );
+        var size = sizeRequest.Request;
+
+        // Measure the child SKCanvasView so MAUI knows it needs rendering
+        ( (IView)MyCanvasView ).Measure( size.Width, size.Height );
+
+        return size;
+    }
+
+    protected override Size ArrangeOverride( Rect bounds )
+    {
+        // Call base which sets Frame, calls PlatformArrange on the native container,
+        // and calls LayoutManager.ArrangeChildren to position native child views.
+        var result = base.ArrangeOverride( bounds );
+
+        // MAUI's base ArrangeOverride passes the *stale* Frame size to LayoutManager.ArrangeChildren
+        // instead of our fresh `bounds`, so the SKCanvasView child can end up arranged at the
+        // previous size. Re-arrange explicitly using the freshly-updated Frame size (which is
+        // the actual on-screen size of this control, after centering/alignment is applied).
+        var size = Frame.Size;
+        if ( size.Width > 0 && size.Height > 0 )
+        {
+            ( (IView)MyCanvasView ).Arrange( new Rect( 0, 0, size.Width, size.Height ) );
+        }
+
+        InvalidateSurface();
+
+        return result;
+    }
 
     protected SKPoint ConvertToPixel( Point pt )
     {
@@ -85,7 +118,12 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
     protected SKSize GetCanvasSize()    => MyCanvasView.CanvasSize;
     protected void InvalidateSurface()  => MyCanvasView.InvalidateSurface();
 
-    protected void PaintPicker( SKCanvas canvas, SKPoint point )
+    void OnCanvasViewLoaded( object sender, EventArgs e )
+    {
+        InvalidateSurface();
+    }
+
+    protected void PaintIndicator( SKCanvas canvas, SKPoint point )
     {
         var paint = new SKPaint
         {
@@ -95,16 +133,18 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
 
         paint.Color         = Colors.White.ToSKColor();
         paint.StrokeWidth   = 2;
-        canvas.DrawCircle( point, GetPickerRadiusPixels() - 2, paint );
+        canvas.DrawCircle( point, GetIndicatorRadiusPixels() - 2, paint );
 
         paint.Color         = Colors.Black.ToSKColor();
         paint.StrokeWidth   = 1;
-        canvas.DrawCircle( point, GetPickerRadiusPixels() - 4, paint );
-        canvas.DrawCircle( point, GetPickerRadiusPixels(), paint );
+        canvas.DrawCircle( point, GetIndicatorRadiusPixels() - 4, paint );
+        canvas.DrawCircle( point, GetIndicatorRadiusPixels(), paint );
     }
 
     void OnPaintSurface( object sender, SKPaintSurfaceEventArgs e )
-      => OnPaintSurface( e.Surface.Canvas, e.Info.Width, e.Info.Height );
+    {
+        OnPaintSurface( e.Surface.Canvas, e.Info.Width, e.Info.Height );
+    }
 
     void OnTouchAction( object sender, ColorPickerTouchActionEventArgs e )
     {

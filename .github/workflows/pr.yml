@@ -1,0 +1,22 @@
+name: PR
+
+# Runs on every pull request targeting main: full build + UI tests + pack
+# (the pack step proves the artifact is shippable but doesn't publish).
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+    with:
+      pack: true
