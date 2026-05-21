@@ -15,6 +15,29 @@
 		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</TargetPlatformMinVersion>
 		<Platforms>AnyCPU;x64</Platforms>
+
+		<!-- NuGet package metadata. Version is supplied by MinVer from the latest
+		     git tag (prefix 'v'); no manual <Version> here. -->
+		<IsPackable>true</IsPackable>
+		<PackageId>ColorPicker.Maui</PackageId>
+		<Authors>Victor Papenko</Authors>
+		<Company>Victor Papenko</Company>
+		<Copyright>Copyright (c) $([System.DateTime]::Now.Year) Victor Papenko</Copyright>
+		<Description>SkiaSharp-based color picker controls for .NET MAUI: ColorWheel, ColorTriangle, HSL/RGB sliders, and a luminance/alpha-aware composite picker.</Description>
+		<PackageTags>maui;colorpicker;color-picker;skiasharp;controls;ui</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/vpapenko/ColorPicker.Maui</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/vpapenko/ColorPicker.Maui</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+		<!-- Reproducible / debuggable builds. -->
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+		<Deterministic>true</Deterministic>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -22,6 +45,20 @@
 	  <PackageReference Include="ColorMinePortable" Version="2.0.1" />
 	  <PackageReference Include="SkiaSharp" Version="2.88.8" />
 	  <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="2.88.8" />
+
+	  <!-- Build-time only: derive Version from latest git tag, embed source links. -->
+	  <PackageReference Include="MinVer" Version="5.0.0" PrivateAssets="all" />
+	  <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<PropertyGroup Label="MinVer">
+		<MinVerTagPrefix>v</MinVerTagPrefix>
+		<MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
+	</PropertyGroup>
+
 </Project>
+

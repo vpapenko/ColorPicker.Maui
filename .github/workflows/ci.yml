@@ -1,0 +1,68 @@
+name: CI
+
+# Runs on every push to main: full build + UI tests + pack, then publishes
+# the resulting nupkg as a PREVIEW package to GitHub Packages. Stable
+# releases are produced by release.yml (tag-driven). MinVer assigns
+# preview versions like "1.1.0-preview.0.42" between tags.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ci-main
+  cancel-in-progress: false   # don't cancel: each commit's preview is a record
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+    with:
+      pack: true
+
+  publish-preview:
+    name: Publish preview to GitHub Packages
+    needs: [ build-and-test ]
+    if: github.repository == 'vpapenko/ColorPicker.Maui'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/download-artifact@v4
+        with:
+          name: nupkgs
+          path: nupkgs
+      - name: Push to GitHub Packages
+        run: |
+          dotnet nuget push "nupkgs/*.nupkg" \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate
+          dotnet nuget push "nupkgs/*.snupkg" \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate || true
+      - name: Job summary
+        run: |
+          echo "## Preview published" >> $GITHUB_STEP_SUMMARY
+          echo "Version: \`${{ needs.build-and-test.outputs.package-version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Source: \`https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json\`" >> $GITHUB_STEP_SUMMARY
+
+  draft-release-notes:
+    name: Update release draft
+    needs: [ build-and-test ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: release-drafter/release-drafter@v6
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
