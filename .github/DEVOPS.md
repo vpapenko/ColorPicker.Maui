@@ -5,35 +5,26 @@ One-time GitHub configuration required to activate the
 
 ---
 
-## 1. Branch protection on `main` (two-phase setup)
+## 1. Order of operations (solo-owner shortcut)
 
 Required-status-check names only appear in GitHub's dropdown **after they've
-run at least once on the default branch**. So we set up in two passes.
+run at least once on the default branch**. Easiest order:
 
-### Phase A — before merging this PR
+1. Add the secret + environment (section 2 + 3 below).
+2. Merge PR #3 as-is — you're the only one with push rights anyway.
+3. Wait for `ci.yml` to finish on `main` (success or failure both register
+   the job names).
+4. Configure branch protection (section 1a) in one pass, including required
+   checks.
+5. Tag `v0.1.0-preview.1` to dry-run `release.yml` (section 5).
+
+## 1a. Branch protection on `main`
 
 **Settings → Branches → Add rule**, branch name pattern: `main`.
 
 - ✅ **Require a pull request before merging**
-  - Require approvals: **0**  (solo-friendly; raise to 1 once you have co-maintainers)
+  - Require approvals: **0** (raise to 1 once you have co-maintainers)
   - ✅ Require review from Code Owners
-- ✅ **Require linear history**
-- ✅ **Restrict who can push to matching branches** → allow only **vpapenko**
-- ✅ **Block force pushes**
-- ✅ **Block deletions**
-- ❌ "Do not allow bypassing the above settings" — leave OFF (break-glass).
-
-Save. Now nobody else can push directly to `main`, and you still get the
-green merge button on PR #3.
-
-### Phase B — after first push to `main`
-
-Merging PR #3 triggers `ci.yml` on `main`, which runs `build-and-test.yml`.
-Once it finishes (success or failure), the job names are registered with
-GitHub and become selectable.
-
-Re-open the `main` branch rule and add:
-
 - ✅ **Require status checks to pass before merging**
   - ✅ Require branches to be up to date before merging
   - Required checks:
@@ -41,9 +32,11 @@ Re-open the `main` branch rule and add:
     - `Build Windows`
     - `UI Tests (Windows)`
     - `Pack NuGet`
-
-Save. From now on every PR must pass all four jobs before its merge button
-turns green.
+- ✅ **Require linear history**
+- ✅ **Restrict who can push to matching branches** → allow only **vpapenko**
+- ✅ **Block force pushes**
+- ✅ **Block deletions**
+- ❌ "Do not allow bypassing the above settings" — leave OFF (break-glass).
 
 External contributors can fork and open PRs freely; CI runs on every PR;
 only you can hit merge.
