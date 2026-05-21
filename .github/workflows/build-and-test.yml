@@ -131,6 +131,17 @@ jobs:
         env:
           UITEST_APP_PATH: ${{ github.workspace }}\ColorPickerTestApp\bin\Release\net8.0-windows10.0.19041.0\win-x64\ColorPickerTestApp.exe
         run: dotnet test ColorPicker.UITests/ColorPicker.UITests.csproj --configuration Release --logger "console;verbosity=normal" --logger "trx;LogFileName=ui-tests.trx"
+      - name: Stage appium.log into workspace
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path $env:APPIUM_LOG) {
+            $dest = Join-Path $env:GITHUB_WORKSPACE "appium-server.log"
+            Copy-Item -Path $env:APPIUM_LOG -Destination $dest -Force
+            Write-Host "Copied appium.log to $dest ($((Get-Item $dest).Length) bytes)"
+          } else {
+            Write-Warning "APPIUM_LOG not set or file missing: $env:APPIUM_LOG"
+          }
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -138,7 +149,7 @@ jobs:
           name: ui-test-results
           path: |
             ColorPicker.UITests/TestResults/**
-            ${{ env.APPIUM_LOG }}
+            appium-server.log
           if-no-files-found: ignore
 
   pack:
