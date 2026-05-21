@@ -118,10 +118,14 @@ jobs:
         run: |
           $log = Join-Path $env:RUNNER_TEMP "appium.log"
           $appiumCmd = (Get-Command appium).Source
-          # Use cmd.exe's own >/2>&1 redirection so the appium.cmd shim's
-          # output is actually captured (Start-Process -Redirect* doesn't
-          # follow children spawned by the .cmd wrapper).
-          Start-Process -FilePath "cmd.exe" -ArgumentList "/c","`"$appiumCmd`" --address 127.0.0.1 --port 4723 > `"$log`" 2>&1" -PassThru | Out-Null
+          # Write a tiny batch wrapper so the redirection happens in cmd itself,
+          # not as a Start-Process argument (which silently drops it on .cmd shims).
+          $wrapper = Join-Path $env:RUNNER_TEMP "run-appium.bat"
+          @"
+          @echo off
+          "$appiumCmd" --address 127.0.0.1 --port 4723 --log-level info > "$log" 2>&1
+          "@ | Set-Content -Path $wrapper -Encoding ASCII
+          Start-Process -FilePath $wrapper -WindowStyle Hidden -PassThru | Out-Null
           $deadline = (Get-Date).AddSeconds(60)
           while ((Get-Date) -lt $deadline) {
             try { (Invoke-WebRequest -Uri http://127.0.0.1:4723/status -UseBasicParsing).StatusCode; break } catch { Start-Sleep -Seconds 1 }
