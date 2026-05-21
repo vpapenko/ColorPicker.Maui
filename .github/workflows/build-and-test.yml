@@ -104,7 +104,8 @@ jobs:
         shell: pwsh
         run: |
           $log = Join-Path $env:RUNNER_TEMP "appium.log"
-          Start-Process -FilePath "appium" -ArgumentList "--address","127.0.0.1","--port","4723" -RedirectStandardOutput $log -RedirectStandardError "$log.err" -PassThru | Out-Null
+          $appiumCmd = (Get-Command appium).Source
+          Start-Process -FilePath "cmd.exe" -ArgumentList "/c",$appiumCmd,"--address","127.0.0.1","--port","4723" -RedirectStandardOutput $log -RedirectStandardError "$log.err" -PassThru | Out-Null
           $deadline = (Get-Date).AddSeconds(60)
           while ((Get-Date) -lt $deadline) {
             try { (Invoke-WebRequest -Uri http://127.0.0.1:4723/status -UseBasicParsing).StatusCode; break } catch { Start-Sleep -Seconds 1 }
