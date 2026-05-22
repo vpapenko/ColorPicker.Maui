@@ -32,6 +32,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<!-- MAUI 8 no longer auto-adds Microsoft.Maui.Controls; required to silence MA002. -->
+		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
 		<PackageReference Include="ColorPicker.Maui" Version="$(ColorPickerVersion)" />
 	</ItemGroup>
 
