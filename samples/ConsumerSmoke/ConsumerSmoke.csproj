@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<!-- TFMs intentionally mirror the library (Android + Windows). iOS/Mac
+		     omitted because the smoke job runs on Windows runners only.
+		     If we add a macOS smoke job later, append net8.0-ios / net8.0-maccatalyst here. -->
+		<TargetFrameworks>net8.0-android34.0</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
+
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<!-- Class library, not an app: we only need compile-time validation
+		     that the published nupkg can be consumed. -->
+		<OutputType>Library</OutputType>
+		<IsPackable>false</IsPackable>
+
+		<SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net8.0-android34.0'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</SupportedOSPlatformVersion>
+		<TargetPlatformMinVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</TargetPlatformMinVersion>
+
+		<RootNamespace>ConsumerSmoke</RootNamespace>
+		<AssemblyName>ConsumerSmoke</AssemblyName>
+
+		<!-- ColorPickerVersion is supplied by CI:
+		       PR smoke   → packed nupkg version from the pack job
+		       Main E2E   → version just published to GitHub Packages
+		     Local devs can override with -p:ColorPickerVersion=x.y.z. -->
+		<ColorPickerVersion Condition="'$(ColorPickerVersion)' == ''">*</ColorPickerVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- MAUI 8 no longer auto-adds Microsoft.Maui.Controls; required to silence MA002. -->
+		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
+		<PackageReference Include="ColorPicker.Maui" Version="$(ColorPickerVersion)" />
+	</ItemGroup>
+
+</Project>

@@ -33,6 +33,7 @@ run at least once on the default branch**. Easiest order:
     - `Build Windows`
     - `UI Tests (Windows)`
     - `Pack NuGet`
+    - `Consumer Smoke (packed nupkg)`
 - ✅ **Require linear history**
 - ✅ **Restrict who can push to matching branches** → allow only **vpapenko**
 - ✅ **Block force pushes**
@@ -105,6 +106,23 @@ dotnet nuget add source https://nuget.pkg.github.com/vpapenko/index.json \
   --password <a-github-pat-with-read:packages>
 dotnet add package ColorPicker.Maui --prerelease
 ```
+
+### 4a. Consumer-smoke validation of the packed nupkg
+
+`ColorPickerTestApp` references the library via `ProjectReference`, so it
+can't catch packaging regressions (missing `.targets`, broken MAUI resource
+glob, dropped public type, TFM mismatch, transitive-dep hole). Two extra
+jobs close that gap:
+
+| Job | Triggered on | Source of the package | Purpose |
+|-----|--------------|-----------------------|---------|
+| `build-and-test.yml → consumer-smoke` | every PR (when `pack: true`) | local feed = the just-packed `nupkgs/` artifact | catch packaging bugs **before merge** |
+| `ci.yml → consumer-e2e-github-packages` | every push to `main` | GitHub Packages (just-published preview) | catch upload/index/auth issues that only show up via the real feed |
+
+Both build the [`samples/ConsumerSmoke/`](../samples/ConsumerSmoke/README.md)
+class library against the version under test, on Android **and** Windows
+TFMs. If either job fails on a PR, the underlying package is broken and
+must not be promoted to a release tag.
 
 ---
 

@@ -196,3 +196,43 @@ jobs:
           path: nupkgs/*
           if-no-files-found: error
           retention-days: 30
+
+  consumer-smoke:
+    name: Consumer Smoke (packed nupkg)
+    if: ${{ inputs.pack }}
+    runs-on: windows-latest
+    needs: [ pack ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install MAUI workloads
+        run: dotnet workload install maui-android maui-windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: nupkgs
+          path: ${{ github.workspace }}\nupkgs
+      - name: Register local feed (packed artifacts)
+        shell: pwsh
+        run: |
+          dotnet nuget add source "${{ github.workspace }}\nupkgs" `
+            --name local-colorpicker `
+            --configfile samples/ConsumerSmoke/NuGet.config
+      - name: Restore consumer against packed version
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.pack.outputs.version }}
+        run: |
+          Write-Host "Restoring ConsumerSmoke against ColorPicker.Maui = $env:VERSION"
+          dotnet restore samples/ConsumerSmoke/ConsumerSmoke.csproj `
+            -p:ColorPickerVersion=$env:VERSION
+      - name: Build consumer (Android)
+        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net8.0-android34.0 -p:ColorPickerVersion=${{ needs.pack.outputs.version }}
+      - name: Build consumer (Windows)
+        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net8.0-windows10.0.19041.0 -p:ColorPickerVersion=${{ needs.pack.outputs.version }}
+      - name: Job summary
+        shell: pwsh
+        run: |
+          "## Consumer smoke passed" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          "Consumed `ColorPicker.Maui` **${{ needs.pack.outputs.version }}** from local feed." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
