@@ -53,6 +53,55 @@ jobs:
           echo "Version: \`${{ needs.build-and-test.outputs.package-version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "Source: \`https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json\`" >> $GITHUB_STEP_SUMMARY
 
+  consumer-e2e-github-packages:
+    name: Consumer E2E (GitHub Packages)
+    needs: [ build-and-test, publish-preview ]
+    if: github.repository == 'vpapenko/ColorPicker.Maui'
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install MAUI workloads
+        run: dotnet workload install maui-android maui-windows
+      - name: Register GitHub Packages as authenticated NuGet source
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet nuget add source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" `
+            --name github-packages `
+            --username "${{ github.repository_owner }}" `
+            --password $env:GH_TOKEN `
+            --store-password-in-clear-text `
+            --configfile samples/ConsumerSmoke/NuGet.config
+      - name: Wait briefly for GH Packages indexing
+        # Just-pushed nupkgs occasionally need a few seconds before they
+        # show up to the restore endpoint. 30s is generous.
+        shell: pwsh
+        run: Start-Sleep -Seconds 30
+      - name: Restore consumer against just-published version
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.build-and-test.outputs.package-version }}
+        run: |
+          Write-Host "Restoring ConsumerSmoke against ColorPicker.Maui = $env:VERSION from GitHub Packages"
+          dotnet restore samples/ConsumerSmoke/ConsumerSmoke.csproj `
+            -p:ColorPickerVersion=$env:VERSION
+      - name: Build consumer (Android)
+        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net8.0-android34.0 -p:ColorPickerVersion=${{ needs.build-and-test.outputs.package-version }}
+      - name: Build consumer (Windows)
+        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net8.0-windows10.0.19041.0 -p:ColorPickerVersion=${{ needs.build-and-test.outputs.package-version }}
+      - name: Job summary
+        shell: pwsh
+        run: |
+          "## Consumer E2E passed" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          "Consumed `ColorPicker.Maui` **${{ needs.build-and-test.outputs.package-version }}** from GitHub Packages." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+
   draft-release-notes:
     name: Update release draft
     needs: [ build-and-test ]
