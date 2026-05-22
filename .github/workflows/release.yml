@@ -80,7 +80,7 @@ jobs:
           name: nupkgs
           path: nupkgs
       - name: Publish release-drafter draft for this tag
-        uses: release-drafter/release-drafter@v6
+        uses: release-drafter/release-drafter@v7
         with:
           config-name: release-drafter.yml
           publish: true
