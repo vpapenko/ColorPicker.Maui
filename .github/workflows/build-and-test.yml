@@ -209,7 +209,7 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Install MAUI workloads
         run: dotnet workload install maui-android maui-windows
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: nupkgs
           path: ${{ github.workspace }}\nupkgs
