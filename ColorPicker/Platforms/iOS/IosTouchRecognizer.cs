@@ -153,7 +153,7 @@ namespace ColorPicker.iOS.Effects
 
         void FireEvent(ColorPickerTouchRecognizer recognizer, long id, TouchActionType actionType, UITouch touch, bool isInContact)
         {
-            // Convert touch location to Xamarin.Forms Point value
+            // Convert touch location to MAUI Point value
             CGPoint cgPoint = touch.LocationInView(recognizer.View);
             Point xfPoint = new Point(cgPoint.X, cgPoint.Y);
 
