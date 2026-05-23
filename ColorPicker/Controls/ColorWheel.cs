@@ -1,6 +1,6 @@
 namespace ColorPicker.Controls;
 
-public class ColorWheel : ColorPickerViewBase
+public class ColorWheel : ColorPickerBase
 {
     readonly ColorDisc        _disc        = new();
     readonly AlphaSlider        _alphaSlider        = new();
@@ -99,7 +99,7 @@ public class ColorWheel : ColorPickerViewBase
         if ( newValue != oldValue )
         {
             // Only propagate to the disc/ring. The embedded sliders use
-            // SliderPicker's auto-fill behavior (IndicatorRadiusScale = 0): their
+            // SliderStack's auto-fill behavior (IndicatorRadiusScale = 0): their
             // picker radius is derived from the slim strip the wheel allots
             // them in ArrangeLayoutChildren, which already produces a picker
             // size visually consistent with the wheel's own picker. Forwarding

@@ -14,7 +14,7 @@ namespace ColorPicker.UITests.Tests;
 /// end-to-end by sampling host corners after applying a known
 /// <c>bg=&lt;color&gt;</c> scenario.
 ///
-/// HSLSliders and RGBSliders fill their canvas with horizontal slider
+/// HslSlider and RgbSlider fill their canvas with horizontal slider
 /// tracks so the host bg is not observable at the corners — they are
 /// intentionally excluded.
 ///

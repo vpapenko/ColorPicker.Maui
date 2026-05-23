@@ -186,7 +186,7 @@
             AutomationId="HSLSliders1Host"
             SemanticProperties.Description="HSL sliders host"
             StrokeThickness="0">
-            <controls:HSLSliders
+            <controls:HslSlider
                 x:Name="HSLSliders1"
                 AutomationId="HSLSliders1"
                 Padding="5"
@@ -201,7 +201,7 @@
             AutomationId="RGBSliders1Host"
             SemanticProperties.Description="RGB sliders host"
             StrokeThickness="0">
-            <controls:RGBSliders
+            <controls:RgbSlider
                 x:Name="RGBSliders1"
                 AutomationId="RGBSliders1"
                 Padding="5"

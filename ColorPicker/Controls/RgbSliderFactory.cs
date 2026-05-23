@@ -1,6 +1,6 @@
-﻿namespace ColorPicker.Controls;
+namespace ColorPicker.Controls;
 
-public static class SliderFunctionsRGB
+public static class RgbSliderFactory
 {
     public static float NewValueR( Color color ) => color.Red;
     public static float NewValueG( Color color ) => color.Green;

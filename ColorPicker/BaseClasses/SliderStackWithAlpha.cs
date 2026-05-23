@@ -1,11 +1,11 @@
-﻿namespace ColorPicker.BaseClasses;
+namespace ColorPicker.BaseClasses;
 
-public abstract class SliderPickerWithAlpha : SliderPicker
+public abstract class SliderStackWithAlpha : SliderStack
 {
     public static readonly BindableProperty ShowAlphaSliderProperty 
                          = BindableProperty.Create( nameof(ShowAlphaSlider),
                                                     typeof(bool),
-                                                    typeof(SliderPickerWithAlpha),
+                                                    typeof(SliderStackWithAlpha),
                                                     true,
                                                     propertyChanged: HandleShowLuminositySet );
     public bool ShowAlphaSlider
@@ -18,7 +18,7 @@ public abstract class SliderPickerWithAlpha : SliderPicker
     {
         if ( newValue != oldValue )
         {
-            ( (SliderPickerWithAlpha)bindable ).UpdateSliders();
+            ( (SliderStackWithAlpha)bindable ).UpdateSliders();
         }
     }
 }

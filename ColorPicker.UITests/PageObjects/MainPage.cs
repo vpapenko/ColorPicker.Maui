@@ -33,8 +33,8 @@ public sealed class MainPage
     // gestures within the host's bounds.
     public AppiumElement ColorWheel    => Find("ColorWheel1Host");
     public AppiumElement ColorTriangle => Find("ColorTriangle1Host");
-    public AppiumElement HSLSliders    => Find("HSLSliders1Host");
-    public AppiumElement RGBSliders    => Find("RGBSliders1Host");
+    public AppiumElement HslSlider    => Find("HSLSliders1Host");
+    public AppiumElement RgbSlider    => Find("RGBSliders1Host");
 
     public void WaitUntilLoaded()
     {

@@ -1,6 +1,6 @@
-﻿namespace ColorPicker.Behaviors;
+namespace ColorPicker.Behaviors;
 
-public enum ColorPickerTouchActionType
+public enum TouchActionType
 {
     Entered,
     Pressed,

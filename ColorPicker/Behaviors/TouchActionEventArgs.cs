@@ -1,13 +1,13 @@
-﻿namespace ColorPicker.Behaviors;
+namespace ColorPicker.Behaviors;
 
-public class ColorPickerTouchActionEventArgs : EventArgs
+public class TouchActionEventArgs : EventArgs
 {
     public long     Id                      { get; }
     public Point    Location                { get; }
     public bool     IsInContact             { get; }
-    public ColorPickerTouchActionType Type  { get; }
+    public TouchActionType Type  { get; }
 
-    public ColorPickerTouchActionEventArgs( long id, ColorPickerTouchActionType type, Point location, bool isInContact )
+    public TouchActionEventArgs( long id, TouchActionType type, Point location, bool isInContact )
     {
         Id          = id;
         Location    = location;

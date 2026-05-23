@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using ColorPicker.BaseClasses;
 
 namespace ColorPickerTestApp;
@@ -59,9 +59,9 @@ public partial class ColorSyncTestPage : ContentPage
         MasterWheel.SelectedColor = c;
     }
 
-    static IEnumerable<ColorPickerViewBase> EnumerateColorPickers(Element root)
+    static IEnumerable<ColorPickerBase> EnumerateColorPickers(Element root)
     {
-        if (root is ColorPickerViewBase cp) yield return cp;
+        if (root is ColorPickerBase cp) yield return cp;
         if (root is IVisualTreeElement vte)
             foreach (var child in vte.GetVisualChildren())
                 if (child is Element e)

@@ -1,4 +1,4 @@
-﻿using CoreGraphics;
+using CoreGraphics;
 using Foundation;
 using UIKit;
 using ColorPicker.Platform.IOS;
@@ -40,7 +40,7 @@ namespace ColorPicker.iOS.Effects
             foreach (UITouch touch in touches.Cast<UITouch>())
             {
                 long id = touch.Handle.ToInt64();
-                FireEvent(this, id, ColorPickerTouchActionType.Pressed, touch, true);
+                FireEvent(this, id, TouchActionType.Pressed, touch, true);
 
                 if (!idToTouchDictionary.ContainsKey(id))
                 {
@@ -62,7 +62,7 @@ namespace ColorPicker.iOS.Effects
 
                 if (capture)
                 {
-                    FireEvent(this, id, ColorPickerTouchActionType.Moved, touch, true);
+                    FireEvent(this, id, TouchActionType.Moved, touch, true);
                 }
                 else
                 {
@@ -70,7 +70,7 @@ namespace ColorPicker.iOS.Effects
 
                     if (idToTouchDictionary[id] is not null)
                     {
-                        FireEvent(idToTouchDictionary[id], id, ColorPickerTouchActionType.Moved, touch, true);
+                        FireEvent(idToTouchDictionary[id], id, TouchActionType.Moved, touch, true);
                     }
                 }
             }
@@ -86,7 +86,7 @@ namespace ColorPicker.iOS.Effects
 
                 if (capture)
                 {
-                    FireEvent(this, id, ColorPickerTouchActionType.Released, touch, false);
+                    FireEvent(this, id, TouchActionType.Released, touch, false);
                 }
                 else
                 {
@@ -94,7 +94,7 @@ namespace ColorPicker.iOS.Effects
 
                     if (idToTouchDictionary[id] is not null)
                     {
-                        FireEvent(idToTouchDictionary[id], id, ColorPickerTouchActionType.Released, touch, false);
+                        FireEvent(idToTouchDictionary[id], id, TouchActionType.Released, touch, false);
                     }
                 }
                 idToTouchDictionary.Remove(id);
@@ -111,11 +111,11 @@ namespace ColorPicker.iOS.Effects
 
                 if (capture)
                 {
-                    FireEvent(this, id, ColorPickerTouchActionType.Cancelled, touch, false);
+                    FireEvent(this, id, TouchActionType.Cancelled, touch, false);
                 }
                 else if (idToTouchDictionary[id] is not null)
                 {
-                    FireEvent(idToTouchDictionary[id], id, ColorPickerTouchActionType.Cancelled, touch, false);
+                    FireEvent(idToTouchDictionary[id], id, TouchActionType.Cancelled, touch, false);
                 }
                 idToTouchDictionary.Remove(id);
             }
@@ -141,28 +141,28 @@ namespace ColorPicker.iOS.Effects
             {
                 if (idToTouchDictionary[id] is not null)
                 {
-                    FireEvent(idToTouchDictionary[id], id, ColorPickerTouchActionType.Exited, touch, true);
+                    FireEvent(idToTouchDictionary[id], id, TouchActionType.Exited, touch, true);
                 }
                 if (recognizerHit is not null)
                 {
-                    FireEvent(recognizerHit, id, ColorPickerTouchActionType.Entered, touch, true);
+                    FireEvent(recognizerHit, id, TouchActionType.Entered, touch, true);
                 }
                 idToTouchDictionary[id] = recognizerHit;
             }
         }
 
-        void FireEvent(ColorPickerTouchRecognizer recognizer, long id, ColorPickerTouchActionType actionType, UITouch touch, bool isInContact)
+        void FireEvent(ColorPickerTouchRecognizer recognizer, long id, TouchActionType actionType, UITouch touch, bool isInContact)
         {
             // Convert touch location to Xamarin.Forms Point value
             CGPoint cgPoint = touch.LocationInView(recognizer.View);
             Point xfPoint = new Point(cgPoint.X, cgPoint.Y);
 
             // Get the method to call for firing events
-            Action<Element, ColorPickerTouchActionEventArgs> onTouchAction = recognizer.touchEffect.OnTouchAction;
+            Action<Element, TouchActionEventArgs> onTouchAction = recognizer.touchEffect.OnTouchAction;
 
             // Call that method
             onTouchAction(recognizer.element,
-                new ColorPickerTouchActionEventArgs(id, actionType, xfPoint, isInContact));
+                new TouchActionEventArgs(id, actionType, xfPoint, isInContact));
         }
     }
 }

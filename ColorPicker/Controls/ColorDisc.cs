@@ -1,6 +1,6 @@
 namespace ColorPicker.Controls;
 
-public class ColorDisc : SkiaSharpPickerBase
+public class ColorDisc : SkiaPickerBase
 {
     long?   _locationHSProgressId    = null;
     long?   _locationLProgressId     = null;
@@ -58,7 +58,7 @@ public class ColorDisc : SkiaSharpPickerBase
     public override float GetIndicatorRadiusPixels() => GetIndicatorRadiusPixels( GetCanvasSize() );
     public override float GetIndicatorRadiusPixels( SKSize canvasSize ) => GetSize( canvasSize ) * IndicatorRadiusScale;
 
-    protected override void OnTouchActionPressed( ColorPickerTouchActionEventArgs args )
+    protected override void OnTouchActionPressed( TouchActionEventArgs args )
     {
         var canvasRadius    = GetCanvasSize().Width / 2F;
         var point           = ConvertToPixel(args.Location);
@@ -77,7 +77,7 @@ public class ColorDisc : SkiaSharpPickerBase
         }
     }
 
-    protected override void OnTouchActionMoved( ColorPickerTouchActionEventArgs args )
+    protected override void OnTouchActionMoved( TouchActionEventArgs args )
     {
         var canvasRadius    = GetCanvasSize().Width / 2F;
         var point           = ConvertToPixel(args.Location);
@@ -94,7 +94,7 @@ public class ColorDisc : SkiaSharpPickerBase
         }
     }
 
-    protected override void OnTouchActionReleased( ColorPickerTouchActionEventArgs args )
+    protected override void OnTouchActionReleased( TouchActionEventArgs args )
     {
         var canvasRadius    = GetCanvasSize().Width / 2F;
         var point           = ConvertToPixel(args.Location);
@@ -113,7 +113,7 @@ public class ColorDisc : SkiaSharpPickerBase
         }
     }
 
-    protected override void OnTouchActionCancelled( ColorPickerTouchActionEventArgs args )
+    protected override void OnTouchActionCancelled( TouchActionEventArgs args )
     {
         if ( _locationHSProgressId == args.Id )
             _locationHSProgressId = null;

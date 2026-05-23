@@ -311,8 +311,8 @@ public partial class LayoutTestPage : ContentPage
             {
                 "wheel"    => MakeWheel(opts),
                 "triangle" => MakeTriangle(opts),
-                "hsl"      => MakeSliders<HSLSliders>(opts),
-                "rgb"      => MakeSliders<RGBSliders>(opts),
+                "hsl"      => MakeSliders<HslSlider>(opts),
+                "rgb"      => MakeSliders<RgbSlider>(opts),
                 _          => throw new ArgumentException($"Unknown control '{control}'"),
             };
             T($"BUILT-CHILD type={child.GetType().Name}");
@@ -376,7 +376,7 @@ public partial class LayoutTestPage : ContentPage
             }
             return true;
         }
-        if ((control == "hsl" || control == "rgb") && existing is SliderPickerWithAlpha s)
+        if ((control == "hsl" || control == "rgb") && existing is SliderStackWithAlpha s)
         {
             s.Vertical        = false;
             s.ShowAlphaSlider = true;
@@ -401,7 +401,7 @@ public partial class LayoutTestPage : ContentPage
         return opts.Length == 0;
     }
 
-    static T MakeSliders<T>(string[] opts) where T : SliderPickerWithAlpha, new()
+    static T MakeSliders<T>(string[] opts) where T : SliderStackWithAlpha, new()
     {
         var s = new T { AutomationId = "ScenarioControl" };
         foreach (var opt in opts)

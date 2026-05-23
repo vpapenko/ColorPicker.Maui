@@ -1,12 +1,12 @@
-﻿namespace ColorPicker.Controls;
+namespace ColorPicker.Controls;
 
-public class LuminositySlider : SliderPicker
+public class LuminositySlider : SliderStack
 {
     protected override IEnumerable<SliderBase> GetSliders() 
         =>  new SliderBase[]
             {
-                new Slider( SliderFunctionsHSL.NewValueL, 
-                            SliderFunctionsHSL.GetNewColorL, 
-                            SliderFunctionsHSL.GetPaintL )
+                new DelegateSlider( HslSliderFactory.NewValueL, 
+                            HslSliderFactory.GetNewColorL, 
+                            HslSliderFactory.GetPaintL )
             };
 }
