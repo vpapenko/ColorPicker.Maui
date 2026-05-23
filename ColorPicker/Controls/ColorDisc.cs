@@ -13,7 +13,7 @@ public class ColorDisc : SkiaSharpPickerBase
     public static readonly BindableProperty ShowLuminosityRingProperty 
                          = BindableProperty.Create( nameof(ShowLuminosityRing),
                                                     typeof(bool),
-                                                    typeof(SkiaSharpPickerBase),
+                                                    typeof(ColorDisc),
                                                     true,
                                                     propertyChanged: HandleShowLuminosity );
     public bool ShowLuminosityRing
@@ -30,15 +30,15 @@ public class ColorDisc : SkiaSharpPickerBase
     public static readonly BindableProperty CanvasBackgroundColorProperty 
                          = BindableProperty.Create( nameof(CanvasBackgroundColor),
                                                     typeof(Color),
-                                                    typeof(IColorPicker),
+                                                    typeof(ColorDisc),
                                                     Colors.Transparent,
-                                                    propertyChanged: HandleWheelBackgroundColor );
+                                                    propertyChanged: HandleCanvasBackgroundColor );
     public Color CanvasBackgroundColor
     {
         get => (Color)GetValue( CanvasBackgroundColorProperty );
         set => SetValue( CanvasBackgroundColorProperty, value );
     }
-    static void HandleWheelBackgroundColor( BindableObject bindable, object oldValue, object newValue )
+    static void HandleCanvasBackgroundColor( BindableObject bindable, object oldValue, object newValue )
     {
         if ( newValue != oldValue )
         {
@@ -47,7 +47,7 @@ public class ColorDisc : SkiaSharpPickerBase
     }
 
     /// <summary>
-    /// Constuctor
+    /// Constructor
     /// </summary>
     public ColorDisc()
     {
