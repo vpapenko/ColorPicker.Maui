@@ -1,7 +1,5 @@
 using ColorPicker.UITests.Infrastructure;
 using ColorPicker.UITests.PageObjects;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
 
 namespace ColorPicker.UITests.Tests;
@@ -46,7 +44,7 @@ public class BackgroundTests
         string scenario, int r, int g, int b)
     {
         var (corner, center) = SampleCornerAndCenter(scenario);
-        AssertNear(corner, new Rgba32((byte)r, (byte)g, (byte)b, 255),
+        AssertNear(corner, new Pixel((byte)r, (byte)g, (byte)b, 255),
                    tol: 16, scenario);
         // Sanity: center sample should differ from corner (a control is
         // drawn on top of the background).
@@ -59,11 +57,11 @@ public class BackgroundTests
     {
         // #FF8000 = pure orange. Sanity-checks the hex parser path.
         var (corner, _) = SampleCornerAndCenter("wheel:400x400:bg=#FF8000");
-        AssertNear(corner, new Rgba32(255, 128, 0, 255), tol: 16,
+        AssertNear(corner, new Pixel(255, 128, 0, 255), tol: 16,
                    "wheel:400x400:bg=#FF8000");
     }
 
-    private (Rgba32 corner, Rgba32 center) SampleCornerAndCenter(string scenario)
+    private (Pixel corner, Pixel center) SampleCornerAndCenter(string scenario)
     {
         var page = _fixture.Page;
         page.Apply(scenario);
@@ -75,7 +73,7 @@ public class BackgroundTests
         return (corner, center);
     }
 
-    private static void AssertNear(Rgba32 actual, Rgba32 expected, int tol, string scenario)
+    private static void AssertNear(Pixel actual, Pixel expected, int tol, string scenario)
     {
         int d = Screenshot.ColorDistance(actual, expected);
         Assert.True(d <= tol,

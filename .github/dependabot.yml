@@ -20,7 +20,6 @@ updates:
           - "xunit*"
           - "Microsoft.NET.Test.Sdk"
           - "Appium*"
-          - "SixLabors.ImageSharp"
 
   # GitHub Actions versions.
   - package-ecosystem: github-actions

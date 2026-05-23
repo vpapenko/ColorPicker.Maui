@@ -1,6 +1,4 @@
 using ColorPicker.UITests.Infrastructure;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace ColorPicker.UITests.Tests;
 
@@ -111,7 +109,7 @@ public sealed class ColorSyncUiDrivenTests : IClassFixture<SyncTestAppFixture>
 
     // ============================== HELPERS ==============================
 
-    private void AssertPickerAt(Image<Rgba32> img, string cellId, string hex)
+    private void AssertPickerAt(PixelImage img, string cellId, string hex)
     {
         var rel = ColorSyncExpectedPickerOffsets.Offsets[(cellId, hex)];
         var b = _fx.Page.GetWheelAreaBounds(cellId);

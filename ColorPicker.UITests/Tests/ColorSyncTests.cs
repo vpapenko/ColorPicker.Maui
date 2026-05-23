@@ -1,6 +1,4 @@
 using ColorPicker.UITests.Infrastructure;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace ColorPicker.UITests.Tests;
 
@@ -94,7 +92,7 @@ public sealed class ColorSyncTests : IClassFixture<SyncTestAppFixture>
     /// rejects "indicator missing / on wrong cell" mutations that a single dark-pixel
     /// scan was missing (see PaintIndicator in SkiaSharpPickerBase).
     /// </summary>
-    private void AssertPickerAt(Image<Rgba32> img, string cellId, string hex)
+    private void AssertPickerAt(PixelImage img, string cellId, string hex)
     {
         if (!ColorSyncExpectedPickerOffsets.Offsets.TryGetValue((cellId, hex), out var rel))
             throw new InvalidOperationException(
@@ -119,7 +117,7 @@ public sealed class ColorSyncTests : IClassFixture<SyncTestAppFixture>
     private const int BlackLuma   = 60;  // 1px black inner/outer rings
 
     private static (bool found, bool hadWhite, bool hadBlack, int maxLuma, int minLuma)
-        ScanForIndicatorRing(Image<Rgba32> img, int cx, int cy, int radius, int whiteLuma, int blackLuma)
+        ScanForIndicatorRing(PixelImage img, int cx, int cy, int radius, int whiteLuma, int blackLuma)
     {
         bool hadWhite = false, hadBlack = false;
         int maxLuma = 0, minLuma = 255;

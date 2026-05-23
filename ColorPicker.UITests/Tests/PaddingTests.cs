@@ -1,8 +1,6 @@
 using System.Runtime.InteropServices;
 using ColorPicker.UITests.Infrastructure;
 using ColorPicker.UITests.PageObjects;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
 
 namespace ColorPicker.UITests.Tests;
@@ -27,7 +25,7 @@ public class PaddingTests
     private readonly LayoutTestAppFixture _fixture;
     public PaddingTests(LayoutTestAppFixture fixture) => _fixture = fixture;
 
-    private static readonly Rgba32 White = new(255, 255, 255, 255);
+    private static readonly Pixel White = new(255, 255, 255, 255);
 
     [Theory]
     [InlineData("wheel:300x300:bg=white")]

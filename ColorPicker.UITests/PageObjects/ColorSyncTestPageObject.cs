@@ -2,8 +2,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
 using OpenQA.Selenium.Interactions;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using ColorPicker.UITests.Infrastructure;
 using PointerInputDevice = OpenQA.Selenium.Appium.Interactions.PointerInputDevice;
 
 namespace ColorPicker.UITests.PageObjects;
@@ -101,10 +100,10 @@ public sealed class ColorSyncTestPageObject
     }
 
     /// <summary>Capture the full window screenshot as an RGBA image.</summary>
-    public Image<Rgba32> CaptureWindow()
+    public PixelImage CaptureWindow()
     {
         var bytes = _driver.GetScreenshot().AsByteArray;
-        return SixLabors.ImageSharp.Image.Load<Rgba32>(bytes);
+        return PixelImage.Load(bytes);
     }
 
     /// <summary>Bounds (in screen pixels) of an element within the captured window image.

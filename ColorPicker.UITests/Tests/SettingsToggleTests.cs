@@ -80,13 +80,11 @@ public sealed class SettingsToggleTests : IClassFixture<AppFixture>
         }
     }
 
-    private static SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>
-        LoadPng(byte[] bytes) =>
-        SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Rgba32>(bytes);
+    private static PixelImage LoadPng(byte[] bytes) => PixelImage.Load(bytes);
 
     private static int CountDifferentPixels(
-        SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> a,
-        SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32> b,
+        PixelImage a,
+        PixelImage b,
         int x, int y, int w, int h, int channelTol)
     {
         int diff = 0;
