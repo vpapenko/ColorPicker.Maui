@@ -57,13 +57,30 @@ Expect ~12-13 minutes for full green.
 
 ## Branch protection / merging
 
-**There is no branch protection.** Auto-merge does *not* work in this repo — it stays pending forever. Use admin merge for everything:
+`main` is protected:
+
+- PRs required (no direct push)
+- **All 5 PR CI checks must pass**, strict (branch must be up-to-date with main before merge)
+- 0 required reviews — solo project, so auto-merge from the author can fire as soon as CI is green
+- Force pushes / deletions disabled
+- Conversation resolution required
+- Admins **not** enforced — `gh pr merge --admin` still works as an emergency exit if you absolutely have to ship something past CI
+
+Normal merge flow:
+
+```bash
+gh pr merge N --squash --delete-branch --auto
+```
+
+`--auto` queues the merge so it fires automatically when all required checks pass. Convention is **squash** merges.
+
+Emergency / docs-only merges that don't need CI gating:
 
 ```bash
 gh pr merge N --admin --squash --delete-branch
 ```
 
-Squash merges are the convention here.
+Use sparingly — defeats the purpose of the gate.
 
 ## Formatting & style
 
