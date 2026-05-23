@@ -1,8 +1,3 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Formats.Png;
-
 namespace ColorPicker.UITests.Infrastructure;
 
 /// <summary>
@@ -59,7 +54,7 @@ public static class ReferenceImage
     /// <summary>Compare two same-size images; return the fraction of pixels
     /// whose sum-of-channel diff exceeds <paramref name="perPixelTol"/>.</summary>
     public static double FractionMismatched(
-        Image<Rgba32> a, Image<Rgba32> b, int perPixelTol)
+        PixelImage a, PixelImage b, int perPixelTol)
     {
         if (a.Width != b.Width || a.Height != b.Height)
             throw new InvalidOperationException(
@@ -80,23 +75,10 @@ public static class ReferenceImage
     }
 
     /// <summary>Crop a screenshot to the rectangle of interest.</summary>
-    public static Image<Rgba32> Crop(Image<Rgba32> source, PixelRect rect)
-    {
-        // Clip to image bounds defensively (anchor maths can be ±1 px).
-        int x = Math.Max(0, rect.X);
-        int y = Math.Max(0, rect.Y);
-        int w = Math.Min(rect.W, source.Width  - x);
-        int h = Math.Min(rect.H, source.Height - y);
-        var crop = source.Clone(ctx => ctx.Crop(new Rectangle(x, y, w, h)));
-        return crop;
-    }
+    public static PixelImage Crop(PixelImage source, PixelRect rect)
+        => source.Crop(rect.X, rect.Y, rect.W, rect.H);
 
-    public static void Save(Image<Rgba32> img, string path)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        img.Save(path, new PngEncoder());
-    }
+    public static void Save(PixelImage img, string path) => img.Save(path);
 
-    public static Image<Rgba32> Load(string path) =>
-        SixLabors.ImageSharp.Image.Load<Rgba32>(path);
+    public static PixelImage Load(string path) => PixelImage.Load(path);
 }

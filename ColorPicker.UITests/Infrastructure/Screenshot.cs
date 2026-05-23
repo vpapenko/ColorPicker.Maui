@@ -1,5 +1,3 @@
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
@@ -15,10 +13,10 @@ namespace ColorPicker.UITests.Infrastructure;
 /// </summary>
 public static class Screenshot
 {
-    public static Image<Rgba32> Capture(WindowsDriver driver)
+    public static PixelImage Capture(WindowsDriver driver)
     {
         var bytes = driver.GetScreenshot().AsByteArray;
-        return SixLabors.ImageSharp.Image.Load<Rgba32>(bytes);
+        return PixelImage.Load(bytes);
     }
 
     /// <summary>Map a logical-units rectangle (as reported by the marker)
@@ -47,7 +45,7 @@ public static class Screenshot
             DpiScale: scale);
     }
 
-    public static Rgba32 SampleBox(Image<Rgba32> img, int cx, int cy, int size = 5)
+    public static Pixel SampleBox(PixelImage img, int cx, int cy, int size = 5)
     {
         int half = size / 2;
         long r = 0, g = 0, b = 0, a = 0, n = 0;
@@ -59,11 +57,11 @@ public static class Screenshot
             var p = img[x, y];
             r += p.R; g += p.G; b += p.B; a += p.A; n++;
         }
-        if (n == 0) return new Rgba32(0, 0, 0, 0);
-        return new Rgba32((byte)(r / n), (byte)(g / n), (byte)(b / n), (byte)(a / n));
+        if (n == 0) return new Pixel(0, 0, 0, 0);
+        return new Pixel((byte)(r / n), (byte)(g / n), (byte)(b / n), (byte)(a / n));
     }
 
-    public static int ColorDistance(Rgba32 a, Rgba32 b) =>
+    public static int ColorDistance(Pixel a, Pixel b) =>
         Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
 }
 

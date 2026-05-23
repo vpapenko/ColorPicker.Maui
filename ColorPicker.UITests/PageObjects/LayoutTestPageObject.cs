@@ -1,8 +1,7 @@
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using ColorPicker.UITests.Infrastructure;
 
 namespace ColorPicker.UITests.PageObjects;
 
@@ -169,12 +168,12 @@ public sealed class LayoutTestPageObject
 
     /// <summary>
     /// Drives a canvas capture and returns the result as a loaded
-    /// <see cref="Image{Rgba32}"/> ready for pixel sampling / diffing.
+    /// <see cref="PixelImage"/> ready for pixel sampling / diffing.
     /// </summary>
-    public Image<Rgba32> CaptureCanvasImage(TimeSpan? timeout = null)
+    public PixelImage CaptureCanvasImage(TimeSpan? timeout = null)
     {
         var path = CaptureCanvas(timeout);
-        return SixLabors.ImageSharp.Image.Load<Rgba32>(path);
+        return PixelImage.Load(path);
     }
 
     static string SafeText(AppiumElement e) { try { return e.Text ?? ""; } catch { return ""; } }

@@ -1,8 +1,6 @@
 using System.Runtime.InteropServices;
 using ColorPicker.UITests.Infrastructure;
 using ColorPicker.UITests.PageObjects;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
 
 namespace ColorPicker.UITests.Tests;
@@ -76,7 +74,7 @@ public class PixelDiffTests
     }
 
     private static void AssertWithin(
-        Image<Rgba32> golden, Image<Rgba32> actual,
+        PixelImage golden, PixelImage actual,
         int perPixelTol, double maxBadFrac, string id, string refPath)
     {
         double bad = ReferenceImage.FractionMismatched(golden, actual, perPixelTol);

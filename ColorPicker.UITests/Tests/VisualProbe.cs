@@ -1,7 +1,5 @@
 using ColorPicker.UITests.Infrastructure;
 using ColorPicker.UITests.PageObjects;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Xunit;
 using Xunit.Abstractions;
 

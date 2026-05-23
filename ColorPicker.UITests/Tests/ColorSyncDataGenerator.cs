@@ -1,7 +1,5 @@
 using ColorPicker.UITests.Infrastructure;
 using ColorPicker.UITests.PageObjects;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 using Xunit.Abstractions;
 
 namespace ColorPicker.UITests.Tests;
@@ -109,7 +107,7 @@ public sealed class ColorSyncDataGenerator : IClassFixture<SyncTestAppFixture>
     /// avoid the LightGray cell stroke.
     /// </summary>
     private static (int x, int y, int luma) FindDarkestPixel(
-        Image<Rgba32> img, Bounds b, double innerFrac, double outerFrac)
+        PixelImage img, Bounds b, double innerFrac, double outerFrac)
     {
         int side = Math.Min(b.Width, b.Height);
         int ox = b.X + (b.Width  - side) / 2;
