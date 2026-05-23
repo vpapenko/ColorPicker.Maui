@@ -14,15 +14,15 @@ public sealed class ColorSyncTestPageObject
     private readonly WindowsDriver _driver;
     public ColorSyncTestPageObject(WindowsDriver driver) => _driver = driver;
 
-    public AppiumElement InputHex     => Find("InputHex");
-    public AppiumElement InputApply   => Find("InputApply");
-    public AppiumElement InputPreset  => Find("InputPreset");
-    public AppiumElement InputSwatch  => Find("InputSwatch");
+    public AppiumElement InputHex => Find("InputHex");
+    public AppiumElement InputApply => Find("InputApply");
+    public AppiumElement InputPreset => Find("InputPreset");
+    public AppiumElement InputSwatch => Find("InputSwatch");
     public AppiumElement OutputSwatch => Find("OutputSwatch");
-    public AppiumElement OutputHex    => Find("OutputHex");
-    public AppiumElement OutputRgba   => Find("OutputRgba");
+    public AppiumElement OutputHex => Find("OutputHex");
+    public AppiumElement OutputRgba => Find("OutputRgba");
 
-    public string OutputHexText  => SafeText(OutputHex);
+    public string OutputHexText => SafeText(OutputHex);
     public string OutputRgbaText => SafeText(OutputRgba);
 
     public AppiumElement Find(string automationId) =>
@@ -41,7 +41,7 @@ public sealed class ColorSyncTestPageObject
                     return;
             }
             catch (NoSuchElementException) { }
-            catch (WebDriverException)     { }
+            catch (WebDriverException) { }
             Thread.Sleep(200);
         }
         throw new TimeoutException("ColorSyncTestPage did not finish loading within 30s.");

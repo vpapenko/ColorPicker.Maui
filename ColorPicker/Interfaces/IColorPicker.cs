@@ -2,6 +2,6 @@
 
 public interface IColorPicker : INotifyPropertyChanged
 {
-    Color        SelectedColor          { get; set; }
-    IColorPicker AttachedColorPicker    { get; set; }
+    Color SelectedColor { get; set; }
+    IColorPicker AttachedColorPicker { get; set; }
 }

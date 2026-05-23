@@ -91,14 +91,14 @@ public sealed class SettingsToggleTests : IClassFixture<AppFixture>
         int xMax = Math.Min(x + w, Math.Min(a.Width,  b.Width));
         int yMax = Math.Min(y + h, Math.Min(a.Height, b.Height));
         for (int j = Math.Max(0, y); j < yMax; j++)
-        for (int i = Math.Max(0, x); i < xMax; i++)
-        {
-            var pa = a[i, j]; var pb = b[i, j];
-            if (Math.Abs(pa.R - pb.R) > channelTol ||
-                Math.Abs(pa.G - pb.G) > channelTol ||
-                Math.Abs(pa.B - pb.B) > channelTol)
-                diff++;
-        }
+            for (int i = Math.Max(0, x); i < xMax; i++)
+            {
+                var pa = a[i, j]; var pb = b[i, j];
+                if (Math.Abs(pa.R - pb.R) > channelTol ||
+                    Math.Abs(pa.G - pb.G) > channelTol ||
+                    Math.Abs(pa.B - pb.B) > channelTol)
+                    diff++;
+            }
         return diff;
     }
 

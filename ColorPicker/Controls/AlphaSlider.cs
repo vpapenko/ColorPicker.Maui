@@ -2,12 +2,12 @@ namespace ColorPicker.Controls;
 
 public class AlphaSlider : SliderStack
 {
-    protected override IEnumerable<SliderBase> GetSliders() 
+    protected override IEnumerable<SliderBase> GetSliders()
         => new SliderBase[]
         {
-            new DelegateSlider( AlphaSliderFactory.NewValueAlpha,
+            new DelegateSlider(AlphaSliderFactory.NewValueAlpha,
                         AlphaSliderFactory.GetNewColorAlpha,
-                        AlphaSliderFactory.GetPaintAlpha )
+                        AlphaSliderFactory.GetPaintAlpha)
             {
                 PaintChessPattern = true
             }

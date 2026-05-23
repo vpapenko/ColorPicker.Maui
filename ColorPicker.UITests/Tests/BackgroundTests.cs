@@ -34,12 +34,12 @@ public class BackgroundTests
     public BackgroundTests(LayoutTestAppFixture fixture) => _fixture = fixture;
 
     [Theory]
-    [InlineData("wheel:400x400:bg=red",        255,   0,   0)]
-    [InlineData("wheel:400x400:bg=blue",         0,   0, 255)]
-    [InlineData("wheel:400x400:bg=yellow",     255, 255,   0)]
-    [InlineData("wheel:400x400:bg=black",        0,   0,   0)]
-    [InlineData("triangle:400x400:bg=red",     255,   0,   0)]
-    [InlineData("triangle:400x400:bg=green",     0, 128,   0)]
+    [InlineData("wheel:400x400:bg=red", 255, 0, 0)]
+    [InlineData("wheel:400x400:bg=blue", 0, 0, 255)]
+    [InlineData("wheel:400x400:bg=yellow", 255, 255, 0)]
+    [InlineData("wheel:400x400:bg=black", 0, 0, 0)]
+    [InlineData("triangle:400x400:bg=red", 255, 0, 0)]
+    [InlineData("triangle:400x400:bg=green", 0, 128, 0)]
     public void Host_Background_Shows_Through_Canvas_Corners(
         string scenario, int r, int g, int b)
     {

@@ -32,7 +32,8 @@ public class VisualProbe
             // we still emit duplicates with -dup suffix so the manifest is complete.
         }
         var list = new List<(string id, string spec)>();
-        void Emit(string id, string spec) {
+        void Emit(string id, string spec)
+        {
             // ensure unique id by suffixing
             string useId = id; int i = 1;
             while (list.Any(t => t.id == useId)) useId = id + "-" + (++i);
@@ -41,8 +42,8 @@ public class VisualProbe
 
         // Tier 1 — LayoutSmoke
         foreach (var ctrl in new[] { "wheel", "triangle", "hsl", "rgb" })
-        foreach (var sz   in new[] { "100x100", "800x800", "300x600", "600x300" })
-            Emit($"smoke-{ctrl}-{sz}", $"{ctrl}:{sz}");
+            foreach (var sz in new[] { "100x100", "800x800", "300x600", "600x300" })
+                Emit($"smoke-{ctrl}-{sz}", $"{ctrl}:{sz}");
 
         // Tier 2 — feature matrix
         for (int mask = 0; mask < 16; mask++)
@@ -53,7 +54,7 @@ public class VisualProbe
             if ((mask & 4) == 0) opts.Add("nolumwheel");
             if ((mask & 8) != 0) opts.Add("vertical");
             var spec = opts.Count == 0 ? "wheel:400x400" : "wheel:400x400:" + string.Join(",", opts);
-            Emit($"feat-{mask:00}-{string.Join("_", opts)}".TrimEnd('-','_'), spec);
+            Emit($"feat-{mask:00}-{string.Join("_", opts)}".TrimEnd('-', '_'), spec);
         }
 
         // Tier 4 — container sizing
@@ -62,38 +63,38 @@ public class VisualProbe
             "wheel:fillx400","wheel:fillxfill","wheel:fillxauto",
             "wheel:autox400","wheel:autoxfill","wheel:autoxauto",
             "triangle:fillxfill","rgb:fillxfill","hsl:fillxfill" })
-            Emit("sizing-" + s.Replace(":","-").Replace(",","_"), s);
+            Emit("sizing-" + s.Replace(":", "-").Replace(",", "_"), s);
 
         // Padding
-        foreach (var s in new[] {"wheel:300x300","wheel:600x600","triangle:300x300"})
-            Emit("padding-" + s.Replace(":","-"), s);
+        foreach (var s in new[] { "wheel:300x300", "wheel:600x600", "triangle:300x300" })
+            Emit("padding-" + s.Replace(":", "-"), s);
 
         // Triangle ring modes (rotate-with-hue vs. fixed-triangle rotating ring)
         foreach (var sz in new[] { "400x400", "300x600", "600x300" })
         {
-            Emit($"triangle-rotate-{sz}",   $"triangle:{sz}");
+            Emit($"triangle-rotate-{sz}", $"triangle:{sz}");
             Emit($"triangle-norotate-{sz}", $"triangle:{sz}:norotate");
         }
 
         // Slider orientation + alpha visibility
         foreach (var ctrl in new[] { "hsl", "rgb" })
-        foreach (var sz   in new[] { "400x400", "300x600", "600x300" })
-        {
-            Emit($"slider-{ctrl}-vertical-{sz}", $"{ctrl}:{sz}:vertical");
-            Emit($"slider-{ctrl}-noalpha-{sz}",  $"{ctrl}:{sz}:noalpha");
-        }
+            foreach (var sz in new[] { "400x400", "300x600", "600x300" })
+            {
+                Emit($"slider-{ctrl}-vertical-{sz}", $"{ctrl}:{sz}:vertical");
+                Emit($"slider-{ctrl}-noalpha-{sz}", $"{ctrl}:{sz}:noalpha");
+            }
 
         // Tier — fixed IndicatorRadiusScale on standalone sliders. Without prs the
         // slider stack fills the whole cell; with prs > 0 the orthogonal axis
         // becomes fixed (thickness = count * 2.2 * prs * length) and only the
         // length axis still fills.
         foreach (var ctrl in new[] { "hsl", "rgb" })
-        foreach (var sz   in new[] { "400x400", "600x300", "300x600" })
-        foreach (var scale in new[] { "0.04", "0.08" })
-        {
-            Emit($"prs-{ctrl}-{sz}-prs{scale.Replace(".","")}",            $"{ctrl}:{sz}:prs={scale}");
-            Emit($"prs-{ctrl}-{sz}-vertical-prs{scale.Replace(".","")}",   $"{ctrl}:{sz}:vertical,prs={scale}");
-        }
+            foreach (var sz in new[] { "400x400", "600x300", "300x600" })
+                foreach (var scale in new[] { "0.04", "0.08" })
+                {
+                    Emit($"prs-{ctrl}-{sz}-prs{scale.Replace(".", "")}", $"{ctrl}:{sz}:prs={scale}");
+                    Emit($"prs-{ctrl}-{sz}-vertical-prs{scale.Replace(".", "")}", $"{ctrl}:{sz}:vertical,prs={scale}");
+                }
 
         // Control-internal background (wbg=) — distinct from host bg=
         foreach (var s in new[] {
@@ -101,14 +102,14 @@ public class VisualProbe
             "wheel:400x400:wbg=yellow",
             "triangle:400x400:wbg=red",
             "triangle:400x400:wbg=blue" })
-            Emit("wbg-" + s.Replace(":","-").Replace("=","-").Replace("#",""), s);
+            Emit("wbg-" + s.Replace(":", "-").Replace("=", "-").Replace("#", ""), s);
 
         // Background
         foreach (var s in new[] {
             "wheel:400x400:bg=red","wheel:400x400:bg=blue","wheel:400x400:bg=yellow",
             "wheel:400x400:bg=black","triangle:400x400:bg=red","triangle:400x400:bg=green",
             "wheel:400x400:bg=#FF8000" })
-            Emit("bg-" + s.Replace(":","-").Replace("=","-").Replace("#","").Replace(",","_"), s);
+            Emit("bg-" + s.Replace(":", "-").Replace("=", "-").Replace("#", "").Replace(",", "_"), s);
 
         // Window events used "wheel:fillxfill" already.
 

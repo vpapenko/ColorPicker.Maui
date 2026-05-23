@@ -35,12 +35,12 @@ public class PixelDiffTests
     // perPixelTol: sum-of-RGB diff per pixel that counts as a "match".
     // maxBadFrac:  fraction of pixels allowed to exceed perPixelTol.
     [Theory]
-    [InlineData("wheel-400-default",         "wheel:400x400",                  30, 0.015)]
-    [InlineData("wheel-400-alpha",           "wheel:400x400:alpha",            30, 0.015)]
-    [InlineData("wheel-400-vertical-alpha",  "wheel:400x400:alpha,vertical",   30, 0.015)]
-    [InlineData("triangle-400-default",      "triangle:400x400",               30, 0.015)]
-    [InlineData("wheel-400-bg-red",          "wheel:400x400:bg=red",           30, 0.015)]
-    [InlineData("wheel-400-nolumwheel",      "wheel:400x400:nolumwheel",       30, 0.015)]
+    [InlineData("wheel-400-default", "wheel:400x400", 30, 0.015)]
+    [InlineData("wheel-400-alpha", "wheel:400x400:alpha", 30, 0.015)]
+    [InlineData("wheel-400-vertical-alpha", "wheel:400x400:alpha,vertical", 30, 0.015)]
+    [InlineData("triangle-400-default", "triangle:400x400", 30, 0.015)]
+    [InlineData("wheel-400-bg-red", "wheel:400x400:bg=red", 30, 0.015)]
+    [InlineData("wheel-400-nolumwheel", "wheel:400x400:nolumwheel", 30, 0.015)]
     public void Matches_Reference(string id, string scenario, int perPixelTol, double maxBadFrac)
     {
         var page = _fixture.Page;

@@ -15,54 +15,54 @@ public class AndroidTouchActionBehavior : Behavior<SkiaPickerBase>
     static readonly Dictionary<Android.Views.View, AndroidTouchActionBehavior> _viewDictionary       = new();
     static readonly Dictionary<int, AndroidTouchActionBehavior>                _idToEffectDictionary = new();
 
-    public AndroidTouchActionBehavior( TouchBehavior sharedBehavior )
+    public AndroidTouchActionBehavior(TouchBehavior sharedBehavior)
     {
-        ArgumentNullException.ThrowIfNull( sharedBehavior );
+        ArgumentNullException.ThrowIfNull(sharedBehavior);
 
         _commonBehavior = sharedBehavior;
     }
 
-    protected override void OnAttachedTo( SkiaPickerBase bindable )
+    protected override void OnAttachedTo(SkiaPickerBase bindable)
     {
         bindable.HandlerChanged += OnHandlerChangedAction;
-        base.OnAttachedTo( bindable );
+        base.OnAttachedTo(bindable);
     }
 
-    void OnHandlerChangedAction( object sender, EventArgs e )
+    void OnHandlerChangedAction(object sender, EventArgs e)
     {
-        if ( sender is not SkiaPickerBase bindable )
+        if (sender is not SkiaPickerBase bindable)
             return;
 
         var mauiContext =   bindable.Handler.MauiContext ?? bindable.Parent.Handler.MauiContext;
 
         // Get the Android View corresponding to the Element that the effect is attached to
-        _nativeView =   bindable.ToPlatform( mauiContext );
+        _nativeView = bindable.ToPlatform(mauiContext);
 
-        if ( _commonBehavior is null || _nativeView is null )
+        if (_commonBehavior is null || _nativeView is null)
             return;
 
-        _viewDictionary.Add( _nativeView, this );
+        _viewDictionary.Add(_nativeView, this);
         _formsElement = bindable;
 
         // Save fromPixels function
-        _fromPixels     = _nativeView.Context.FromPixels;
+        _fromPixels = _nativeView.Context.FromPixels;
 
         // Set event handler on View
         _nativeView.Touch += OnTouch;
     }
 
-    protected override void OnDetachingFrom( SkiaPickerBase bindable )
+    protected override void OnDetachingFrom(SkiaPickerBase bindable)
     {
-        if ( _viewDictionary.ContainsKey( _nativeView ) )
+        if (_viewDictionary.ContainsKey(_nativeView))
         {
-            _viewDictionary.Remove( _nativeView );
+            _viewDictionary.Remove(_nativeView);
             _nativeView.Touch -= OnTouch;
         }
 
-        base.OnDetachingFrom( bindable );
+        base.OnDetachingFrom(bindable);
     }
 
-    void OnTouch( object sender, Android.Views.View.TouchEventArgs args )
+    void OnTouch(object sender, Android.Views.View.TouchEventArgs args)
     {
         // Two object common to all the events
         var senderView = sender as Android.Views.View;
@@ -74,45 +74,45 @@ public class AndroidTouchActionBehavior : Behavior<SkiaPickerBase>
         // Get the id that identifies a finger over the course of its progress
         var id = motionEvent.GetPointerId(pointerIndex);
 
-        senderView.GetLocationOnScreen( _screenLocationArray );
+        senderView.GetLocationOnScreen(_screenLocationArray);
 
         Point screenPointerCoords = new(_screenLocationArray[0] + motionEvent.GetX(pointerIndex),
                                         _screenLocationArray[1] + motionEvent.GetY(pointerIndex));
 
         // Use ActionMasked here rather than Action to reduce the number of possibilities
-        switch ( args.Event.ActionMasked )
+        switch (args.Event.ActionMasked)
         {
             case MotionEventActions.Down:
             case MotionEventActions.PointerDown:
-                FireEvent( this, id, TouchActionType.Pressed, screenPointerCoords, true );
+                FireEvent(this, id, TouchActionType.Pressed, screenPointerCoords, true);
 
-                _idToEffectDictionary.Add( id, this );
+                _idToEffectDictionary.Add(id, this);
 
                 _capture = _commonBehavior.Capture;
                 break;
 
             case MotionEventActions.Move:
                 // Multiple Move events are bundled, so handle them in a loop
-                for ( pointerIndex = 0; pointerIndex < motionEvent.PointerCount; pointerIndex++ )
+                for (pointerIndex = 0; pointerIndex < motionEvent.PointerCount; pointerIndex++)
                 {
-                    id = motionEvent.GetPointerId( pointerIndex );
+                    id = motionEvent.GetPointerId(pointerIndex);
 
-                    if ( _capture )
+                    if (_capture)
                     {
-                        senderView.GetLocationOnScreen( _screenLocationArray );
+                        senderView.GetLocationOnScreen(_screenLocationArray);
 
-                        screenPointerCoords = new Point( _screenLocationArray[ 0 ] + motionEvent.GetX( pointerIndex ),
-                                                         _screenLocationArray[ 1 ] + motionEvent.GetY( pointerIndex ) );
+                        screenPointerCoords = new Point(_screenLocationArray[0] + motionEvent.GetX(pointerIndex),
+                                                         _screenLocationArray[1] + motionEvent.GetY(pointerIndex));
 
-                        FireEvent( this, id, TouchActionType.Moved, screenPointerCoords, true );
+                        FireEvent(this, id, TouchActionType.Moved, screenPointerCoords, true);
                     }
                     else
                     {
-                        CheckForBoundaryHop( id, screenPointerCoords );
+                        CheckForBoundaryHop(id, screenPointerCoords);
 
-                        if ( _idToEffectDictionary[ id ] is not null )
+                        if (_idToEffectDictionary[id] is not null)
                         {
-                            FireEvent( _idToEffectDictionary[ id ], id, TouchActionType.Moved, screenPointerCoords, true );
+                            FireEvent(_idToEffectDictionary[id], id, TouchActionType.Moved, screenPointerCoords, true);
                         }
                     }
                 }
@@ -121,96 +121,96 @@ public class AndroidTouchActionBehavior : Behavior<SkiaPickerBase>
 
             case MotionEventActions.Up:
             case MotionEventActions.Pointer1Up:
-                if ( _capture )
+                if (_capture)
                 {
-                    FireEvent( this, id, TouchActionType.Released, screenPointerCoords, false );
+                    FireEvent(this, id, TouchActionType.Released, screenPointerCoords, false);
                 }
                 else
                 {
-                    CheckForBoundaryHop( id, screenPointerCoords );
+                    CheckForBoundaryHop(id, screenPointerCoords);
 
-                    if ( _idToEffectDictionary[ id ] is not null )
+                    if (_idToEffectDictionary[id] is not null)
                     {
-                        FireEvent( _idToEffectDictionary[ id ], id, TouchActionType.Released, screenPointerCoords, false );
+                        FireEvent(_idToEffectDictionary[id], id, TouchActionType.Released, screenPointerCoords, false);
                     }
                 }
 
-                _idToEffectDictionary.Remove( id );
+                _idToEffectDictionary.Remove(id);
                 break;
 
             case MotionEventActions.Cancel:
-                if ( _capture )
+                if (_capture)
                 {
-                    FireEvent( this, id, TouchActionType.Cancelled, screenPointerCoords, false );
+                    FireEvent(this, id, TouchActionType.Cancelled, screenPointerCoords, false);
                 }
                 else
                 {
-                    if ( _idToEffectDictionary[ id ] is not null )
+                    if (_idToEffectDictionary[id] is not null)
                     {
-                        FireEvent( _idToEffectDictionary[ id ], id, TouchActionType.Cancelled, screenPointerCoords, false );
+                        FireEvent(_idToEffectDictionary[id], id, TouchActionType.Cancelled, screenPointerCoords, false);
                     }
                 }
 
-                _idToEffectDictionary.Remove( id );
+                _idToEffectDictionary.Remove(id);
                 break;
         }
     }
 
-    void CheckForBoundaryHop( int id, Point pointerLocation )
+    void CheckForBoundaryHop(int id, Point pointerLocation)
     {
         AndroidTouchActionBehavior touchEffectHit = null;
 
-        foreach ( var view in _viewDictionary.Keys )
+        foreach (var view in _viewDictionary.Keys)
         {
             // Get the view rectangle
             try
             {
-                view.GetLocationOnScreen( _screenLocationArray );
+                view.GetLocationOnScreen(_screenLocationArray);
             }
             catch // System.ObjectDisposedException: Cannot access a disposed object.
             {
                 continue;
             }
 
-            Rect viewRect = new( _screenLocationArray[0], 
-                                      _screenLocationArray[1], 
-                                      view.Width, 
-                                      view.Height );
+            Rect viewRect = new(_screenLocationArray[0],
+                                      _screenLocationArray[1],
+                                      view.Width,
+                                      view.Height);
 
-            if ( viewRect.Contains( pointerLocation ) )
+            if (viewRect.Contains(pointerLocation))
             {
-                touchEffectHit = _viewDictionary[ view ];
+                touchEffectHit = _viewDictionary[view];
             }
         }
 
-        if ( touchEffectHit != _idToEffectDictionary[ id ] )
+        if (touchEffectHit != _idToEffectDictionary[id])
         {
-            if ( _idToEffectDictionary[ id ] is not null )
+            if (_idToEffectDictionary[id] is not null)
             {
-                FireEvent( _idToEffectDictionary[ id ], id, TouchActionType.Exited, pointerLocation, true );
+                FireEvent(_idToEffectDictionary[id], id, TouchActionType.Exited, pointerLocation, true);
             }
 
-            if ( touchEffectHit is not null )
+            if (touchEffectHit is not null)
             {
-                FireEvent( touchEffectHit, id, TouchActionType.Entered, pointerLocation, true );
+                FireEvent(touchEffectHit, id, TouchActionType.Entered, pointerLocation, true);
             }
 
-            _idToEffectDictionary[ id ] = touchEffectHit;
+            _idToEffectDictionary[id] = touchEffectHit;
         }
     }
 
-    void FireEvent( AndroidTouchActionBehavior behavior, int id, TouchActionType actionType, Point pointerLocation, bool isInContact )
+    void FireEvent(AndroidTouchActionBehavior behavior, int id, TouchActionType actionType, Point pointerLocation, bool isInContact)
     {
         // Get the location of the pointer within the view
-        behavior._nativeView.GetLocationOnScreen( _screenLocationArray );
+        behavior._nativeView.GetLocationOnScreen(_screenLocationArray);
 
         var x = pointerLocation.X - _screenLocationArray[0];
         var y = pointerLocation.Y - _screenLocationArray[1];
 
-        Point point = new( _fromPixels(x), _fromPixels(y) );
+        Point point = new(_fromPixels(x), _fromPixels(y));
 
         // Call the method
-        behavior._commonBehavior.OnTouchAction( behavior._formsElement, 
-                                                new TouchActionEventArgs( id, actionType, point, isInContact ) );
+        behavior._commonBehavior.OnTouchAction(behavior._formsElement,
+                                                new TouchActionEventArgs(id, actionType, point, isInContact));
     }
 }

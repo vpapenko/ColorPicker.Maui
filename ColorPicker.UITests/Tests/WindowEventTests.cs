@@ -42,7 +42,7 @@ public class WindowEventTests
             Math.Abs(s.HostBounds.W - s.ViewportBounds.W) <= 2 &&
             s.ViewportBounds.W > small.ViewportBounds.W);
 
-        Assert.True(big.HostBounds.W   > small.HostBounds.W,
+        Assert.True(big.HostBounds.W > small.HostBounds.W,
             $"Host did not grow: small={small.HostBounds.W}, big={big.HostBounds.W}");
         Assert.True(big.ControlBounds.W > 0 && big.ControlBounds.W <= big.HostBounds.W + 1,
             $"Control did not adapt to new host size: {big.ControlBounds.W} / {big.HostBounds.W}");

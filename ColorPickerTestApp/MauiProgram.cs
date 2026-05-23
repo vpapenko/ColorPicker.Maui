@@ -21,7 +21,7 @@ public static class MauiProgram
         //
         builder.UseColorPickersAndSliders();
 
-        builder.ConfigureFonts( fonts => fonts.AddFont( "OpenSans-Regular.ttf", "OpenSansRegular" ) );
+        builder.ConfigureFonts(fonts => fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular"));
 
         return builder.Build();
     }

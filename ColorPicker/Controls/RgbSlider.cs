@@ -6,28 +6,28 @@ public class RgbSlider : SliderStackWithAlpha
     {
         var result = new List<DelegateSlider>()
             {
-                new DelegateSlider( RgbSliderFactory.NewValueR,
+                new DelegateSlider(RgbSliderFactory.NewValueR,
                             RgbSliderFactory.GetNewColorR,
-                            RgbSliderFactory.GetPaintR ),
+                            RgbSliderFactory.GetPaintR),
 
-                new DelegateSlider( RgbSliderFactory.NewValueG,
+                new DelegateSlider(RgbSliderFactory.NewValueG,
                             RgbSliderFactory.GetNewColorG,
-                            RgbSliderFactory.GetPaintG ),
+                            RgbSliderFactory.GetPaintG),
 
-                new DelegateSlider( RgbSliderFactory.NewValueB,
+                new DelegateSlider(RgbSliderFactory.NewValueB,
                             RgbSliderFactory.GetNewColorB,
-                            RgbSliderFactory.GetPaintB )
+                            RgbSliderFactory.GetPaintB)
             };
 
-        if ( ShowAlphaSlider )
+        if (ShowAlphaSlider)
         {
-            var slider = new DelegateSlider( AlphaSliderFactory.NewValueAlpha,
+            var slider = new DelegateSlider(AlphaSliderFactory.NewValueAlpha,
                                      AlphaSliderFactory.GetNewColorAlpha,
-                                     AlphaSliderFactory.GetPaintAlpha )
+                                     AlphaSliderFactory.GetPaintAlpha)
             {
                 PaintChessPattern = true
             };
-            result.Add( slider );
+            result.Add(slider);
         }
 
         return result;

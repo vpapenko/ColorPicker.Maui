@@ -12,13 +12,13 @@ public sealed class LayoutTestPageObject
 
     public LayoutTestPageObject(WindowsDriver driver) => _driver = driver;
 
-    public AppiumElement ScenarioEntry  => Find("ScenarioEntry");
-    public AppiumElement ApplyButton    => Find("ApplyScenario");
-    public AppiumElement CaptureButton  => Find("CaptureCanvas");
-    public AppiumElement CapturePath    => Find("CapturePath");
-    public AppiumElement Host           => Find("ScenarioHost");
-    public AppiumElement Control        => Find("ScenarioControl");
-    public AppiumElement AppliedMarker  => Find("ScenarioApplied");
+    public AppiumElement ScenarioEntry => Find("ScenarioEntry");
+    public AppiumElement ApplyButton => Find("ApplyScenario");
+    public AppiumElement CaptureButton => Find("CaptureCanvas");
+    public AppiumElement CapturePath => Find("CapturePath");
+    public AppiumElement Host => Find("ScenarioHost");
+    public AppiumElement Control => Find("ScenarioControl");
+    public AppiumElement AppliedMarker => Find("ScenarioApplied");
 
     public void WaitUntilLoaded()
     {
@@ -31,7 +31,7 @@ public sealed class LayoutTestPageObject
                 return;
             }
             catch (NoSuchElementException) { Thread.Sleep(250); }
-            catch (WebDriverException)     { Thread.Sleep(250); }
+            catch (WebDriverException) { Thread.Sleep(250); }
         }
         throw new TimeoutException("LayoutTestPage did not display ScenarioEntry within 30s.");
     }
@@ -282,8 +282,8 @@ public readonly record struct ScenarioState(
         var ci = System.Globalization.CultureInfo.InvariantCulture;
         if (!double.TryParse(comma[0], System.Globalization.NumberStyles.Float, ci, out var x)) return false;
         if (!double.TryParse(comma[1], System.Globalization.NumberStyles.Float, ci, out var y)) return false;
-        if (!double.TryParse(sz[0],   System.Globalization.NumberStyles.Float, ci, out var w)) return false;
-        if (!double.TryParse(sz[1],   System.Globalization.NumberStyles.Float, ci, out var h)) return false;
+        if (!double.TryParse(sz[0], System.Globalization.NumberStyles.Float, ci, out var w)) return false;
+        if (!double.TryParse(sz[1], System.Globalization.NumberStyles.Float, ci, out var h)) return false;
         b = new LogicalBounds(x, y, w, h);
         return true;
     }
