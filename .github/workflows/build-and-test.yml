@@ -148,7 +148,7 @@ jobs:
           }
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ui-test-results
           path: |
@@ -190,7 +190,7 @@ jobs:
           echo "version=$version" >> $env:GITHUB_OUTPUT
           Write-Host "Packed version: $version"
       - name: Upload nupkgs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nupkgs
           path: nupkgs/*
