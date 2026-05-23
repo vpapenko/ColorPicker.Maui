@@ -30,7 +30,7 @@ jobs:
     if: github.repository == 'vpapenko/ColorPicker.Maui'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - uses: actions/download-artifact@v8
@@ -63,7 +63,7 @@ jobs:
       packages: read
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Install MAUI workloads
