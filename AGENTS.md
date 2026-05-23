@@ -7,6 +7,8 @@ Practical notes accumulated from prior coding sessions. Read before working in t
 | Path | Purpose |
 |---|---|
 | `ColorPicker/` | The library — the published NuGet package (`ColorPicker.Maui`) |
+| `ColorPicker.Core/` | Pure platform-agnostic math (HSL/RGB, polar, unit-square primitives). No MAUI / Skia deps. Multi-targets `netstandard2.0` + `net8.0`. |
+| `ColorPicker.Core.Tests/` | xUnit tests for `ColorPicker.Core` (runs on every PR, ubuntu, sub-second) |
 | `ColorPickerTestApp/` | MAUI app for manual visual testing |
 | `ColorPicker.UITests/` | Appium-driven xUnit UI test suite (~213 tests) |
 | `samples/ConsumerSmoke/` | Smoke project that consumes the **packed nupkg**, *not* a ProjectReference |
