@@ -4,9 +4,9 @@ public class ColorTriangle : SkiaPickerBase
 {
     double _lastHue = 0;
     bool _zeroSL = false;
-    long? _locationSVProgressId = null;
+    long? _locationSvProgressId = null;
     long? _locationHProgressId = null;
-    SKPoint _locationSV = new();
+    SKPoint _locationSv = new();
     SKPoint _locationH1 = new();
     SKPoint _locationH2 = new();
     SKPoint _locationMiddleH = new();
@@ -78,10 +78,10 @@ public class ColorTriangle : SkiaPickerBase
         point.X -= offX;
         point.Y -= offY;
 
-        if (_locationSVProgressId is null && IsInSVArea( point, canvasRadius ))
+        if (_locationSvProgressId is null && IsInSvArea( point, canvasRadius ))
         {
-            _locationSVProgressId = args.Id;
-            _locationSV = LimitToSVTriangle( point, canvasRadius );
+            _locationSvProgressId = args.Id;
+            _locationSv = LimitToSvTriangle( point, canvasRadius );
             UpdateColors( canvasRadius );
         }
         else if (_locationHProgressId is null && IsInHArea( point, canvasRadius ))
@@ -100,9 +100,9 @@ public class ColorTriangle : SkiaPickerBase
         point.X -= offX;
         point.Y -= offY;
 
-        if (_locationSVProgressId == args.Id)
+        if (_locationSvProgressId == args.Id)
         {
-            _locationSV = LimitToSVTriangle( point, canvasRadius );
+            _locationSv = LimitToSvTriangle( point, canvasRadius );
             UpdateColors( canvasRadius );
         }
         else if (_locationHProgressId == args.Id)
@@ -120,10 +120,10 @@ public class ColorTriangle : SkiaPickerBase
         point.X -= offX;
         point.Y -= offY;
 
-        if (_locationSVProgressId == args.Id)
+        if (_locationSvProgressId == args.Id)
         {
-            _locationSVProgressId = null;
-            _locationSV = LimitToSVTriangle( point, canvasRadius );
+            _locationSvProgressId = null;
+            _locationSv = LimitToSvTriangle( point, canvasRadius );
             UpdateColors( canvasRadius );
         }
         else if (_locationHProgressId == args.Id)
@@ -136,8 +136,8 @@ public class ColorTriangle : SkiaPickerBase
 
     protected override void OnTouchActionCancelled( TouchActionEventArgs args )
     {
-        if (_locationSVProgressId == args.Id)
-            _locationSVProgressId = null;
+        if (_locationSvProgressId == args.Id)
+            _locationSvProgressId = null;
         else if (_locationHProgressId == args.Id)
             _locationHProgressId = null;
     }
@@ -161,8 +161,8 @@ public class ColorTriangle : SkiaPickerBase
         else
             PaintIndicator( canvas, _locationMiddleH );
 
-        PaintSVTriangle( canvas, canvasRadius );
-        PaintIndicator( canvas, _locationSV );
+        PaintSvTriangle( canvas, canvasRadius );
+        PaintIndicator( canvas, _locationSv );
 
         canvas.Restore();
     }
@@ -216,23 +216,23 @@ public class ColorTriangle : SkiaPickerBase
         var polarValue = ToPolar(new SKPoint(luminosityX, luminosityY));
         polarValue.Radius *= (float)value;
 
-        _locationSV = FromPolar( polarValue );
-        _locationSV.X = -_locationSV.X;
-        _locationSV.Y -= 1;
-        _locationSV.X *= SvRadius( canvasRadius );
-        _locationSV.Y *= SvRadius( canvasRadius );
+        _locationSv = FromPolar( polarValue );
+        _locationSv.X = -_locationSv.X;
+        _locationSv.Y -= 1;
+        _locationSv.X *= SvRadius( canvasRadius );
+        _locationSv.Y *= SvRadius( canvasRadius );
 
-        polarValue = ToPolar( new SKPoint( _locationSV.X, _locationSV.Y ) );
+        polarValue = ToPolar( new SKPoint( _locationSv.X, _locationSv.Y ) );
         polarValue.Angle -= (float)(2 * Math.PI / 3);
-        _locationSV = FromPolar( polarValue );
+        _locationSv = FromPolar( polarValue );
 
-        _locationSV.X += canvasRadius;
-        _locationSV.Y += canvasRadius;
+        _locationSv.X += canvasRadius;
+        _locationSv.Y += canvasRadius;
 
         if (RotateTriangleByHue)
         {
             var rotationHue = SKMatrix.CreateRotation(-(float)((2D * Math.PI * _lastHue) + (Math.PI / 2D)), canvasRadius, canvasRadius);
-            _locationSV = rotationHue.MapPoint( _locationSV );
+            _locationSv = rotationHue.MapPoint( _locationSv );
         }
 
         var angleH = _lastHue * Math.PI * 2;
@@ -252,7 +252,7 @@ public class ColorTriangle : SkiaPickerBase
 
     void UpdateColors( float canvasRadius )
     {
-        var svPoint = ToSvCoordinates(_locationSV, canvasRadius);
+        var svPoint = ToSvCoordinates(_locationSv, canvasRadius);
         var hPoint = ToHCoordinates(_locationH1, canvasRadius);
         var newColor = WheelPointToColor(svPoint, hPoint);
 
@@ -264,7 +264,7 @@ public class ColorTriangle : SkiaPickerBase
         SelectedColor = newColor;
     }
 
-    bool IsInSVArea( SKPoint point, float canvasRadius )
+    bool IsInSvArea( SKPoint point, float canvasRadius )
     {
         var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
         return polar.Radius <= SvRadius( canvasRadius );
@@ -303,7 +303,7 @@ public class ColorTriangle : SkiaPickerBase
         canvas.DrawCircle( center, HRadius( canvasRadius ), paint );
     }
 
-    void PaintSVTriangle( SKCanvas canvas, float canvasRadius )
+    void PaintSvTriangle( SKCanvas canvas, float canvasRadius )
     {
         canvas.Save();
 
@@ -453,7 +453,7 @@ public class ColorTriangle : SkiaPickerBase
         return result;
     }
 
-    SKPoint LimitToSVTriangle( SKPoint point, float canvasRadius )
+    SKPoint LimitToSvTriangle( SKPoint point, float canvasRadius )
     {
         var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
         polar.Radius = polar.Radius < SvRadius( canvasRadius ) ? polar.Radius : SvRadius( canvasRadius );

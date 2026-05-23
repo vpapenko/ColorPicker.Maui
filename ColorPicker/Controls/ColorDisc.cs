@@ -2,10 +2,10 @@ namespace ColorPicker.Controls;
 
 public class ColorDisc : SkiaPickerBase
 {
-    long?   _locationHSProgressId    = null;
+    long?   _locationHsProgressId    = null;
     long?   _locationLProgressId     = null;
 
-    SKPoint _locationHS              = new();
+    SKPoint _locationHs              = new();
     SKPoint _locationL               = new();
 
     readonly SKColor[] _sweepGradientColors = new SKColor[256];
@@ -63,10 +63,10 @@ public class ColorDisc : SkiaPickerBase
         var canvasRadius    = GetCanvasSize().Width / 2F;
         var point           = ConvertToPixel(args.Location);
 
-        if ( _locationHSProgressId is null && IsInHSArea( point, canvasRadius ) )
+        if ( _locationHsProgressId is null && IsInHsArea( point, canvasRadius ) )
         {
-            _locationHSProgressId    = args.Id;
-            _locationHS              = LimitToHSRadius( point, canvasRadius );
+            _locationHsProgressId    = args.Id;
+            _locationHs              = LimitToHsRadius( point, canvasRadius );
             UpdateColors( canvasRadius );
         }
         else if ( _locationLProgressId is null && IsInLArea( point, canvasRadius ) )
@@ -82,9 +82,9 @@ public class ColorDisc : SkiaPickerBase
         var canvasRadius    = GetCanvasSize().Width / 2F;
         var point           = ConvertToPixel(args.Location);
 
-        if ( _locationHSProgressId == args.Id )
+        if ( _locationHsProgressId == args.Id )
         {
-            _locationHS = LimitToHSRadius( point, canvasRadius );
+            _locationHs = LimitToHsRadius( point, canvasRadius );
             UpdateColors( canvasRadius );
         }
         else if ( _locationLProgressId == args.Id )
@@ -99,10 +99,10 @@ public class ColorDisc : SkiaPickerBase
         var canvasRadius    = GetCanvasSize().Width / 2F;
         var point           = ConvertToPixel(args.Location);
 
-        if ( _locationHSProgressId == args.Id )
+        if ( _locationHsProgressId == args.Id )
         {
-            _locationHSProgressId    = null;
-            _locationHS              = LimitToHSRadius( point, canvasRadius );
+            _locationHsProgressId    = null;
+            _locationHs              = LimitToHsRadius( point, canvasRadius );
             UpdateColors( canvasRadius );
         }
         else if ( _locationLProgressId == args.Id )
@@ -115,8 +115,8 @@ public class ColorDisc : SkiaPickerBase
 
     protected override void OnTouchActionCancelled( TouchActionEventArgs args )
     {
-        if ( _locationHSProgressId == args.Id )
-            _locationHSProgressId = null;
+        if ( _locationHsProgressId == args.Id )
+            _locationHsProgressId = null;
         else if ( _locationLProgressId == args.Id )
             _locationLProgressId = null;
     }
@@ -137,7 +137,7 @@ public class ColorDisc : SkiaPickerBase
 
         PaintColorSweepGradient( canvas, canvasRadius );
         PaintGrayRadialGradient( canvas, canvasRadius );
-        PaintIndicator( canvas, _locationHS );
+        PaintIndicator( canvas, _locationHs );
     }
 
     protected override void OnSelectedColorChanging( Color color ) 
@@ -162,15 +162,15 @@ public class ColorDisc : SkiaPickerBase
 
     void UpdateLocations( Color color, float canvasRadius )
     {
-        if ( color.GetLuminosity() != 0 || !IsInHSArea( _locationHS, canvasRadius ) )
+        if ( color.GetLuminosity() != 0 || !IsInHsArea( _locationHs, canvasRadius ) )
         {
-            var angleHS  = (0.5 - color.GetHue()) * (2 * Math.PI);
-            var radiusHS = HsRadius(canvasRadius) * color.GetSaturation();
+            var angleHs  = (0.5 - color.GetHue()) * (2 * Math.PI);
+            var radiusHs = HsRadius(canvasRadius) * color.GetSaturation();
 
-            var resultHS = FromPolar(new PolarPoint( (float)radiusHS, (float)angleHS) );
-            resultHS.X  += canvasRadius;
-            resultHS.Y  += canvasRadius;
-            _locationHS   = resultHS;
+            var resultHs = FromPolar(new PolarPoint( (float)radiusHs, (float)angleHs) );
+            resultHs.X  += canvasRadius;
+            resultHs.Y  += canvasRadius;
+            _locationHs   = resultHs;
         }
 
         var polarL      = ToPolar(ToLCoordinates(_locationL, canvasRadius));
@@ -186,14 +186,14 @@ public class ColorDisc : SkiaPickerBase
 
     void UpdateColors( float canvasRadius )
     {
-        var hsPoint    = ToHsCoordinates(_locationHS, canvasRadius);
+        var hsPoint    = ToHsCoordinates(_locationHs, canvasRadius);
         var lPoint     = ToLCoordinates(_locationL, canvasRadius);
 
         var newColor        = WheelPointToColor(hsPoint, lPoint);
         SelectedColor       = newColor;
     }
 
-    bool IsInHSArea( SKPoint point, float canvasRadius )
+    bool IsInHsArea( SKPoint point, float canvasRadius )
     {
         var polar = ToPolar( new SKPoint( point.X - canvasRadius, point.Y - canvasRadius ) );
         return polar.Radius <= HsRadius( canvasRadius );
@@ -323,7 +323,7 @@ public class ColorDisc : SkiaPickerBase
         return Color.FromHsla( h, s, l, SelectedColor.Alpha );
     }
 
-    SKPoint LimitToHSRadius( SKPoint point, float canvasRadius )
+    SKPoint LimitToHsRadius( SKPoint point, float canvasRadius )
     {
         var polar       = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
         polar.Radius    = polar.Radius < HsRadius( canvasRadius ) ? polar.Radius : HsRadius( canvasRadius );
