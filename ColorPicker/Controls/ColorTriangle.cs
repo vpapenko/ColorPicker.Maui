@@ -16,16 +16,16 @@ public class ColorTriangle : SkiaSharpPickerBase
     public static readonly BindableProperty CanvasBackgroundColorProperty
                          = BindableProperty.Create(nameof(CanvasBackgroundColor),
                                                     typeof(Color),
-                                                    typeof(IColorPicker),
+                                                    typeof(ColorTriangle),
                                                     Colors.Transparent,
-                                                    propertyChanged: HandleWheelBackgroundColorSet );
+                                                    propertyChanged: HandleCanvasBackgroundColorChanged );
     public Color CanvasBackgroundColor
     {
         get => (Color)GetValue( CanvasBackgroundColorProperty );
         set => SetValue( CanvasBackgroundColorProperty, value );
     }
 
-    static void HandleWheelBackgroundColorSet( BindableObject bindable, object oldValue, object newValue )
+    static void HandleCanvasBackgroundColorChanged( BindableObject bindable, object oldValue, object newValue )
     {
         if (newValue != oldValue)
         {

@@ -2,7 +2,7 @@ namespace ColorPicker.Controls;
 
 public class ColorWheel : ColorPickerViewBase
 {
-    readonly ColorDisc        _colorCircle        = new();
+    readonly ColorDisc        _disc        = new();
     readonly AlphaSlider        _alphaSlider        = new();
     readonly LuminositySlider   _luminositySlider   = new();
 
@@ -35,7 +35,7 @@ public class ColorWheel : ColorPickerViewBase
                                                     typeof(Color),
                                                     typeof(ColorWheel),
                                                     Colors.Transparent,
-                                                    propertyChanged: HandleWheelBackgroundColor );
+                                                    propertyChanged: HandleCanvasBackgroundColor );
 
     public static readonly BindableProperty IndicatorRadiusScaleProperty 
                          = BindableProperty.Create( nameof(IndicatorRadiusScale),
@@ -57,7 +57,7 @@ public class ColorWheel : ColorPickerViewBase
         set => SetValue( ShowLuminosityRingProperty, value );
     }
     static void HandleShowLuminosity( BindableObject bindable, object oldValue, object newValue )
-            => ( (ColorWheel)bindable )._colorCircle.ShowLuminosityRing = (bool)newValue;
+            => ( (ColorWheel)bindable )._disc.ShowLuminosityRing = (bool)newValue;
 
 
     public bool ShowLuminositySlider
@@ -83,10 +83,10 @@ public class ColorWheel : ColorPickerViewBase
         get => (Color)GetValue( CanvasBackgroundColorProperty );
         set => SetValue( CanvasBackgroundColorProperty, value );
     }
-    static void HandleWheelBackgroundColor( BindableObject bindable, object oldValue, object newValue )
+    static void HandleCanvasBackgroundColor( BindableObject bindable, object oldValue, object newValue )
     {
         if ( newValue != oldValue )
-            ( (ColorWheel)bindable )._colorCircle.CanvasBackgroundColor = (Color)newValue;
+            ( (ColorWheel)bindable )._disc.CanvasBackgroundColor = (Color)newValue;
     }
 
     public float IndicatorRadiusScale
@@ -105,7 +105,7 @@ public class ColorWheel : ColorPickerViewBase
             // size visually consistent with the wheel's own picker. Forwarding
             // a non-zero scale here would force the slider into aspect-locked
             // mode and break the wheel's manual layout.
-            ( (ColorWheel)bindable )._colorCircle.IndicatorRadiusScale = (float)newValue;
+            ( (ColorWheel)bindable )._disc.IndicatorRadiusScale = (float)newValue;
         }
     }
 
@@ -131,12 +131,12 @@ public class ColorWheel : ColorPickerViewBase
     /// </summary>
     public ColorWheel()
     {
-        _colorCircle.AttachedColorPicker    = this;
+        _disc.AttachedColorPicker    = this;
 
         HorizontalOptions                   = LayoutOptions.Center;
         VerticalOptions                     = LayoutOptions.Center;
 
-        Children.Add( _colorCircle );
+        Children.Add( _disc );
 
         _alphaSlider.AttachedColorPicker       = this;
         _luminositySlider.AttachedColorPicker  = this;
@@ -221,8 +221,8 @@ public class ColorWheel : ColorPickerViewBase
 
         // Bounds == natural size (parent honors our DesiredSize via HO/VO=Center),
         // so children are placed at (0,0) with no centering offset needed.
-        ( (IView)_colorCircle ).Measure( circleSize, circleSize );
-        ( (IView)_colorCircle ).Arrange( new Rect( 0, 0, circleSize, circleSize ) );
+        ( (IView)_disc ).Measure( circleSize, circleSize );
+        ( (IView)_disc ).Arrange( new Rect( 0, 0, circleSize, circleSize ) );
 
         if ( Vertical )
         {
