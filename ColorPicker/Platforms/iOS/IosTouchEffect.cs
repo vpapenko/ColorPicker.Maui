@@ -1,4 +1,4 @@
-﻿using ColorPicker.Platform.IOS;
+using ColorPicker.Platform;
 
 using System.Linq;
 using UIKit;
@@ -11,7 +11,7 @@ using ColorPicker.Platform.IOS
     public class ColorPickerTouchEffect : PlatformEffect
     {
         UIView view;
-        ColorPickerTouchRecognizeriOS touchRecognizer;
+        IosTouchRecognizer touchRecognizer;
 
         protected override void OnAttached()
         {
@@ -24,7 +24,7 @@ using ColorPicker.Platform.IOS
             if (effect is not null && view is not null)
             {
                 // Create a TouchRecognizer for this UIView
-                touchRecognizer = new ColorPickerTouchRecognizeriOS(Element, view, effect);
+                touchRecognizer = new IosTouchRecognizer(Element, view, effect);
                 view.AddGestureRecognizer(touchRecognizer);
             }
         }

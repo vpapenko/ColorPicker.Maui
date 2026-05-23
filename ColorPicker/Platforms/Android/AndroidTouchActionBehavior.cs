@@ -1,28 +1,28 @@
-﻿namespace ColorPicker.Platforms.Droid;
+namespace ColorPicker.Platforms.Droid;
 
 using Android.Views;
 using Microsoft.Maui.Graphics;
 
-public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
+public class AndroidTouchActionBehavior : Behavior<SkiaPickerBase>
 {
     Android.Views.View              _nativeView;
     Element                         _formsElement;
-    ColorPickerTouchBehavior        _commonBehavior;
+    TouchBehavior        _commonBehavior;
     bool                            _capture;
     Func<double, double>            _fromPixels;
     readonly int[]                  _screenLocationArray = new int[2];
 
-    static readonly Dictionary<Android.Views.View, ColorPickerTouchActionBehaviorDroid> _viewDictionary       = new();
-    static readonly Dictionary<int, ColorPickerTouchActionBehaviorDroid>                _idToEffectDictionary = new();
+    static readonly Dictionary<Android.Views.View, AndroidTouchActionBehavior> _viewDictionary       = new();
+    static readonly Dictionary<int, AndroidTouchActionBehavior>                _idToEffectDictionary = new();
 
-    public ColorPickerTouchActionBehaviorDroid( ColorPickerTouchBehavior sharedBehavior )
+    public AndroidTouchActionBehavior( TouchBehavior sharedBehavior )
     {
         ArgumentNullException.ThrowIfNull( sharedBehavior );
 
         _commonBehavior = sharedBehavior;
     }
 
-    protected override void OnAttachedTo( SkiaSharpPickerBase bindable )
+    protected override void OnAttachedTo( SkiaPickerBase bindable )
     {
         bindable.HandlerChanged += OnHandlerChangedAction;
         base.OnAttachedTo( bindable );
@@ -30,7 +30,7 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
 
     void OnHandlerChangedAction( object sender, EventArgs e )
     {
-        if ( sender is not SkiaSharpPickerBase bindable )
+        if ( sender is not SkiaPickerBase bindable )
             return;
 
         var mauiContext =   bindable.Handler.MauiContext ?? bindable.Parent.Handler.MauiContext;
@@ -51,7 +51,7 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
         _nativeView.Touch += OnTouch;
     }
 
-    protected override void OnDetachingFrom( SkiaSharpPickerBase bindable )
+    protected override void OnDetachingFrom( SkiaPickerBase bindable )
     {
         if ( _viewDictionary.ContainsKey( _nativeView ) )
         {
@@ -84,7 +84,7 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
         {
             case MotionEventActions.Down:
             case MotionEventActions.PointerDown:
-                FireEvent( this, id, ColorPickerTouchActionType.Pressed, screenPointerCoords, true );
+                FireEvent( this, id, TouchActionType.Pressed, screenPointerCoords, true );
 
                 _idToEffectDictionary.Add( id, this );
 
@@ -104,7 +104,7 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
                         screenPointerCoords = new Point( _screenLocationArray[ 0 ] + motionEvent.GetX( pointerIndex ),
                                                          _screenLocationArray[ 1 ] + motionEvent.GetY( pointerIndex ) );
 
-                        FireEvent( this, id, ColorPickerTouchActionType.Moved, screenPointerCoords, true );
+                        FireEvent( this, id, TouchActionType.Moved, screenPointerCoords, true );
                     }
                     else
                     {
@@ -112,7 +112,7 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
 
                         if ( _idToEffectDictionary[ id ] is not null )
                         {
-                            FireEvent( _idToEffectDictionary[ id ], id, ColorPickerTouchActionType.Moved, screenPointerCoords, true );
+                            FireEvent( _idToEffectDictionary[ id ], id, TouchActionType.Moved, screenPointerCoords, true );
                         }
                     }
                 }
@@ -123,7 +123,7 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
             case MotionEventActions.Pointer1Up:
                 if ( _capture )
                 {
-                    FireEvent( this, id, ColorPickerTouchActionType.Released, screenPointerCoords, false );
+                    FireEvent( this, id, TouchActionType.Released, screenPointerCoords, false );
                 }
                 else
                 {
@@ -131,7 +131,7 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
 
                     if ( _idToEffectDictionary[ id ] is not null )
                     {
-                        FireEvent( _idToEffectDictionary[ id ], id, ColorPickerTouchActionType.Released, screenPointerCoords, false );
+                        FireEvent( _idToEffectDictionary[ id ], id, TouchActionType.Released, screenPointerCoords, false );
                     }
                 }
 
@@ -141,13 +141,13 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
             case MotionEventActions.Cancel:
                 if ( _capture )
                 {
-                    FireEvent( this, id, ColorPickerTouchActionType.Cancelled, screenPointerCoords, false );
+                    FireEvent( this, id, TouchActionType.Cancelled, screenPointerCoords, false );
                 }
                 else
                 {
                     if ( _idToEffectDictionary[ id ] is not null )
                     {
-                        FireEvent( _idToEffectDictionary[ id ], id, ColorPickerTouchActionType.Cancelled, screenPointerCoords, false );
+                        FireEvent( _idToEffectDictionary[ id ], id, TouchActionType.Cancelled, screenPointerCoords, false );
                     }
                 }
 
@@ -158,7 +158,7 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
 
     void CheckForBoundaryHop( int id, Point pointerLocation )
     {
-        ColorPickerTouchActionBehaviorDroid touchEffectHit = null;
+        AndroidTouchActionBehavior touchEffectHit = null;
 
         foreach ( var view in _viewDictionary.Keys )
         {
@@ -187,19 +187,19 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
         {
             if ( _idToEffectDictionary[ id ] is not null )
             {
-                FireEvent( _idToEffectDictionary[ id ], id, ColorPickerTouchActionType.Exited, pointerLocation, true );
+                FireEvent( _idToEffectDictionary[ id ], id, TouchActionType.Exited, pointerLocation, true );
             }
 
             if ( touchEffectHit is not null )
             {
-                FireEvent( touchEffectHit, id, ColorPickerTouchActionType.Entered, pointerLocation, true );
+                FireEvent( touchEffectHit, id, TouchActionType.Entered, pointerLocation, true );
             }
 
             _idToEffectDictionary[ id ] = touchEffectHit;
         }
     }
 
-    void FireEvent( ColorPickerTouchActionBehaviorDroid behavior, int id, ColorPickerTouchActionType actionType, Point pointerLocation, bool isInContact )
+    void FireEvent( AndroidTouchActionBehavior behavior, int id, TouchActionType actionType, Point pointerLocation, bool isInContact )
     {
         // Get the location of the pointer within the view
         behavior._nativeView.GetLocationOnScreen( _screenLocationArray );
@@ -211,6 +211,6 @@ public class ColorPickerTouchActionBehaviorDroid : Behavior<SkiaSharpPickerBase>
 
         // Call the method
         behavior._commonBehavior.OnTouchAction( behavior._formsElement, 
-                                                new ColorPickerTouchActionEventArgs( id, actionType, point, isInContact ) );
+                                                new TouchActionEventArgs( id, actionType, point, isInContact ) );
     }
 }

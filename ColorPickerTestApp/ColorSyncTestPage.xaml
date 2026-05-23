@@ -162,7 +162,7 @@
             <!-- Row 2: HSL sliders -->
             <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource CellHost}" Background="Transparent">
                 <Grid RowDefinitions="*,Auto">
-                    <controls:HSLSliders Grid.Row="0" AutomationId="C_HSL_inner"
+                    <controls:HslSlider Grid.Row="0" AutomationId="C_HSL_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
                                          ShowAlphaSlider="False" />
                     <Label Grid.Row="1" AutomationId="C_HSL_label" Text="HSL: horiz" />
@@ -170,7 +170,7 @@
             </Border>
             <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource CellHost}" Background="Transparent">
                 <Grid RowDefinitions="*,Auto">
-                    <controls:HSLSliders Grid.Row="0" AutomationId="C_HSLAlpha_inner"
+                    <controls:HslSlider Grid.Row="0" AutomationId="C_HSLAlpha_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
                                          ShowAlphaSlider="True" />
                     <Label Grid.Row="1" AutomationId="C_HSLAlpha_label" Text="HSL: horiz +α" />
@@ -178,7 +178,7 @@
             </Border>
             <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource CellHost}" Background="Transparent">
                 <Grid RowDefinitions="*,Auto">
-                    <controls:HSLSliders Grid.Row="0" AutomationId="C_HSLVert_inner"
+                    <controls:HslSlider Grid.Row="0" AutomationId="C_HSLVert_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
                                          Vertical="True"
                                          ShowAlphaSlider="False" />
@@ -187,7 +187,7 @@
             </Border>
             <Border Grid.Row="2" Grid.Column="3" Style="{StaticResource CellHost}" Background="Transparent">
                 <Grid RowDefinitions="*,Auto">
-                    <controls:HSLSliders Grid.Row="0" AutomationId="C_HSLVertAlpha_inner"
+                    <controls:HslSlider Grid.Row="0" AutomationId="C_HSLVertAlpha_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
                                          Vertical="True" ShowAlphaSlider="True" />
                     <Label Grid.Row="1" AutomationId="C_HSLVertAlpha_label" Text="HSL: vert +α" />
@@ -208,7 +208,7 @@
             <!-- Row 3: RGB sliders -->
             <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource CellHost}" Background="Transparent">
                 <Grid RowDefinitions="*,Auto">
-                    <controls:RGBSliders Grid.Row="0" AutomationId="C_RGB_inner"
+                    <controls:RgbSlider Grid.Row="0" AutomationId="C_RGB_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
                                          ShowAlphaSlider="False" />
                     <Label Grid.Row="1" AutomationId="C_RGB_label" Text="RGB: horiz" />
@@ -216,7 +216,7 @@
             </Border>
             <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource CellHost}" Background="Transparent">
                 <Grid RowDefinitions="*,Auto">
-                    <controls:RGBSliders Grid.Row="0" AutomationId="C_RGBAlpha_inner"
+                    <controls:RgbSlider Grid.Row="0" AutomationId="C_RGBAlpha_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
                                          ShowAlphaSlider="True" />
                     <Label Grid.Row="1" AutomationId="C_RGBAlpha_label" Text="RGB: horiz +α" />
@@ -224,7 +224,7 @@
             </Border>
             <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource CellHost}" Background="Transparent">
                 <Grid RowDefinitions="*,Auto">
-                    <controls:RGBSliders Grid.Row="0" AutomationId="C_RGBVert_inner"
+                    <controls:RgbSlider Grid.Row="0" AutomationId="C_RGBVert_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
                                          Vertical="True"
                                          ShowAlphaSlider="False" />
@@ -233,7 +233,7 @@
             </Border>
             <Border Grid.Row="3" Grid.Column="3" Style="{StaticResource CellHost}" Background="Transparent">
                 <Grid RowDefinitions="*,Auto">
-                    <controls:RGBSliders Grid.Row="0" AutomationId="C_RGBVertAlpha_inner"
+                    <controls:RgbSlider Grid.Row="0" AutomationId="C_RGBVertAlpha_inner"
                                          AttachedColorPicker="{x:Reference MasterWheel}"
                                          Vertical="True" ShowAlphaSlider="True" />
                     <Label Grid.Row="1" AutomationId="C_RGBVertAlpha_label" Text="RGB: vert +α" />

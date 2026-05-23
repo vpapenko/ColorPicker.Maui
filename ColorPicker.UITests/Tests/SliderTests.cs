@@ -13,7 +13,7 @@ public sealed class SliderTests : IClassFixture<AppFixture>
     {
         var before = _fx.Page.SelectedColorHex;
         // Drag horizontally near the top of the HSL panel — this hits the H slider.
-        _fx.Page.DragInside(_fx.Page.HSLSliders, 0.10, 0.20, 0.85, 0.20);
+        _fx.Page.DragInside(_fx.Page.HslSlider, 0.10, 0.20, 0.85, 0.20);
         Thread.Sleep(300);
 
         Assert.NotEqual(before, _fx.Page.SelectedColorHex);
@@ -23,7 +23,7 @@ public sealed class SliderTests : IClassFixture<AppFixture>
     public void DraggingRGBSliders_ChangesSelectedColor()
     {
         var before = _fx.Page.SelectedColorHex;
-        _fx.Page.DragInside(_fx.Page.RGBSliders, 0.10, 0.20, 0.85, 0.20);
+        _fx.Page.DragInside(_fx.Page.RgbSlider, 0.10, 0.20, 0.85, 0.20);
         Thread.Sleep(300);
 
         Assert.NotEqual(before, _fx.Page.SelectedColorHex);

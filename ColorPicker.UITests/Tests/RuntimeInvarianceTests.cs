@@ -10,7 +10,7 @@ namespace ColorPicker.UITests.Tests;
 /// Verifies that the layout produced by <em>creating a wheel with feature
 /// flag X already set</em> matches the layout produced by <em>creating a
 /// bare wheel and then toggling X on at runtime</em>. This is the exact
-/// regression class fixed by the SkiaSharpPickerBase.ArrangeOverride change
+/// regression class fixed by the SkiaPickerBase.ArrangeOverride change
 /// (canvas was not re-arranged at the new Frame.Size when child layout
 /// invalidated due to a property change).
 ///

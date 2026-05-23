@@ -1,12 +1,12 @@
-﻿namespace ColorPicker.Controls;
+namespace ColorPicker.Controls;
 
-public class Slider : SliderBase, Interfaces.ISlider
+public class DelegateSlider : SliderBase, Interfaces.ISlider
 {
     readonly Func<Color, float>                     _newValue;
     readonly Func<float, Color, Color>              _getNewColor;
     readonly Func<Color, SKPoint, SKPoint, SKPaint> _getPaint;
 
-    public Slider( Func<Color, float>                       newValue, 
+    public DelegateSlider( Func<Color, float>                       newValue, 
                    Func<float, Color, Color>                getNewColor, 
                    Func<Color, SKPoint, SKPoint, SKPaint>   getPaint )
     {

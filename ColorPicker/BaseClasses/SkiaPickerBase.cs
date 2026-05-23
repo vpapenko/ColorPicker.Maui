@@ -9,14 +9,14 @@ using ColorPicker.Platforms.Droid;
 
 using SkiaSharp.Views.Maui.Controls;
 
-public abstract class SkiaSharpPickerBase : ColorPickerViewBase
+public abstract class SkiaPickerBase : ColorPickerBase
 {
-    protected readonly SKCanvasView     MyCanvasView;
+    protected readonly SKCanvasView     CanvasView;
 
     public static readonly BindableProperty IndicatorRadiusScaleProperty
                          = BindableProperty.Create( nameof(IndicatorRadiusScale),
                                                     typeof(float),
-                                                    typeof(SkiaSharpPickerBase),
+                                                    typeof(SkiaPickerBase),
                                                     0.05F,
                                                     propertyChanged: HandlePickerRadiusScaleSet );
     public float IndicatorRadiusScale
@@ -26,22 +26,22 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
     }
 
     static void HandlePickerRadiusScaleSet( BindableObject bindable, object oldValue, object newValue )
-            => ( (SkiaSharpPickerBase)bindable ).InvalidateSurface();
+            => ( (SkiaPickerBase)bindable ).InvalidateSurface();
 
     /// <summary>
     /// Constructor
     /// </summary>
-    public SkiaSharpPickerBase()
+    public SkiaPickerBase()
     {
         HorizontalOptions           =   LayoutOptions.Center;
         VerticalOptions             =   LayoutOptions.Center;
 
-        var touchBehavior           =   new ColorPickerTouchBehavior();
+        var touchBehavior           =   new TouchBehavior();
 
 #if WINDOWS
-        var touchImpl               =   new ColorPickerTouchActionBehaviorWinUI( touchBehavior );
+        var touchImpl               =   new WindowsTouchActionBehavior( touchBehavior );
 #elif ANDROID
-        var touchImpl               =   new ColorPickerTouchActionBehaviorDroid( touchBehavior );
+        var touchImpl               =   new AndroidTouchActionBehavior( touchBehavior );
 #else
         throw new NotImplementedException( "Specified platform not yet implemented" );
 #endif
@@ -49,13 +49,13 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         var view                    =   new SKCanvasView();
         view.PaintSurface          +=   OnPaintSurface;
         view.Loaded                +=   OnCanvasViewLoaded;
-        MyCanvasView                =   view;
+        CanvasView                =   view;
 
         touchBehavior.Capture       =   true;
         touchBehavior.TouchAction  +=   OnTouchAction;
 
         Behaviors.Add( touchImpl );
-        Children.Add( MyCanvasView );
+        Children.Add( CanvasView );
     }
 
     public abstract     float       GetIndicatorRadiusPixels();
@@ -65,10 +65,10 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
     protected abstract  float       GetSize();
     protected abstract  float       GetSize( SKSize canvasSize );
     protected abstract  void        OnPaintSurface( SKCanvas canvas, int width, int height );
-    protected abstract  void        OnTouchActionPressed( ColorPickerTouchActionEventArgs args );
-    protected abstract  void        OnTouchActionMoved( ColorPickerTouchActionEventArgs args );
-    protected abstract  void        OnTouchActionReleased( ColorPickerTouchActionEventArgs args );
-    protected abstract  void        OnTouchActionCancelled( ColorPickerTouchActionEventArgs args );
+    protected abstract  void        OnTouchActionPressed( TouchActionEventArgs args );
+    protected abstract  void        OnTouchActionMoved( TouchActionEventArgs args );
+    protected abstract  void        OnTouchActionReleased( TouchActionEventArgs args );
+    protected abstract  void        OnTouchActionCancelled( TouchActionEventArgs args );
 
     protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
     {
@@ -82,7 +82,7 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         var size = sizeRequest.Request;
 
         // Measure the child SKCanvasView so MAUI knows it needs rendering
-        ( (IView)MyCanvasView ).Measure( size.Width, size.Height );
+        ( (IView)CanvasView ).Measure( size.Width, size.Height );
 
         return size;
     }
@@ -100,7 +100,7 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         var size = Frame.Size;
         if ( size.Width > 0 && size.Height > 0 )
         {
-            ( (IView)MyCanvasView ).Arrange( new Rect( 0, 0, size.Width, size.Height ) );
+            ( (IView)CanvasView ).Arrange( new Rect( 0, 0, size.Width, size.Height ) );
         }
 
         InvalidateSurface();
@@ -111,12 +111,12 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
     protected SKPoint ConvertToPixel( Point pt )
     {
         var canvasSize = GetCanvasSize();
-        return new SKPoint( (float)( canvasSize.Width * pt.X / MyCanvasView.Width ),
-                           (float)( canvasSize.Height * pt.Y / MyCanvasView.Height ) );
+        return new SKPoint( (float)( canvasSize.Width * pt.X / CanvasView.Width ),
+                           (float)( canvasSize.Height * pt.Y / CanvasView.Height ) );
     }
 
-    protected SKSize GetCanvasSize()    => MyCanvasView.CanvasSize;
-    protected void InvalidateSurface()  => MyCanvasView.InvalidateSurface();
+    protected SKSize GetCanvasSize()    => CanvasView.CanvasSize;
+    protected void InvalidateSurface()  => CanvasView.InvalidateSurface();
 
     void OnCanvasViewLoaded( object sender, EventArgs e )
     {
@@ -146,20 +146,20 @@ public abstract class SkiaSharpPickerBase : ColorPickerViewBase
         OnPaintSurface( e.Surface.Canvas, e.Info.Width, e.Info.Height );
     }
 
-    void OnTouchAction( object sender, ColorPickerTouchActionEventArgs e )
+    void OnTouchAction( object sender, TouchActionEventArgs e )
     {
         switch ( e.Type )
         {
-            case ColorPickerTouchActionType.Pressed:
+            case TouchActionType.Pressed:
                 OnTouchActionPressed( e );
                 break;
-            case ColorPickerTouchActionType.Moved:
+            case TouchActionType.Moved:
                 OnTouchActionMoved( e );
                 break;
-            case ColorPickerTouchActionType.Released:
+            case TouchActionType.Released:
                 OnTouchActionReleased( e );
                 break;
-            case ColorPickerTouchActionType.Cancelled:
+            case TouchActionType.Cancelled:
                 OnTouchActionCancelled( e );
                 break;
         }

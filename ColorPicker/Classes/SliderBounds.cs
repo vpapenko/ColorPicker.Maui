@@ -1,8 +1,8 @@
-﻿namespace ColorPicker.Classes;
+namespace ColorPicker.Classes;
 
-public class SliderLocation
+public class SliderBounds
 {
-    public SliderLocation( SliderBase slider )  => Slider = slider;
+    public SliderBounds( SliderBase slider )  => Slider = slider;
 
     public SliderBase   Slider                      { get; }
 

@@ -13,8 +13,8 @@ public partial class SmokePage : ContentPage
         // packed assembly (e.g. accidentally made internal during refactor).
         _ = typeof(ColorWheel);
         _ = typeof(ColorTriangle);
-        _ = typeof(HSLSliders);
-        _ = typeof(RGBSliders);
+        _ = typeof(HslSlider);
+        _ = typeof(RgbSlider);
         _ = typeof(AlphaSlider);
         _ = typeof(LuminositySlider);
         _ = typeof(ColorDisc);

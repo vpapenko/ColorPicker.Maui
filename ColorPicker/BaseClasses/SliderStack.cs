@@ -1,12 +1,12 @@
 namespace ColorPicker.BaseClasses;
 
-public abstract class SliderPicker : SkiaSharpPickerBase
+public abstract class SliderStack : SkiaPickerBase
 {
-    readonly List<SliderLocation> _sliders = new();
+    readonly List<SliderBounds> _sliders = new();
 
     //	Constructor
     //
-    public SliderPicker()
+    public SliderStack()
     {
         // Default to 0 (sentinel: "auto-fill"). Standalone sliders fill all
         // available space when picker radius is unset; explicit IndicatorRadiusScale
@@ -19,7 +19,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
     public static readonly BindableProperty VerticalProperty 
                          = BindableProperty.Create( nameof(Vertical),
                                                     typeof(bool),
-                                                    typeof(SliderPicker),
+                                                    typeof(SliderStack),
                                                     false,
                                                     propertyChanged: HandleVerticalSet );
     public bool Vertical
@@ -32,8 +32,8 @@ public abstract class SliderPicker : SkiaSharpPickerBase
     {
         if ( newValue != oldValue )
         {
-            ( (SliderPicker)bindable ).InvalidateMeasure();
-            ( (SliderPicker)bindable ).UpdateSliders();
+            ( (SliderStack)bindable ).InvalidateMeasure();
+            ( (SliderStack)bindable ).UpdateSliders();
         }
     }
 
@@ -61,11 +61,11 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         var i = 1;
         foreach ( var slider in GetSliders() )
         {
-            var sliderLocation = new SliderLocation(slider)
+            var SliderBounds = new SliderBounds(slider)
             {
                 OffsetLocationMultiplier = (float)(-1.1 + (i * 2.2))
             };
-            _sliders.Add( sliderLocation );
+            _sliders.Add( SliderBounds );
             i++;
         }
 
@@ -87,7 +87,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
 
     protected override void OnSelectedColorChanging( Color color ) => InvalidateSurface();
 
-    protected override void OnTouchActionPressed( ColorPickerTouchActionEventArgs args )
+    protected override void OnTouchActionPressed( TouchActionEventArgs args )
     {
         var canvasSize  = GetCanvasSize();
         var point       = ConvertToPixel(args.Location);
@@ -104,7 +104,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         }
     }
 
-    protected override void OnTouchActionMoved( ColorPickerTouchActionEventArgs args )
+    protected override void OnTouchActionMoved( TouchActionEventArgs args )
     {
         var canvasSize  = GetCanvasSize();
         var point       = ConvertToPixel(args.Location);
@@ -120,7 +120,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         }
     }
 
-    protected override void OnTouchActionReleased( ColorPickerTouchActionEventArgs args )
+    protected override void OnTouchActionReleased( TouchActionEventArgs args )
     {
         var canvasSize  = GetCanvasSize();
         var point       = ConvertToPixel(args.Location);
@@ -137,7 +137,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         }
     }
 
-    protected override void OnTouchActionCancelled( ColorPickerTouchActionEventArgs args )
+    protected override void OnTouchActionCancelled( TouchActionEventArgs args )
     {
         foreach ( var slider in _sliders )
         {
@@ -230,7 +230,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
        => Vertical ? canvasSize.Height - ( GetIndicatorRadiusPixels() * 2.2F )
                    : canvasSize.Width - ( GetIndicatorRadiusPixels() * 2.2F );
 
-    void UpdateColors( SliderLocation slider, SKSize canvasSize )
+    void UpdateColors( SliderBounds slider, SKSize canvasSize )
     {
         var newColor = SelectedColor;
         var pr = GetIndicatorRadiusPixels();
@@ -243,7 +243,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         InvalidateSurface();
     }
 
-    void PaintSlider( SKCanvas canvas, SliderLocation slider, SKSize canvasSize )
+    void PaintSlider( SKCanvas canvas, SliderBounds slider, SKSize canvasSize )
     {
         var pickerRadiusPixels = GetIndicatorRadiusPixels();
         var sliderTop = slider.GetSliderOffset(pickerRadiusPixels);
@@ -273,7 +273,7 @@ public abstract class SliderPicker : SkiaSharpPickerBase
         canvas.DrawLine( startPoint, endPoint, paint );
     }
 
-    void PaintChessPattern( SKCanvas canvas, SliderLocation slider, SKSize canvasSize )
+    void PaintChessPattern( SKCanvas canvas, SliderBounds slider, SKSize canvasSize )
     {
         var pickerRadiusPixels  = GetIndicatorRadiusPixels();
         var sliderTop           = slider.GetSliderOffset(pickerRadiusPixels);

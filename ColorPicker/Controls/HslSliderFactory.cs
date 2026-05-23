@@ -1,6 +1,6 @@
-﻿namespace ColorPicker.Controls;
+namespace ColorPicker.Controls;
 
-public static class SliderFunctionsHSL
+public static class HslSliderFactory
 {
     public static float NewValueH( Color color ) => color.GetHue();
     public static float NewValueS( Color color ) => color.GetSaturation();

@@ -90,7 +90,7 @@ public sealed class ColorSyncTests : IClassFixture<SyncTestAppFixture>
     /// 1px black inner/outer rings) inside a tight window. Saturated wheel/triangle
     /// pixels (which can be dark on their own) cannot satisfy BOTH at once, so this
     /// rejects "indicator missing / on wrong cell" mutations that a single dark-pixel
-    /// scan was missing (see PaintIndicator in SkiaSharpPickerBase).
+    /// scan was missing (see PaintIndicator in SkiaPickerBase).
     /// </summary>
     private void AssertPickerAt(PixelImage img, string cellId, string hex)
     {

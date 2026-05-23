@@ -1,6 +1,6 @@
-﻿namespace ColorPicker.Controls;
+namespace ColorPicker.Controls;
 
-public static class SliderFunctionsAlpha
+public static class AlphaSliderFactory
 {
     public static float NewValueAlpha( Color color ) => (float)color.Alpha;
 

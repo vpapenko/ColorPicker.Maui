@@ -1,4 +1,4 @@
-﻿namespace ColorPicker.BaseClasses;
+namespace ColorPicker.BaseClasses;
 
 using System.ComponentModel;
 
@@ -9,21 +9,21 @@ using System.ComponentModel;
 /// ColorPicker implementation.
 /// 
 /// </summary>
-public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
+public abstract class ColorPickerBase : Layout, IColorPicker, IRegisterable
 {
     //  Bindable objects
     //
     public static readonly BindableProperty SelectedColorProperty
                          = BindableProperty.Create( nameof(SelectedColor),
                                                     typeof(Color),
-                                                    typeof(ColorPickerViewBase),
+                                                    typeof(ColorPickerBase),
                                                     Color.FromHsla(0, 0, 0.5),
                                                     propertyChanged: HandleSelectedColor );
 
     public static readonly BindableProperty AttachedColorPickerProperty
                          = BindableProperty.Create( nameof(AttachedColorPicker),
                                                     typeof(IColorPicker),
-                                                    typeof(ColorPickerViewBase),
+                                                    typeof(ColorPickerBase),
                                                     null,
                                                     propertyChanged: HandleConnectedColorPicker );
 
@@ -68,15 +68,15 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
 
     private class ColorPickerLayoutManager : ILayoutManager
     {
-        readonly ColorPickerViewBase _layout;
+        readonly ColorPickerBase _layout;
         bool _measuring;
 
-        public ColorPickerLayoutManager( ColorPickerViewBase layout ) => _layout = layout;
+        public ColorPickerLayoutManager( ColorPickerBase layout ) => _layout = layout;
 
         public Size Measure( double widthConstraint, double heightConstraint )
         {
             // Apply the layout's WidthRequest/HeightRequest before measuring children.
-            // Without this, children get the raw parent constraints (e.g. 1192×∞)
+            // Without this, children get the raw parent constraints (e.g. 1192??)
             // and SkiaSharp renders at that size, causing clipping.
             if ( _layout.WidthRequest >= 0 )
                 widthConstraint = Math.Min( widthConstraint, _layout.WidthRequest );
@@ -115,7 +115,7 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
     //
     static void HandleSelectedColor( BindableObject bindable, object oldValue, object newValue )
     {
-        if ( bindable is not ColorPickerViewBase viewBase )
+        if ( bindable is not ColorPickerBase viewBase )
             return;
 
         if (oldValue != newValue)
@@ -136,7 +136,7 @@ public abstract class ColorPickerViewBase : Layout, IColorPicker, IRegisterable
     //
     static void HandleConnectedColorPicker( BindableObject bindable, object oldValue, object newValue )
     {
-        if (bindable is not ColorPickerViewBase viewBase)
+        if (bindable is not ColorPickerBase viewBase)
             return;
 
         if ( oldValue is not null )
