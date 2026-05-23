@@ -151,9 +151,9 @@ public sealed class ColorSyncUiDrivenTests : IClassFixture<SyncTestAppFixture>
         {
             double d = max - min;
             s = l > 0.5 ? d / (2.0 - max - min) : d / (max + min);
-            if      (max == dr) h = (dg - db) / d + (dg < db ? 6 : 0);
+            if (max == dr) h = (dg - db) / d + (dg < db ? 6 : 0);
             else if (max == dg) h = (db - dr) / d + 2;
-            else                h = (dr - dg) / d + 4;
+            else h = (dr - dg) / d + 4;
             h /= 6.0;
         }
         return (h, s, l);

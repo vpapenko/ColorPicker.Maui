@@ -7,8 +7,8 @@ public static class MauiAppBuilderExtensions
     /// <summary>
     /// Use this to register SkiaSharp and ColorPicker controls
     /// </summary>
-    public static MauiAppBuilder UseColorPickersAndSliders( this MauiAppBuilder builder )
-    {   
+    public static MauiAppBuilder UseColorPickersAndSliders(this MauiAppBuilder builder)
+    {
         //  Using SkiaSharp
         //
         builder.UseSkiaSharp();

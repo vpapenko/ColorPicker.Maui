@@ -63,14 +63,14 @@ public static class ReferenceImage
         long bad = 0;
         long total = (long)a.Width * a.Height;
         for (int y = 0; y < a.Height; y++)
-        for (int x = 0; x < a.Width;  x++)
-        {
-            var pa = a[x, y]; var pb = b[x, y];
-            int d = Math.Abs(pa.R - pb.R)
+            for (int x = 0; x < a.Width; x++)
+            {
+                var pa = a[x, y]; var pb = b[x, y];
+                int d = Math.Abs(pa.R - pb.R)
                   + Math.Abs(pa.G - pb.G)
                   + Math.Abs(pa.B - pb.B);
-            if (d > perPixelTol) bad++;
-        }
+                if (d > perPixelTol) bad++;
+            }
         return bad / (double)total;
     }
 

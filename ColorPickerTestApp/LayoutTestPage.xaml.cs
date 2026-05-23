@@ -147,15 +147,15 @@ public partial class LayoutTestPage : ContentPage
         switch (wMode)
         {
             case SizeMode.Fixed:
-                HostBorder.WidthRequest      = wValue;
+                HostBorder.WidthRequest = wValue;
                 HostBorder.HorizontalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Auto:
-                HostBorder.WidthRequest      = -1;
+                HostBorder.WidthRequest = -1;
                 HostBorder.HorizontalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Fill:
-                HostBorder.WidthRequest      = -1;
+                HostBorder.WidthRequest = -1;
                 HostBorder.HorizontalOptions = LayoutOptions.Fill;
                 break;
         }
@@ -163,16 +163,16 @@ public partial class LayoutTestPage : ContentPage
         switch (hMode)
         {
             case SizeMode.Fixed:
-                HostBorder.HeightRequest    = hValue;
-                HostBorder.VerticalOptions  = LayoutOptions.Start;
+                HostBorder.HeightRequest = hValue;
+                HostBorder.VerticalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Auto:
-                HostBorder.HeightRequest    = -1;
-                HostBorder.VerticalOptions  = LayoutOptions.Start;
+                HostBorder.HeightRequest = -1;
+                HostBorder.VerticalOptions = LayoutOptions.Start;
                 break;
             case SizeMode.Fill:
-                HostBorder.HeightRequest    = -1;
-                HostBorder.VerticalOptions  = LayoutOptions.Fill;
+                HostBorder.HeightRequest = -1;
+                HostBorder.VerticalOptions = LayoutOptions.Fill;
                 break;
         }
     }
@@ -185,12 +185,12 @@ public partial class LayoutTestPage : ContentPage
         // The trailing "desired=" segment carries the inner control's
         // measured DesiredSize so tests can detect MeasureOverride regressions
         // even when the parent host clamps the arranged bounds.
-        var hX = HostBorder.X;       var hY = HostBorder.Y;
-        var hW = HostBorder.Width;   var hH = HostBorder.Height;
-        var cX = ScenarioContent.X;  var cY = ScenarioContent.Y;
+        var hX = HostBorder.X; var hY = HostBorder.Y;
+        var hW = HostBorder.Width; var hH = HostBorder.Height;
+        var cX = ScenarioContent.X; var cY = ScenarioContent.Y;
         var cW = ScenarioContent.Width; var cH = ScenarioContent.Height;
-        var vX = HostContainer.X;    var vY = HostContainer.Y;
-        var vW = HostContainer.Width;var vH = HostContainer.Height;
+        var vX = HostContainer.X; var vY = HostContainer.Y;
+        var vW = HostContainer.Width; var vH = HostContainer.Height;
         double dW = 0, dH = 0;
         if (ScenarioContent.Content is View innerCtrl)
         {
@@ -320,14 +320,14 @@ public partial class LayoutTestPage : ContentPage
             T($"CONTENT-SET; hb.W={HostBorder.Width:0} hb.H={HostBorder.Height:0} sc.W={ScenarioContent.Width:0} sc.H={ScenarioContent.Height:0}");
             _lastControl = control; _lastSizeKey = sizeKey; _lastFeatureKey = featureKey;
 
-            StatusLabel.Text  = $"applied: {spec}";
+            StatusLabel.Text = $"applied: {spec}";
             UpdateAppliedMarker();
             T($"DONE marker={AppliedLabel.Text}");
         }
         catch (Exception ex)
         {
             T($"EXCEPTION:{ex.GetType().Name}:{ex.Message}");
-            StatusLabel.Text  = "error: " + ex.Message;
+            StatusLabel.Text = "error: " + ex.Message;
             AppliedLabel.Text = "ERROR:" + ex.Message;
         }
     }
@@ -337,22 +337,22 @@ public partial class LayoutTestPage : ContentPage
         if (control == "wheel" && existing is ColorWheel w)
         {
             // Reset to defaults then apply opts.
-            w.ShowAlphaSlider     = false;
-            w.ShowLuminositySlider= false;
+            w.ShowAlphaSlider = false;
+            w.ShowLuminositySlider = false;
             w.ShowLuminosityRing = true;
-            w.Vertical            = false;
+            w.Vertical = false;
             w.CanvasBackgroundColor = Colors.Transparent;
             foreach (var opt in opts)
             {
                 if (IsKvOpt(opt, out _, out _)) continue; // handled separately
                 switch (opt.Trim().ToLowerInvariant())
                 {
-                    case "alpha":     w.ShowAlphaSlider     = true;  break;
-                    case "lumslider": w.ShowLuminositySlider= true;  break;
-                    case "nolumwheel":w.ShowLuminosityRing = false; break;
-                    case "vertical":  w.Vertical            = true;  break;
-                    case "":          break;
-                    default:          throw new ArgumentException("Unknown option: " + opt);
+                    case "alpha": w.ShowAlphaSlider = true; break;
+                    case "lumslider": w.ShowLuminositySlider = true; break;
+                    case "nolumwheel": w.ShowLuminosityRing = false; break;
+                    case "vertical": w.Vertical = true; break;
+                    case "": break;
+                    default: throw new ArgumentException("Unknown option: " + opt);
                 }
             }
             var wbg = ParseColorOpt(opts, "wbg");
@@ -362,23 +362,23 @@ public partial class LayoutTestPage : ContentPage
         if (control == "triangle" && existing is ColorTriangle t)
         {
             t.CanvasBackgroundColor = ParseColorOpt(opts, "wbg") ?? Colors.Transparent;
-            t.RotateTriangleByHue  = true;
+            t.RotateTriangleByHue = true;
             foreach (var opt in opts)
             {
                 if (IsKvOpt(opt, out _, out _)) continue;
                 switch (opt.Trim().ToLowerInvariant())
                 {
                     case "norotate": t.RotateTriangleByHue = false; break;
-                    case "rotate":   t.RotateTriangleByHue = true;  break;
-                    case "":         break;
-                    default:         throw new ArgumentException("Unknown option: " + opt);
+                    case "rotate": t.RotateTriangleByHue = true; break;
+                    case "": break;
+                    default: throw new ArgumentException("Unknown option: " + opt);
                 }
             }
             return true;
         }
         if ((control == "hsl" || control == "rgb") && existing is SliderStackWithAlpha s)
         {
-            s.Vertical        = false;
+            s.Vertical = false;
             s.ShowAlphaSlider = true;
             s.IndicatorRadiusScale = 0F;
             foreach (var opt in opts)
@@ -386,10 +386,10 @@ public partial class LayoutTestPage : ContentPage
                 if (IsKvOpt(opt, out _, out _)) continue;
                 switch (opt.Trim().ToLowerInvariant())
                 {
-                    case "vertical": s.Vertical        = true;  break;
-                    case "noalpha":  s.ShowAlphaSlider = false; break;
-                    case "":         break;
-                    default:         throw new ArgumentException("Unknown option: " + opt);
+                    case "vertical": s.Vertical = true; break;
+                    case "noalpha": s.ShowAlphaSlider = false; break;
+                    case "": break;
+                    default: throw new ArgumentException("Unknown option: " + opt);
                 }
             }
             var prs = ParseFloatOpt(opts, "prs");
@@ -409,10 +409,10 @@ public partial class LayoutTestPage : ContentPage
             if (IsKvOpt(opt, out _, out _)) continue;
             switch (opt.Trim().ToLowerInvariant())
             {
-                case "vertical": s.Vertical        = true;  break;
-                case "noalpha":  s.ShowAlphaSlider = false; break;
-                case "":         break;
-                default:         throw new ArgumentException("Unknown option: " + opt);
+                case "vertical": s.Vertical = true; break;
+                case "noalpha": s.ShowAlphaSlider = false; break;
+                case "": break;
+                default: throw new ArgumentException("Unknown option: " + opt);
             }
         }
         var prs = ParseFloatOpt(opts, "prs");
@@ -428,13 +428,13 @@ public partial class LayoutTestPage : ContentPage
             if (IsKvOpt(opt, out _, out _)) continue;
             switch (opt.Trim().ToLowerInvariant())
             {
-                case "alpha":     wheel.ShowAlphaSlider     = true;  break;
+                case "alpha": wheel.ShowAlphaSlider = true; break;
                 case "lumslider": wheel.ShowLuminositySlider = true; break;
                 case "noLumWheel":
-                case "nolumwheel":wheel.ShowLuminosityRing  = false; break;
-                case "vertical":  wheel.Vertical            = true;  break;
-                case "":          break;
-                default:          throw new ArgumentException("Unknown option: " + opt);
+                case "nolumwheel": wheel.ShowLuminosityRing = false; break;
+                case "vertical": wheel.Vertical = true; break;
+                case "": break;
+                default: throw new ArgumentException("Unknown option: " + opt);
             }
         }
         var wbg = ParseColorOpt(opts, "wbg");
@@ -450,9 +450,9 @@ public partial class LayoutTestPage : ContentPage
             switch (opt.Trim().ToLowerInvariant())
             {
                 case "norotate": t.RotateTriangleByHue = false; break;
-                case "rotate":   t.RotateTriangleByHue = true;  break;
-                case "":         break;
-                default:         throw new ArgumentException("Unknown option: " + opt);
+                case "rotate": t.RotateTriangleByHue = true; break;
+                case "": break;
+                default: throw new ArgumentException("Unknown option: " + opt);
             }
         }
         var wbg = ParseColorOpt(opts, "wbg");
@@ -465,7 +465,7 @@ public partial class LayoutTestPage : ContentPage
         var idx = opt.IndexOf('=');
         if (idx > 0)
         {
-            key   = opt[..idx].Trim().ToLowerInvariant();
+            key = opt[..idx].Trim().ToLowerInvariant();
             value = opt[(idx + 1)..].Trim();
             return true;
         }
@@ -503,15 +503,15 @@ public partial class LayoutTestPage : ContentPage
         if (s.StartsWith("#")) return Color.FromArgb(s);
         return s.ToLowerInvariant() switch
         {
-            "transparent"  => Colors.Transparent,
-            "white"        => Colors.White,
-            "black"        => Colors.Black,
-            "red"          => Colors.Red,
-            "green"        => Colors.Green,
-            "blue"         => Colors.Blue,
-            "yellow"       => Colors.Yellow,
-            "magenta"      => Colors.Magenta,
-            "cyan"         => Colors.Cyan,
+            "transparent" => Colors.Transparent,
+            "white" => Colors.White,
+            "black" => Colors.Black,
+            "red" => Colors.Red,
+            "green" => Colors.Green,
+            "blue" => Colors.Blue,
+            "yellow" => Colors.Yellow,
+            "magenta" => Colors.Magenta,
+            "cyan" => Colors.Cyan,
             "gray" or "grey" => Colors.Gray,
             "lightgray" or "lightgrey" => Colors.LightGray,
             _ => throw new ArgumentException("Unknown color: " + s),

@@ -18,7 +18,7 @@ public sealed class SyncTestAppFixture : AppFixtureBase
     {
         // SYNC_TEST + LAYOUT_TEST both pin the window in App.CreateWindow,
         // so the same "skip Maximize" logic in AppFixtureBase applies.
-        env["SYNC_TEST"]   = "1";
+        env["SYNC_TEST"] = "1";
         env["LAYOUT_TEST"] = "1";
     }
 }

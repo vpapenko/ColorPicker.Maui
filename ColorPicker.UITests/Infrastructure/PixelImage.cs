@@ -30,7 +30,7 @@ public sealed class PixelImage : IDisposable
 
     private PixelImage(SKBitmap bitmap) => _bitmap = bitmap;
 
-    public int Width  => _bitmap.Width;
+    public int Width => _bitmap.Width;
     public int Height => _bitmap.Height;
 
     /// <summary>RGBA read of the pixel at (x, y). No bounds checking —
@@ -66,7 +66,7 @@ public sealed class PixelImage : IDisposable
     {
         x = Math.Max(0, x);
         y = Math.Max(0, y);
-        w = Math.Min(w, _bitmap.Width  - x);
+        w = Math.Min(w, _bitmap.Width - x);
         h = Math.Min(h, _bitmap.Height - y);
 
         var dst = new SKBitmap(w, h, _bitmap.ColorType, _bitmap.AlphaType);

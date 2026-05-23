@@ -50,13 +50,13 @@ public static class Screenshot
         int half = size / 2;
         long r = 0, g = 0, b = 0, a = 0, n = 0;
         for (int dy = -half; dy <= half; dy++)
-        for (int dx = -half; dx <= half; dx++)
-        {
-            int x = cx + dx, y = cy + dy;
-            if (x < 0 || y < 0 || x >= img.Width || y >= img.Height) continue;
-            var p = img[x, y];
-            r += p.R; g += p.G; b += p.B; a += p.A; n++;
-        }
+            for (int dx = -half; dx <= half; dx++)
+            {
+                int x = cx + dx, y = cy + dy;
+                if (x < 0 || y < 0 || x >= img.Width || y >= img.Height) continue;
+                var p = img[x, y];
+                r += p.R; g += p.G; b += p.B; a += p.A; n++;
+            }
         if (n == 0) return new Pixel(0, 0, 0, 0);
         return new Pixel((byte)(r / n), (byte)(g / n), (byte)(b / n), (byte)(a / n));
     }
@@ -67,8 +67,8 @@ public static class Screenshot
 
 public readonly record struct PixelRect(int X, int Y, int W, int H, double DpiScale)
 {
-    public int Right   => X + W;
-    public int Bottom  => Y + H;
+    public int Right => X + W;
+    public int Bottom => Y + H;
     public int CenterX => X + W / 2;
     public int CenterY => Y + H / 2;
 

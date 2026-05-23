@@ -25,8 +25,8 @@ public class LayoutSmokeTests : IClassFixture<AppiumServerFixture>, IClassFixtur
         var data = new TheoryData<string>();
         var sizes = new[] { "100x100", "800x800", "300x600", "600x300" };
         foreach (var ctrl in new[] { "wheel", "triangle", "hsl", "rgb" })
-        foreach (var sz in sizes)
-            data.Add($"{ctrl}:{sz}");
+            foreach (var sz in sizes)
+                data.Add($"{ctrl}:{sz}");
         return data;
     }
 

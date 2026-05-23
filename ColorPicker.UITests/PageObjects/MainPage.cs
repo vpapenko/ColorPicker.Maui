@@ -16,25 +16,25 @@ public sealed class MainPage
     public MainPage(WindowsDriver driver) => _driver = driver;
 
     // Switches
-    public AppiumElement ShowTriangleSwitch         => Find("ShowTriangleSwitch");
-    public AppiumElement ShowAlphaSwitch            => Find("ShowAlphaSwitch");
+    public AppiumElement ShowTriangleSwitch => Find("ShowTriangleSwitch");
+    public AppiumElement ShowAlphaSwitch => Find("ShowAlphaSwitch");
     public AppiumElement ShowLuminositySliderSwitch => Find("ShowLuminositySlider");
-    public AppiumElement ShowLuminosityWheelSwitch  => Find("ShowLuminosityRing");
-    public AppiumElement ShowVerticalSliderSwitch   => Find("ShowVerticalSlider");
-    public AppiumElement RotateTriangleByHueSwitch  => Find("RotateTriangleByHue");
+    public AppiumElement ShowLuminosityWheelSwitch => Find("ShowLuminosityRing");
+    public AppiumElement ShowVerticalSliderSwitch => Find("ShowVerticalSlider");
+    public AppiumElement RotateTriangleByHueSwitch => Find("RotateTriangleByHue");
 
     // Color readouts
-    public string SelectedColorHex  => Find("SelectedColorHex").Text;
+    public string SelectedColorHex => Find("SelectedColorHex").Text;
     public string SelectedColorRgba => Find("SelectedColorRGBA").Text;
     public string SelectedColorHsla => Find("SelectedColorHSLA").Text;
 
     // Custom controls — UIA-opaque (SkiaSharp surface). We expose them via an
     // outer Border host (AutomationId="*Host"). Tests use coordinate-based
     // gestures within the host's bounds.
-    public AppiumElement ColorWheel    => Find("ColorWheel1Host");
+    public AppiumElement ColorWheel => Find("ColorWheel1Host");
     public AppiumElement ColorTriangle => Find("ColorTriangle1Host");
-    public AppiumElement HslSlider    => Find("HSLSliders1Host");
-    public AppiumElement RgbSlider    => Find("RGBSliders1Host");
+    public AppiumElement HslSlider => Find("HSLSliders1Host");
+    public AppiumElement RgbSlider => Find("RGBSliders1Host");
 
     public void WaitUntilLoaded()
     {
@@ -47,7 +47,7 @@ public sealed class MainPage
                 return;
             }
             catch (NoSuchElementException) { Thread.Sleep(250); }
-            catch (WebDriverException)     { Thread.Sleep(250); }
+            catch (WebDriverException) { Thread.Sleep(250); }
         }
         throw new TimeoutException("Sample app did not display ColorWheel within 30s.");
     }
@@ -123,10 +123,10 @@ public sealed class MainPage
     /// <summary>Drag inside the centered square of a control.</summary>
     public void DragInsideSquare(AppiumElement element,
         double fromNormX, double fromNormY,
-        double toNormX,   double toNormY)
+        double toNormX, double toNormY)
     {
         var (x1, y1) = SquareCenteredPoint(element, fromNormX, fromNormY);
-        var (x2, y2) = SquareCenteredPoint(element, toNormX,   toNormY);
+        var (x2, y2) = SquareCenteredPoint(element, toNormX, toNormY);
         var finger = new PointerInputDevice(PointerKind.Touch, "finger");
         var seq = new ActionSequence(finger, 0);
         seq.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport, x1, y1, TimeSpan.Zero));
@@ -149,7 +149,7 @@ public sealed class MainPage
     /// <summary>Drag from one normalized point to another inside the control.</summary>
     public void DragInside(AppiumElement element,
         double fromNormX, double fromNormY,
-        double toNormX,   double toNormY)
+        double toNormX, double toNormY)
     {
         var loc  = element.Location;
         var size = element.Size;

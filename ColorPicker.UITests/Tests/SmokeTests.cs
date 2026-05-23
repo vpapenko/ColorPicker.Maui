@@ -12,7 +12,7 @@ public sealed class SmokeTests : IClassFixture<AppFixture>
     public void App_Launches_And_ShowsColorWheel()
     {
         var size = _fx.Page.ColorWheel.Size;
-        Assert.True(size.Width  > 50, $"ColorWheel width too small: {size.Width}");
+        Assert.True(size.Width > 50, $"ColorWheel width too small: {size.Width}");
         Assert.True(size.Height > 50, $"ColorWheel height too small: {size.Height}");
     }
 

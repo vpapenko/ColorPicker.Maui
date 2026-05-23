@@ -80,14 +80,14 @@ public partial class ColorSyncTestPage : ContentPage
             // Convention: #RRGGBBAA
             r = (byte)((v >> 24) & 0xFF);
             g = (byte)((v >> 16) & 0xFF);
-            b = (byte)((v >>  8) & 0xFF);
-            a = (byte)(v         & 0xFF);
+            b = (byte)((v >> 8) & 0xFF);
+            a = (byte)(v & 0xFF);
         }
         else
         {
             r = (byte)((v >> 16) & 0xFF);
-            g = (byte)((v >>  8) & 0xFF);
-            b = (byte)(v         & 0xFF);
+            g = (byte)((v >> 8) & 0xFF);
+            b = (byte)(v & 0xFF);
         }
         return Color.FromRgba(r, g, b, a);
     }

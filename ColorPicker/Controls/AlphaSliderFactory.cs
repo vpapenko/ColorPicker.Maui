@@ -2,19 +2,19 @@ namespace ColorPicker.Controls;
 
 public static class AlphaSliderFactory
 {
-    public static float NewValueAlpha( Color color ) => (float)color.Alpha;
+    public static float NewValueAlpha(Color color) => (float)color.Alpha;
 
-    public static Color GetNewColorAlpha( float newValue, Color oldColor )
-        => Color.FromRgba( oldColor.Red, oldColor.Green, oldColor.Blue, newValue );
+    public static Color GetNewColorAlpha(float newValue, Color oldColor)
+        => Color.FromRgba(oldColor.Red, oldColor.Green, oldColor.Blue, newValue);
 
-    public static SKPaint GetPaintAlpha( Color color, SKPoint startPoint, SKPoint endPoint )
+    public static SKPaint GetPaintAlpha(Color color, SKPoint startPoint, SKPoint endPoint)
     {
         var startColor = Color.FromRgba(color.Red, color.Green, color.Blue, 0).ToSKColor();
         var endColor = Color.FromRgba(color.Red, color.Green, color.Blue, 1).ToSKColor();
-        return GetPaint( startColor, endColor, startPoint, endPoint );
+        return GetPaint(startColor, endColor, startPoint, endPoint);
     }
 
-    public static SKPaint GetPaint( SKColor startColor, SKColor endColor, SKPoint startPoint, SKPoint endPoint )
+    public static SKPaint GetPaint(SKColor startColor, SKColor endColor, SKPoint startPoint, SKPoint endPoint)
     {
         var paint = new SKPaint()
         {
