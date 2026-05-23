@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0   # MinVer needs full history + tags
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Install MAUI workloads
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Install MAUI workloads
@@ -70,7 +70,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - uses: actions/setup-node@v6
@@ -167,7 +167,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0   # MinVer needs full history + tags
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Install MAUI workloads
@@ -204,7 +204,7 @@ jobs:
     needs: [ pack ]
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.0.x'
       - name: Install MAUI workloads
