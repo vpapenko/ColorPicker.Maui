@@ -1,534 +1,222 @@
 namespace ColorPicker.Controls;
 
-public class ColorTriangle : SkiaPickerBase
+public class ColorTriangle : ColorPickerBase
 {
-    double _lastHue = 0;
-    bool _zeroSL = false;
-    long? _locationSvProgressId = null;
-    long? _locationHProgressId = null;
-    SKPoint _locationSv = new();
-    SKPoint _locationH1 = new();
-    SKPoint _locationH2 = new();
-    SKPoint _locationMiddleH = new();
+    readonly ColorTriangleArea  _area           = new();
+    readonly AlphaSlider        _alphaSlider    = new();
 
-    readonly SKColor[] _sweepGradientColors = new SKColor[256];
-
-    public static readonly BindableProperty CanvasBackgroundColorProperty
-                         = BindableProperty.Create(nameof(CanvasBackgroundColor),
-                                                    typeof(Color),
+    public static readonly BindableProperty ShowAlphaSliderProperty
+                         = BindableProperty.Create( nameof(ShowAlphaSlider),
+                                                    typeof(bool),
                                                     typeof(ColorTriangle),
-                                                    Colors.Transparent,
-                                                    propertyChanged: HandleCanvasBackgroundColorChanged );
-    public Color CanvasBackgroundColor
-    {
-        get => (Color)GetValue( CanvasBackgroundColorProperty );
-        set => SetValue( CanvasBackgroundColorProperty, value );
-    }
+                                                    false,
+                                                    propertyChanged: HandleShowAlphaSlider );
 
-    static void HandleCanvasBackgroundColorChanged( BindableObject bindable, object oldValue, object newValue )
-    {
-        if (newValue != oldValue)
-        {
-            ((ColorTriangle)bindable).InvalidateSurface();
-        }
-    }
+    public static readonly BindableProperty VerticalProperty
+                         = BindableProperty.Create( nameof(Vertical),
+                                                    typeof(bool),
+                                                    typeof(ColorTriangle),
+                                                    false,
+                                                    propertyChanged: HandleVertical );
 
     public static readonly BindableProperty RotateTriangleByHueProperty
-                         = BindableProperty.Create(nameof(RotateTriangleByHue),
+                         = BindableProperty.Create( nameof(RotateTriangleByHue),
                                                     typeof(bool),
                                                     typeof(ColorTriangle),
                                                     true,
-                                                    propertyChanged: HandleRotateTriangleByHueSet );
+                                                    propertyChanged: HandleRotateTriangleByHue );
+
+    public static readonly BindableProperty CanvasBackgroundColorProperty
+                         = BindableProperty.Create( nameof(CanvasBackgroundColor),
+                                                    typeof(Color),
+                                                    typeof(ColorTriangle),
+                                                    Colors.Transparent,
+                                                    propertyChanged: HandleCanvasBackgroundColor );
+
+    public static readonly BindableProperty IndicatorRadiusScaleProperty
+                         = BindableProperty.Create( nameof(IndicatorRadiusScale),
+                                                    typeof(float),
+                                                    typeof(ColorTriangle),
+                                                    0.035F,
+                                                    propertyChanged: HandleIndicatorRadiusScale );
+
+    public bool ShowAlphaSlider
+    {
+        get => (bool)GetValue( ShowAlphaSliderProperty );
+        set => SetValue( ShowAlphaSliderProperty, value );
+    }
+    static void HandleShowAlphaSlider( BindableObject bindable, object oldValue, object newValue )
+            => ( (ColorTriangle)bindable ).UpdateAlphaSlider( (bool)newValue );
+
+    public bool Vertical
+    {
+        get => (bool)GetValue( VerticalProperty );
+        set => SetValue( VerticalProperty, value );
+    }
+    static void HandleVertical( BindableObject bindable, object oldValue, object newValue )
+    {
+        if ( newValue != oldValue )
+        {
+            var triangle = (ColorTriangle)bindable;
+            triangle._alphaSlider.Vertical = (bool)newValue;
+            triangle.InvalidateMeasure();
+        }
+    }
+
     public bool RotateTriangleByHue
     {
         get => (bool)GetValue( RotateTriangleByHueProperty );
         set => SetValue( RotateTriangleByHueProperty, value );
     }
-
-    static void HandleRotateTriangleByHueSet( BindableObject bindable, object oldValue, object newValue )
+    static void HandleRotateTriangleByHue( BindableObject bindable, object oldValue, object newValue )
     {
-        if (newValue != oldValue)
+        if ( newValue != oldValue )
+            ( (ColorTriangle)bindable )._area.RotateTriangleByHue = (bool)newValue;
+    }
+
+    public Color CanvasBackgroundColor
+    {
+        get => (Color)GetValue( CanvasBackgroundColorProperty );
+        set => SetValue( CanvasBackgroundColorProperty, value );
+    }
+    static void HandleCanvasBackgroundColor( BindableObject bindable, object oldValue, object newValue )
+    {
+        if ( newValue != oldValue )
+            ( (ColorTriangle)bindable )._area.CanvasBackgroundColor = (Color)newValue;
+    }
+
+    public float IndicatorRadiusScale
+    {
+        get => (float)GetValue( IndicatorRadiusScaleProperty );
+        set => SetValue( IndicatorRadiusScaleProperty, value );
+    }
+    static void HandleIndicatorRadiusScale( BindableObject bindable, object oldValue, object newValue )
+    {
+        if ( newValue != oldValue )
         {
-            ((ColorTriangle)bindable).InvalidateSurface();
+            // Only propagate to the inner triangle area. The embedded alpha
+            // slider uses SliderStack's auto-fill behavior (its own
+            // IndicatorRadiusScale = 0): its picker radius is derived from
+            // the slim strip we allot it in ArrangeLayoutChildren, mirroring
+            // the pattern used by ColorWheel.
+            ( (ColorTriangle)bindable )._area.IndicatorRadiusScale = (float)newValue;
         }
     }
 
     /// <summary>
     /// Constructor
     /// </summary>
-    public ColorTriangle() : base()
+    public ColorTriangle()
     {
+        _area.AttachedColorPicker = this;
+
         HorizontalOptions = LayoutOptions.Center;
         VerticalOptions   = LayoutOptions.Center;
-        IndicatorRadiusScale = 0.035F;
-        for (var i = 128; i >= -127; i--)
-        {
-            _sweepGradientColors[ 255 - (i + 127) ] = Color.FromHsla( (i < 0 ? 255 + i : i) / 255D, 1, 0.5 ).ToSKColor();
-        }
+
+        Children.Add( _area );
+
+        _alphaSlider.AttachedColorPicker = this;
+
+        UpdateAlphaSlider( ShowAlphaSlider );
     }
 
-    public override float GetIndicatorRadiusPixels( SKSize canvasSize ) => GetSize( canvasSize ) * IndicatorRadiusScale;
-    public override float GetIndicatorRadiusPixels() => GetIndicatorRadiusPixels( GetCanvasSize() );
+    protected override void OnSelectedColorChanging( Color color ) { }
 
-    protected override void OnTouchActionPressed( TouchActionEventArgs args )
+    protected override Size MeasureOverride( double widthConstraint, double heightConstraint )
     {
-        var canvasRadius = GetSize() / 2F;
-        var (offX, offY) = GetDrawingOffset();
-        var point = ConvertToPixel(args.Location);
-        point.X -= offX;
-        point.Y -= offY;
+        if ( WidthRequest >= 0 )
+            widthConstraint = Math.Min( widthConstraint, WidthRequest );
+        if ( HeightRequest >= 0 )
+            heightConstraint = Math.Min( heightConstraint, HeightRequest );
 
-        if (_locationSvProgressId is null && IsInSvArea( point, canvasRadius ))
+        if ( double.IsPositiveInfinity( widthConstraint ) &&
+             double.IsPositiveInfinity( heightConstraint ) )
         {
-            _locationSvProgressId = args.Id;
-            _locationSv = LimitToSvTriangle( point, canvasRadius );
-            UpdateColors( canvasRadius );
-        }
-        else if (_locationHProgressId is null && IsInHArea( point, canvasRadius ))
-        {
-            _locationHProgressId = args.Id;
-            LimitToHRadius( point, canvasRadius );
-            UpdateColors( canvasRadius );
-        }
-    }
-
-    protected override void OnTouchActionMoved( TouchActionEventArgs args )
-    {
-        var canvasRadius = GetSize() / 2F;
-        var (offX, offY) = GetDrawingOffset();
-        var point = ConvertToPixel(args.Location);
-        point.X -= offX;
-        point.Y -= offY;
-
-        if (_locationSvProgressId == args.Id)
-        {
-            _locationSv = LimitToSvTriangle( point, canvasRadius );
-            UpdateColors( canvasRadius );
-        }
-        else if (_locationHProgressId == args.Id)
-        {
-            LimitToHRadius( point, canvasRadius );
-            UpdateColors( canvasRadius );
-        }
-    }
-
-    protected override void OnTouchActionReleased( TouchActionEventArgs args )
-    {
-        var canvasRadius = GetSize() / 2F;
-        var (offX, offY) = GetDrawingOffset();
-        var point = ConvertToPixel(args.Location);
-        point.X -= offX;
-        point.Y -= offY;
-
-        if (_locationSvProgressId == args.Id)
-        {
-            _locationSvProgressId = null;
-            _locationSv = LimitToSvTriangle( point, canvasRadius );
-            UpdateColors( canvasRadius );
-        }
-        else if (_locationHProgressId == args.Id)
-        {
-            _locationHProgressId = null;
-            LimitToHRadius( point, canvasRadius );
-            UpdateColors( canvasRadius );
-        }
-    }
-
-    protected override void OnTouchActionCancelled( TouchActionEventArgs args )
-    {
-        if (_locationSvProgressId == args.Id)
-            _locationSvProgressId = null;
-        else if (_locationHProgressId == args.Id)
-            _locationHProgressId = null;
-    }
-
-    protected override void OnPaintSurface( SKCanvas canvas, int width, int height )
-    {
-        var canvasRadius = GetSize() / 2F;
-        var (offX, offY) = GetDrawingOffset();
-
-        UpdateLocations( SelectedColor, canvasRadius );
-        canvas.Clear();
-
-        canvas.Save();
-        canvas.Translate( offX, offY );
-
-        PaintBackground( canvas, canvasRadius );
-        PaintHGradient( canvas, canvasRadius );
-
-        if (RotateTriangleByHue)
-            PaintLinePicker( canvas );
-        else
-            PaintIndicator( canvas, _locationMiddleH );
-
-        PaintSvTriangle( canvas, canvasRadius );
-        PaintIndicator( canvas, _locationSv );
-
-        canvas.Restore();
-    }
-
-    protected override void OnSelectedColorChanging( Color color )
-    {
-        if (color.GetSaturation() > 0.00390625D)
-        {
-            _lastHue = color.GetHue();
-            _zeroSL = false;
-        }
-        else
-        {
-            _zeroSL = true;
-        }
-
-        InvalidateSurface();
-    }
-
-    protected override SizeRequest GetMeasure( double widthConstraint, double heightConstraint )
-    {
-        if (double.IsPositiveInfinity( widthConstraint ) &&
-             double.IsPositiveInfinity( heightConstraint ))
-        {
-            widthConstraint = 200;
+            widthConstraint  = 200;
             heightConstraint = 200;
         }
 
-        var size = Math.Min( widthConstraint, heightConstraint );
+        var sliderCount    = ShowAlphaSlider ? 1 : 0;
+        var sliderFraction = 0.1 * sliderCount;
 
-        return new SizeRequest( new Size( size, size ) );
-    }
+        double triangleSize;
+        double totalWidth;
+        double totalHeight;
 
-    protected override float GetSize( SKSize canvasSize ) => Math.Min( canvasSize.Width, canvasSize.Height );
-    protected override float GetSize() => GetSize( GetCanvasSize() );
-
-    (float offsetX, float offsetY) GetDrawingOffset()
-    {
-        var canvas = GetCanvasSize();
-        var size   = Math.Min( canvas.Width, canvas.Height );
-        return ( ( canvas.Width - size ) / 2F, ( canvas.Height - size ) / 2F );
-    }
-
-    void UpdateLocations( Color color, float canvasRadius )
-    {
-        ColorToHsv( color, out _, out var saturation, out var value );
-
-        var luminosityX = -(float)( (2 * _triangleSide * saturation) - _triangleSide );
-        var luminosityY = _triangleHeight;
-
-        var polarValue = ToPolar(new SKPoint(luminosityX, luminosityY));
-        polarValue.Radius *= (float)value;
-
-        _locationSv = FromPolar( polarValue );
-        _locationSv.X = -_locationSv.X;
-        _locationSv.Y -= 1;
-        _locationSv.X *= SvRadius( canvasRadius );
-        _locationSv.Y *= SvRadius( canvasRadius );
-
-        polarValue = ToPolar( new SKPoint( _locationSv.X, _locationSv.Y ) );
-        polarValue.Angle -= (float)(2 * Math.PI / 3);
-        _locationSv = FromPolar( polarValue );
-
-        _locationSv.X += canvasRadius;
-        _locationSv.Y += canvasRadius;
-
-        if (RotateTriangleByHue)
+        if ( Vertical )
         {
-            var rotationHue = SKMatrix.CreateRotation(-(float)((2D * Math.PI * _lastHue) + (Math.PI / 2D)), canvasRadius, canvasRadius);
-            _locationSv = rotationHue.MapPoint( _locationSv );
+            triangleSize = Math.Min( heightConstraint, ( 1.0 - sliderFraction ) * widthConstraint );
+            totalHeight  = triangleSize;
+            totalWidth   = sliderCount > 0 ? triangleSize / ( 1.0 - sliderFraction ) : triangleSize;
+        }
+        else
+        {
+            triangleSize = Math.Min( widthConstraint, ( 1.0 - sliderFraction ) * heightConstraint );
+            totalWidth   = triangleSize;
+            totalHeight  = sliderCount > 0 ? triangleSize / ( 1.0 - sliderFraction ) : triangleSize;
         }
 
-        var angleH = _lastHue * Math.PI * 2;
-
-        _locationMiddleH = FromPolar( new PolarPoint( HRadius( canvasRadius ), (float)(Math.PI - angleH) ) );
-        _locationMiddleH.X += canvasRadius;
-        _locationMiddleH.Y += canvasRadius;
-
-        _locationH1 = FromPolar( new PolarPoint( HRadius( canvasRadius ) + GetIndicatorRadiusPixels(), (float)(Math.PI - angleH) ) );
-        _locationH1.X += canvasRadius;
-        _locationH1.Y += canvasRadius;
-
-        _locationH2 = FromPolar( new PolarPoint( HRadius( canvasRadius ) - GetIndicatorRadiusPixels(), (float)(Math.PI - angleH) ) );
-        _locationH2.X += canvasRadius;
-        _locationH2.Y += canvasRadius;
+        return new Size( totalWidth, totalHeight );
     }
 
-    void UpdateColors( float canvasRadius )
+    protected override Size ArrangeLayoutChildren( Rect bounds )
     {
-        var svPoint = ToSvCoordinates(_locationSv, canvasRadius);
-        var hPoint = ToHCoordinates(_locationH1, canvasRadius);
-        var newColor = WheelPointToColor(svPoint, hPoint);
+        var width  = bounds.Width;
+        var height = bounds.Height;
 
-        if (_zeroSL && (newColor.GetSaturation() > 0))
+        var sliderCount    = ShowAlphaSlider ? 1 : 0;
+        var sliderFraction = 0.1 * sliderCount;
+
+        double triangleSize;
+        double sliderThickness;
+
+        if ( Vertical )
         {
-            newColor = Color.FromHsla( _lastHue, newColor.GetSaturation(), newColor.GetLuminosity(), newColor.Alpha );
+            triangleSize    = Math.Min( height,
+                                        sliderCount > 0 ? ( 1.0 - sliderFraction ) * width : width );
+            sliderThickness = sliderCount > 0
+                            ? ( sliderFraction * triangleSize ) / ( ( 1.0 - sliderFraction ) * sliderCount )
+                            : 0;
+        }
+        else
+        {
+            triangleSize    = Math.Min( width,
+                                        sliderCount > 0 ? ( 1.0 - sliderFraction ) * height : height );
+            sliderThickness = sliderCount > 0
+                            ? ( sliderFraction * triangleSize ) / ( ( 1.0 - sliderFraction ) * sliderCount )
+                            : 0;
         }
 
-        SelectedColor = newColor;
-    }
+        ( (IView)_area ).Measure( triangleSize, triangleSize );
+        ( (IView)_area ).Arrange( new Rect( 0, 0, triangleSize, triangleSize ) );
 
-    bool IsInSvArea( SKPoint point, float canvasRadius )
-    {
-        var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        return polar.Radius <= SvRadius( canvasRadius );
-    }
-
-    bool IsInHArea( SKPoint point, float canvasRadius )
-    {
-        var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        return polar.Radius <= HRadius( canvasRadius ) + GetIndicatorRadiusPixels() && polar.Radius >= HRadius( canvasRadius ) - GetIndicatorRadiusPixels();
-    }
-
-    void PaintBackground( SKCanvas canvas, float canvasRadius )
-    {
-        var center = new SKPoint(canvasRadius, canvasRadius);
-        var paint = new SKPaint
+        if ( ShowAlphaSlider )
         {
-            IsAntialias = true,
-            Color = CanvasBackgroundColor.ToSKColor()
-        };
-
-        canvas.DrawCircle( center, canvasRadius, paint );
-    }
-
-    void PaintHGradient( SKCanvas canvas, float canvasRadius )
-    {
-        var center = new SKPoint(canvasRadius, canvasRadius);
-        var shader = SKShader.CreateSweepGradient(center, _sweepGradientColors, null);
-
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Shader = shader,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = GetIndicatorRadiusPixels() * 2
-        };
-        canvas.DrawCircle( center, HRadius( canvasRadius ), paint );
-    }
-
-    void PaintSvTriangle( SKCanvas canvas, float canvasRadius )
-    {
-        canvas.Save();
-
-        var rotationHue = SKMatrix.CreateRotation(-(float)( (2D * Math.PI * _lastHue) + (Math.PI / 2D) ),
-                                                   canvasRadius, canvasRadius);
-
-        if ( RotateTriangleByHue )
-        {
-            canvas.Concat( ref rotationHue );
+            if ( Vertical )
+            {
+                ( (IView)_alphaSlider ).Measure( sliderThickness, triangleSize );
+                ( (IView)_alphaSlider ).Arrange( new Rect( triangleSize, 0, sliderThickness, triangleSize ) );
+            }
+            else
+            {
+                ( (IView)_alphaSlider ).Measure( triangleSize, sliderThickness );
+                ( (IView)_alphaSlider ).Arrange( new Rect( 0, triangleSize, triangleSize, sliderThickness ) );
+            }
         }
 
-        var point1 = new SKPoint( canvasRadius, canvasRadius - SvRadius(canvasRadius) );
-        var point2 = new SKPoint(canvasRadius + (_triangleSide * SvRadius(canvasRadius))
-                , canvasRadius + (_triangleVerticalOffset * SvRadius(canvasRadius)));
+        return bounds.Size;
+    }
 
-        var point3 = new SKPoint(canvasRadius - (_triangleSide * SvRadius(canvasRadius))
-                , canvasRadius + (_triangleVerticalOffset * SvRadius(canvasRadius)));
-
-        using (var pathTriangle = new SKPath())
+    void UpdateAlphaSlider( bool show )
+    {
+        if ( show )
         {
-            pathTriangle.MoveTo( point1 );
-            pathTriangle.LineTo( point2 );
-            pathTriangle.LineTo( point3 );
-
-            canvas.ClipPath( pathTriangle, SKClipOperation.Intersect, true );
+            if ( !Children.Contains( _alphaSlider ) )
+                Children.Add( _alphaSlider );
         }
-
-        canvas.Save();
-
-        var gradientRotation = SKMatrix.CreateRotation(-(float)Math.PI / 3F, point3.X, point3.Y);
-        canvas.Concat( ref gradientRotation );
-
-        var shader = SKShader.CreateSweepGradient(point3,
-                                                   new SKColor[]
-                                                   {
-                                                       Color.FromHsla(_lastHue, 1, 0.5).ToSKColor(),
-                                                       Colors.White.ToSKColor(),
-                                                       Color.FromHsla(_lastHue, 1, 0.5).ToSKColor()
-                                                   },
-                                                   new float[]
-                                                   {
-                                                       0F, 0.16666666666666F, 1F
-                                                   });
-
-        var paint = new SKPaint
+        else
         {
-            IsAntialias = true,
-            Shader      = shader,
-            Style       = SKPaintStyle.Fill
-        };
-
-        canvas.DrawCircle( point3, SvRadius( canvasRadius ) * 2, paint );
-
-        canvas.Restore();
-
-        var colors = new SKColor[]
-        {
-            SKColors.Black,
-            SKColors.Transparent
-        };
-
-        PaintGradient( canvas, canvasRadius, colors, point3 );
-
-        canvas.Restore();
-    }
-
-    void PaintGradient( SKCanvas canvas, float canvasRadius, SKColor[] colors, SKPoint centerGradient )
-    {
-        var center = new SKPoint(canvasRadius, canvasRadius);
-        var polar = ToPolar(new SKPoint(center.X - centerGradient.X, center.Y - centerGradient.Y));
-
-        polar.Radius *= _triangleHeight;
-
-        var p2 = FromPolar(polar);
-        p2.X += centerGradient.X;
-        p2.Y += centerGradient.Y;
-
-        var shader = SKShader.CreateLinearGradient(centerGradient, p2, colors, null, SKShaderTileMode.Clamp);
-
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Shader      = shader,
-            Style       = SKPaintStyle.Fill
-        };
-
-        canvas.DrawCircle( center, SvRadius( canvasRadius ), paint );
-    }
-
-    SKPoint ToSvCoordinates( SKPoint point, float canvasRadius )
-    {
-        var result = new SKPoint(point.X, point.Y);
-
-        result.X -= canvasRadius;
-        result.Y -= canvasRadius;
-        result.X /= SvRadius( canvasRadius );
-        result.Y /= SvRadius( canvasRadius );
-
-        return result;
-    }
-
-    SKPoint ToHCoordinates( SKPoint point, float canvasRadius )
-    {
-        var result = new SKPoint(point.X, point.Y);
-
-        result.X -= canvasRadius;
-        result.Y -= canvasRadius;
-        result.X /= HRadius( canvasRadius );
-        result.Y /= HRadius( canvasRadius );
-
-        return result;
-    }
-
-    const float _triangleHeight = 1.5000001F;
-    const float _triangleSide = 0.8660244F;
-    const float _triangleVerticalOffset = 0.5000001F;
-
-    Color WheelPointToColor( SKPoint pointSV, SKPoint pointH )
-    {
-        if (RotateTriangleByHue)
-        {
-            var rotationHue = SKMatrix.CreateRotation((float)((2D * Math.PI * _lastHue) + (Math.PI / 2D)));
-            pointSV = rotationHue.MapPoint( pointSV );
+            Children.Remove( _alphaSlider );
         }
-
-        var polarH = ToPolar(pointH);
-        var h = (-polarH.Angle + Math.PI) / (2 * Math.PI);
-
-        pointSV.Y = -pointSV.Y + _triangleVerticalOffset;
-        pointSV.X += _triangleSide;
-
-        var x1 = _triangleSide;
-        var y1 = _triangleHeight;
-        var x2 = x1 * 2;
-        var y2 = 0F;
-
-        var vCurrent = ( (pointSV.X * (y2 - y1)) - (pointSV.Y * (x2 - x1)) + (x2 * y1) - (y2 * x1)) / Math.Sqrt(Math.Pow(y2 - y1, 2) + Math.Pow(x2 - x1, 2) );
-        var v = (y1 - vCurrent) / y1;
-
-        var sMax = x2 - (vCurrent / Math.Sin(Math.PI / 3));
-        var sCurrent = pointSV.Y / Math.Sin(Math.PI / 3);
-        var s = sCurrent / sMax;
-
-        _lastHue = h;
-        var result = ColorFromHsv(h, s, v, SelectedColor.Alpha);
-
-        return result;
-    }
-
-    SKPoint LimitToSvTriangle( SKPoint point, float canvasRadius )
-    {
-        var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        polar.Radius = polar.Radius < SvRadius( canvasRadius ) ? polar.Radius : SvRadius( canvasRadius );
-
-        var result = FromPolar(polar);
-        result.X += canvasRadius;
-        result.Y += canvasRadius;
-        return result;
-    }
-
-    void LimitToHRadius( SKPoint point, float canvasRadius )
-    {
-        var point1 = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        point1.Radius = HRadius( canvasRadius ) + GetIndicatorRadiusPixels();
-
-        var point2 = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        point1.Radius = HRadius( canvasRadius ) - GetIndicatorRadiusPixels();
-
-        _locationH1 = FromPolar( point1 );
-        _locationH2 = FromPolar( point2 );
-
-        _locationH1.X += canvasRadius;
-        _locationH1.Y += canvasRadius;
-        _locationH2.X += canvasRadius;
-        _locationH2.Y += canvasRadius;
-    }
-
-    static PolarPoint ToPolar( SKPoint point )
-    {
-        var radius = (float)Math.Sqrt((point.X * point.X) + (point.Y * point.Y));
-        var angle = (float)Math.Atan2(point.Y, point.X);
-        return new PolarPoint( radius, angle );
-    }
-
-    static SKPoint FromPolar( PolarPoint point )
-    {
-        var x = (float)(point.Radius * Math.Cos(point.Angle));
-        var y = (float)(point.Radius * Math.Sin(point.Angle));
-        return new SKPoint( x, y );
-    }
-
-    float SvRadius( float canvasRadius ) => canvasRadius - (2 * GetIndicatorRadiusPixels()) - 2;
-    float HRadius( float canvasRadius ) => canvasRadius - GetIndicatorRadiusPixels();
-
-    void PaintLinePicker( SKCanvas canvas )
-    {
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Style       = SKPaintStyle.Stroke
-        };
-
-        paint.Color = Colors.Black.ToSKColor();
-        paint.StrokeWidth = 4;
-
-        using var pathTriangle = new SKPath();
-        pathTriangle.MoveTo( _locationH1 );
-        pathTriangle.LineTo( _locationH2 );
-
-        canvas.DrawPath( pathTriangle, paint );
-    }
-
-    public static void ColorToHsv( Color color, out double hue, out double saturation, out double value )
-    {
-        var rgb = new Rgb { R = Math.Round(color.Red * 255F), G = Math.Round(color.Green * 255F), B = Math.Round(color.Blue * 255F) };
-        var hsv = rgb.To<Hsv>();
-
-        hue = color.GetHue();
-        saturation = hsv.S;
-        value = hsv.V;
-    }
-
-    public static Color ColorFromHsv( double hue, double saturation, double value, double a )
-    {
-        var result = Color.FromHsv((float)hue, (float)saturation, (float)value);
-        return new Color( result.Red, result.Green, result.Blue, (float)a );
     }
 }

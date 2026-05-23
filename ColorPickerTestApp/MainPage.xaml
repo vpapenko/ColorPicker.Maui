@@ -176,7 +176,8 @@
                 AutomationId="ColorTriangle1"
                 Padding="5"
                 AttachedColorPicker="{x:Reference Name=ColorWheel1}"
-                RotateTriangleByHue="{Binding Source={x:Reference RotateTriangleByHue}, Path=IsToggled}" />
+                RotateTriangleByHue="{Binding Source={x:Reference RotateTriangleByHue}, Path=IsToggled}"
+                ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}" />
         </Border>
 
         <Label Grid.Row="2" />
