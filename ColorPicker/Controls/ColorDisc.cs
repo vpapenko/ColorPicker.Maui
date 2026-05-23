@@ -165,7 +165,7 @@ public class ColorDisc : SkiaPickerBase
         if ( color.GetLuminosity() != 0 || !IsInHSArea( _locationHS, canvasRadius ) )
         {
             var angleHS  = (0.5 - color.GetHue()) * (2 * Math.PI);
-            var radiusHS = WheelHSRadius(canvasRadius) * color.GetSaturation();
+            var radiusHS = HsRadius(canvasRadius) * color.GetSaturation();
 
             var resultHS = FromPolar(new PolarPoint( (float)radiusHS, (float)angleHS) );
             resultHS.X  += canvasRadius;
@@ -173,12 +173,12 @@ public class ColorDisc : SkiaPickerBase
             _locationHS   = resultHS;
         }
 
-        var polarL      = ToPolar(ToWheelLCoordinates(_locationL, canvasRadius));
+        var polarL      = ToPolar(ToLCoordinates(_locationL, canvasRadius));
         polarL.Angle   -= (float)Math.PI / 2F;
         var signOld     = polarL.Angle <= 0 ? 1 : -1;
         var angleL      = color.GetLuminosity() * Math.PI * signOld;
 
-        var resultL     = FromPolar( new PolarPoint( WheelLRadius(canvasRadius), (float)(angleL - (Math.PI / 2)) ) );
+        var resultL     = FromPolar( new PolarPoint( LRadius(canvasRadius), (float)(angleL - (Math.PI / 2)) ) );
         resultL.X      += canvasRadius;
         resultL.Y      += canvasRadius;
         _locationL       = resultL;
@@ -186,17 +186,17 @@ public class ColorDisc : SkiaPickerBase
 
     void UpdateColors( float canvasRadius )
     {
-        var wheelHSPoint    = ToWheelHSCoordinates(_locationHS, canvasRadius);
-        var wheelLPoint     = ToWheelLCoordinates(_locationL, canvasRadius);
+        var hsPoint    = ToHsCoordinates(_locationHS, canvasRadius);
+        var lPoint     = ToLCoordinates(_locationL, canvasRadius);
 
-        var newColor        = WheelPointToColor(wheelHSPoint, wheelLPoint);
+        var newColor        = WheelPointToColor(hsPoint, lPoint);
         SelectedColor       = newColor;
     }
 
     bool IsInHSArea( SKPoint point, float canvasRadius )
     {
         var polar = ToPolar( new SKPoint( point.X - canvasRadius, point.Y - canvasRadius ) );
-        return polar.Radius <= WheelHSRadius( canvasRadius );
+        return polar.Radius <= HsRadius( canvasRadius );
     }
 
     bool IsInLArea( SKPoint point, float canvasRadius )
@@ -206,8 +206,8 @@ public class ColorDisc : SkiaPickerBase
 
         var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
 
-        return polar.Radius <= WheelLRadius( canvasRadius ) + ( GetIndicatorRadiusPixels() / 2F )
-            && polar.Radius >= WheelLRadius( canvasRadius ) - ( GetIndicatorRadiusPixels() / 2F );
+        return polar.Radius <= LRadius( canvasRadius ) + ( GetIndicatorRadiusPixels() / 2F )
+            && polar.Radius >= LRadius( canvasRadius ) - ( GetIndicatorRadiusPixels() / 2F );
     }
 
     void PaintBackground( SKCanvas canvas, float canvasRadius )
@@ -245,7 +245,7 @@ public class ColorDisc : SkiaPickerBase
             Style       = SKPaintStyle.Stroke,
             StrokeWidth = GetIndicatorRadiusPixels()
         };
-        canvas.DrawCircle( center, WheelLRadius( canvasRadius ), paint );
+        canvas.DrawCircle( center, LRadius( canvasRadius ), paint );
     }
 
     void PaintColorSweepGradient( SKCanvas canvas, float canvasRadius )
@@ -260,7 +260,7 @@ public class ColorDisc : SkiaPickerBase
             Shader      = shader,
             Style       = SKPaintStyle.Fill
         };
-        canvas.DrawCircle( center, WheelHSRadius( canvasRadius ), paint );
+        canvas.DrawCircle( center, HsRadius( canvasRadius ), paint );
     }
 
     void PaintGrayRadialGradient( SKCanvas canvas, float canvasRadius )
@@ -273,7 +273,7 @@ public class ColorDisc : SkiaPickerBase
             SKColors.Transparent
         };
 
-        var shader = SKShader.CreateRadialGradient( center, WheelHSRadius(canvasRadius), colors, null, SKShaderTileMode.Clamp );
+        var shader = SKShader.CreateRadialGradient( center, HsRadius(canvasRadius), colors, null, SKShaderTileMode.Clamp );
 
         var paint = new SKPaint
         {
@@ -284,26 +284,26 @@ public class ColorDisc : SkiaPickerBase
         canvas.DrawPaint( paint );
     }
 
-    SKPoint ToWheelHSCoordinates( SKPoint point, float canvasRadius )
+    SKPoint ToHsCoordinates( SKPoint point, float canvasRadius )
     {
         var result = new SKPoint( point.X, point.Y );
 
         result.X  -= canvasRadius;
         result.Y  -= canvasRadius;
-        result.X  /= WheelHSRadius( canvasRadius );
-        result.Y  /= WheelHSRadius( canvasRadius );
+        result.X  /= HsRadius( canvasRadius );
+        result.Y  /= HsRadius( canvasRadius );
 
         return result;
     }
 
-    SKPoint ToWheelLCoordinates( SKPoint point, float canvasRadius )
+    SKPoint ToLCoordinates( SKPoint point, float canvasRadius )
     {
         var result = new SKPoint( point.X, point.Y );
 
         result.X  -= canvasRadius;
         result.Y  -= canvasRadius;
-        result.X  /= WheelLRadius( canvasRadius );
-        result.Y  /= WheelLRadius( canvasRadius );
+        result.X  /= LRadius( canvasRadius );
+        result.Y  /= LRadius( canvasRadius );
 
         return result;
     }
@@ -326,7 +326,7 @@ public class ColorDisc : SkiaPickerBase
     SKPoint LimitToHSRadius( SKPoint point, float canvasRadius )
     {
         var polar       = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        polar.Radius    = polar.Radius < WheelHSRadius( canvasRadius ) ? polar.Radius : WheelHSRadius( canvasRadius );
+        polar.Radius    = polar.Radius < HsRadius( canvasRadius ) ? polar.Radius : HsRadius( canvasRadius );
         var result      = FromPolar(polar);
 
         result.X       += canvasRadius;
@@ -338,7 +338,7 @@ public class ColorDisc : SkiaPickerBase
     SKPoint LimitToLRadius( SKPoint point, float canvasRadius )
     {
         var polar       = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        polar.Radius    = WheelLRadius( canvasRadius );
+        polar.Radius    = LRadius( canvasRadius );
         var result      = FromPolar(polar);
 
         result.X       += canvasRadius;
@@ -367,10 +367,10 @@ public class ColorDisc : SkiaPickerBase
     // does not get clipped at the canvas edge.
     const float PickerEdgeMargin = 3F;
 
-    float WheelHSRadius( float canvasRadius )
+    float HsRadius( float canvasRadius )
        => ! ShowLuminosityRing ? canvasRadius - GetIndicatorRadiusPixels() - PickerEdgeMargin
                                 : canvasRadius - ( 3 * GetIndicatorRadiusPixels() ) - 2;
 
-    float WheelLRadius( float canvasRadius )
+    float LRadius( float canvasRadius )
        => canvasRadius - GetIndicatorRadiusPixels() - PickerEdgeMargin;
 }
