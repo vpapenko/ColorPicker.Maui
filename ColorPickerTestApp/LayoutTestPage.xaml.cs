@@ -241,16 +241,13 @@ public partial class LayoutTestPage : ContentPage
         catch (Exception ex) { DebugTraceLabel.Text = "diag err: " + ex.Message; }
     }
 
-    /// <summary>
-    /// Scenario format: "<control>:<width>x<height>[:opt1,opt2,...]"
-    ///   control = wheel | triangle | hsl | rgb
-    ///   opts (wheel only): alpha, lumslider, lumwheel, vertical
-    /// Examples:
-    ///   "wheel:300x300"
-    ///   "wheel:400x400:alpha,vertical"
-    ///   "triangle:600x300"
-    /// </summary>
     /// <summary>How a single dimension is sized.</summary>
+    /// <remarks>
+    /// Scenario format: <c>&lt;control&gt;:&lt;width&gt;x&lt;height&gt;[:opt1,opt2,...]</c>.
+    /// control = wheel | triangle | hsl | rgb.
+    /// opts (wheel only): alpha, lumslider, lumwheel, vertical.
+    /// Examples: <c>wheel:300x300</c>, <c>wheel:400x400:alpha,vertical</c>, <c>triangle:600x300</c>.
+    /// </remarks>
     enum SizeMode { Fixed, Auto, Fill }
 
     void ApplyScenario(string spec)

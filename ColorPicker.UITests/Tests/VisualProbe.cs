@@ -24,13 +24,6 @@ public class VisualProbe
 
     public static IEnumerable<object[]> AllScenarios()
     {
-        var seen = new HashSet<string>();
-        void Add(string id, string spec)
-        {
-            if (seen.Add(spec)) {/*ok*/}
-            else id += "-dup";
-            // we still emit duplicates with -dup suffix so the manifest is complete.
-        }
         var list = new List<(string id, string spec)>();
         void Emit(string id, string spec)
         {
