@@ -89,13 +89,13 @@ public class ColorTriangleArea : SkiaPickerBase
         {
             _locationSvProgressId = args.Id;
             _locationSv = LimitToSvTriangle(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            UpdateColorsFromSv(canvasRadius);
         }
         else if (_locationHProgressId is null && IsInHArea(point, canvasRadius))
         {
             _locationHProgressId = args.Id;
             LimitToHRadius(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            UpdateColorsFromH(canvasRadius);
         }
     }
 
@@ -110,12 +110,12 @@ public class ColorTriangleArea : SkiaPickerBase
         if (_locationSvProgressId == args.Id)
         {
             _locationSv = LimitToSvTriangle(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            UpdateColorsFromSv(canvasRadius);
         }
         else if (_locationHProgressId == args.Id)
         {
             LimitToHRadius(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            UpdateColorsFromH(canvasRadius);
         }
     }
 
@@ -131,13 +131,13 @@ public class ColorTriangleArea : SkiaPickerBase
         {
             _locationSvProgressId = null;
             _locationSv = LimitToSvTriangle(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            UpdateColorsFromSv(canvasRadius);
         }
         else if (_locationHProgressId == args.Id)
         {
             _locationHProgressId = null;
             LimitToHRadius(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            UpdateColorsFromH(canvasRadius);
         }
     }
 
@@ -238,7 +238,9 @@ public class ColorTriangleArea : SkiaPickerBase
         _locationH2 = OffsetByCenter(_locationH2, canvasRadius);
     }
 
-    void UpdateColors(float canvasRadius)
+    // Decode only the SV indicator. Hue is left untouched so the SV-only
+    // drag never roundtrips H through pixel quantization.
+    void UpdateColorsFromSv(float canvasRadius)
     {
         var hsla = new HslaColor(_lastHue,
                                  SelectedColor.GetSaturation(),
@@ -246,13 +248,30 @@ public class ColorTriangleArea : SkiaPickerBase
                                  SelectedColor.Alpha);
 
         var svUnit = ToUnit(_locationSv, canvasRadius, SvRadius(canvasRadius));
-        // Decode SV with the OLD hue (_lastHue, baked into hsla.H) — same
-        // ordering MAUI uses: triangle decode then hue assignment.
         hsla = Triangle.UpdateColor(svUnit, hsla);
+
+        WriteSelectedColor(hsla);
+    }
+
+    // Decode only the hue ring. SV is left untouched so dragging the hue
+    // ring (especially on the rotating triangle) never re-quantizes S/L
+    // through the encode/decode roundtrip — that was the source of the
+    // speed-dependent S/L drift.
+    void UpdateColorsFromH(float canvasRadius)
+    {
+        var hsla = new HslaColor(_lastHue,
+                                 SelectedColor.GetSaturation(),
+                                 SelectedColor.GetLuminosity(),
+                                 SelectedColor.Alpha);
 
         var hUnit = ToUnit(_locationH1, canvasRadius, HRadius(canvasRadius));
         hsla = _hueRing.UpdateColor(hUnit, hsla);
 
+        WriteSelectedColor(hsla);
+    }
+
+    void WriteSelectedColor(HslaColor hsla)
+    {
         var newColor = hsla.ToMauiColor();
 
         if (_zeroSL && (newColor.GetSaturation() > 0))
