@@ -1,19 +1,25 @@
+using ColorPicker.Core;
+
 namespace ColorPicker.Controls;
 
 public static class RgbSliderFactory
 {
-    public static float NewValueR(Color color) => color.Red;
-    public static float NewValueG(Color color) => color.Green;
-    public static float NewValueB(Color color) => color.Blue;
+    static readonly RedSlider   _red   = new();
+    static readonly GreenSlider _green = new();
+    static readonly BlueSlider  _blue  = new();
+
+    public static float NewValueR(Color color) => (float)_red  .Read(color.ToRgba());
+    public static float NewValueG(Color color) => (float)_green.Read(color.ToRgba());
+    public static float NewValueB(Color color) => (float)_blue .Read(color.ToRgba());
 
     public static Color GetNewColorR(float newValue, Color oldColor)
-            => Color.FromRgba(newValue, oldColor.Green, oldColor.Blue, oldColor.Alpha);
+            => _red.Write(oldColor.ToRgba(), newValue).WithA(oldColor.Alpha).ToMauiColor();
 
     public static Color GetNewColorG(float newValue, Color oldColor)
-            => Color.FromRgba(oldColor.Red, newValue, oldColor.Blue, oldColor.Alpha);
+            => _green.Write(oldColor.ToRgba(), newValue).WithA(oldColor.Alpha).ToMauiColor();
 
     public static Color GetNewColorB(float newValue, Color oldColor)
-            => Color.FromRgba(oldColor.Red, oldColor.Green, newValue, oldColor.Alpha);
+            => _blue.Write(oldColor.ToRgba(), newValue).WithA(oldColor.Alpha).ToMauiColor();
 
     public static SKPaint GetPaintR(Color color, SKPoint startPoint, SKPoint endPoint)
     {
