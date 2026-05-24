@@ -1,21 +1,23 @@
 using ColorPicker.Core;
+using ColorPicker.Core.Interaction;
 
 namespace ColorPicker.Controls;
 
 public class ColorTriangleArea : SkiaPickerBase
 {
-    static readonly SaturationValueTriangle _triangleRotated = new(rotateByHue: true);
-    static readonly SaturationValueTriangle _triangleFixed   = new(rotateByHue: false);
-    static readonly HueRing                 _hueRing         = new();
+    static readonly HueRing _hueRing = new();
 
-    double _lastHue = 0;
-    bool _zeroSL = false;
+    // Interaction state lives in a pure controller so it can be exercised
+    // by deterministic Core unit tests. Two controllers (rotating / fixed)
+    // are kept so we don't have to re-sync when RotateTriangleByHue toggles.
+    readonly TriangleAreaInteraction _interactionRotated = new(rotateByHue: true);
+    readonly TriangleAreaInteraction _interactionFixed   = new(rotateByHue: false);
+
+    TriangleAreaInteraction Interaction
+        => RotateTriangleByHue ? _interactionRotated : _interactionFixed;
+
     long? _locationSvProgressId = null;
     long? _locationHProgressId = null;
-    SKPoint _locationSv = new();
-    SKPoint _locationH1 = new();
-    SKPoint _locationH2 = new();
-    SKPoint _locationMiddleH = new();
 
     readonly SKColor[] _sweepGradientColors = new SKColor[256];
 
@@ -84,17 +86,18 @@ public class ColorTriangleArea : SkiaPickerBase
         point.X -= offX;
         point.Y -= offY;
 
-        if (_locationSvProgressId is null && IsInSvArea(point, canvasRadius))
+        var svUnit = PixelToUnit(point, canvasRadius, SvRadius(canvasRadius));
+        var hUnit  = PixelToUnit(point, canvasRadius, HRadius(canvasRadius));
+
+        if (_locationSvProgressId is null && Interaction.IsInSv(svUnit))
         {
             _locationSvProgressId = args.Id;
-            _locationSv = LimitToSvTriangle(point, canvasRadius);
-            UpdateColorsFromSv(canvasRadius);
+            WriteSelectedColor(Interaction.UpdateFromSv(svUnit));
         }
-        else if (_locationHProgressId is null && IsInHArea(point, canvasRadius))
+        else if (_locationHProgressId is null && IsInHueRing(hUnit, canvasRadius))
         {
             _locationHProgressId = args.Id;
-            LimitToHRadius(point, canvasRadius);
-            UpdateColorsFromH(canvasRadius);
+            WriteSelectedColor(Interaction.UpdateFromH(hUnit));
         }
     }
 
@@ -108,13 +111,13 @@ public class ColorTriangleArea : SkiaPickerBase
 
         if (_locationSvProgressId == args.Id)
         {
-            _locationSv = LimitToSvTriangle(point, canvasRadius);
-            UpdateColorsFromSv(canvasRadius);
+            var svUnit = PixelToUnit(point, canvasRadius, SvRadius(canvasRadius));
+            WriteSelectedColor(Interaction.UpdateFromSv(svUnit));
         }
         else if (_locationHProgressId == args.Id)
         {
-            LimitToHRadius(point, canvasRadius);
-            UpdateColorsFromH(canvasRadius);
+            var hUnit = PixelToUnit(point, canvasRadius, HRadius(canvasRadius));
+            WriteSelectedColor(Interaction.UpdateFromH(hUnit));
         }
     }
 
@@ -129,14 +132,14 @@ public class ColorTriangleArea : SkiaPickerBase
         if (_locationSvProgressId == args.Id)
         {
             _locationSvProgressId = null;
-            _locationSv = LimitToSvTriangle(point, canvasRadius);
-            UpdateColorsFromSv(canvasRadius);
+            var svUnit = PixelToUnit(point, canvasRadius, SvRadius(canvasRadius));
+            WriteSelectedColor(Interaction.UpdateFromSv(svUnit));
         }
         else if (_locationHProgressId == args.Id)
         {
             _locationHProgressId = null;
-            LimitToHRadius(point, canvasRadius);
-            UpdateColorsFromH(canvasRadius);
+            var hUnit = PixelToUnit(point, canvasRadius, HRadius(canvasRadius));
+            WriteSelectedColor(Interaction.UpdateFromH(hUnit));
         }
     }
 
@@ -153,7 +156,12 @@ public class ColorTriangleArea : SkiaPickerBase
         var canvasRadius = GetSize() / 2F;
         var (offX, offY) = GetDrawingOffset();
 
-        UpdateLocations(SelectedColor, canvasRadius);
+        // Compute paint-time pixel positions of indicators from the
+        // controller's unit-space locations.
+        var locationSv = UnitToPixel(Interaction.LocationSv, canvasRadius, SvRadius(canvasRadius));
+
+        var hLocations = ComputeHueIndicatorPixels(canvasRadius);
+
         canvas.Clear();
 
         canvas.Save();
@@ -163,28 +171,19 @@ public class ColorTriangleArea : SkiaPickerBase
         PaintHGradient(canvas, canvasRadius);
 
         if (RotateTriangleByHue)
-            PaintLinePicker(canvas);
+            PaintLinePicker(canvas, hLocations.outer, hLocations.inner);
         else
-            PaintIndicator(canvas, _locationMiddleH);
+            PaintIndicator(canvas, hLocations.middle);
 
         PaintSvTriangle(canvas, canvasRadius);
-        PaintIndicator(canvas, _locationSv);
+        PaintIndicator(canvas, locationSv);
 
         canvas.Restore();
     }
 
     protected override void OnSelectedColorChanging(Color color)
     {
-        if (color.GetSaturation() > 0.00390625D)
-        {
-            _lastHue = color.GetHue();
-            _zeroSL = false;
-        }
-        else
-        {
-            _zeroSL = true;
-        }
-
+        Interaction.SyncFromColor(color.ToHsla());
         InvalidateSurface();
     }
 
@@ -212,84 +211,36 @@ public class ColorTriangleArea : SkiaPickerBase
         return ((canvas.Width - size) / 2F, (canvas.Height - size) / 2F);
     }
 
-    SaturationValueTriangle Triangle => RotateTriangleByHue ? _triangleRotated : _triangleFixed;
+    SaturationValueTriangle Triangle => RotateTriangleByHue ? SaturationValueTriangleRotated : SaturationValueTriangleFixed;
+    static readonly SaturationValueTriangle SaturationValueTriangleRotated = new(rotateByHue: true);
+    static readonly SaturationValueTriangle SaturationValueTriangleFixed   = new(rotateByHue: false);
 
-    void UpdateLocations(Color color, float canvasRadius)
+    // Compute the three hue-indicator pixel positions from the controller's
+    // unit-space LocationH at paint time.
+    (SKPoint outer, SKPoint inner, SKPoint middle) ComputeHueIndicatorPixels(float canvasRadius)
     {
-        // Use _lastHue (not color.GetHue()) so the SV indicator stays put when
-        // the selected color is grayscale — matches the existing MAUI behavior.
-        var hsla = new HslaColor(_lastHue,
-                                 color.GetSaturation(),
-                                 color.GetLuminosity(),
-                                 color.Alpha);
+        var hUnit = Interaction.LocationH;
+        // Recover the angle from the unit point (the radius from the
+        // controller is exactly 0.5 in unit space).
+        var centered = new SKPoint(hUnit.X - 0.5f, hUnit.Y - 0.5f);
+        var angle = (float)Math.Atan2(centered.Y, centered.X);
 
-        var svUnit = Triangle.ColorToPoint(hsla);
-        _locationSv = FromUnit(svUnit, canvasRadius, SvRadius(canvasRadius));
-
-        var angleH = _lastHue * Math.PI * 2;
-        _locationMiddleH = FromPolar(new PolarPoint(HRadius(canvasRadius),                                  (float)(Math.PI - angleH)));
-        _locationMiddleH = OffsetByCenter(_locationMiddleH, canvasRadius);
-
-        _locationH1 = FromPolar(new PolarPoint(HRadius(canvasRadius) + GetIndicatorRadiusPixels(),          (float)(Math.PI - angleH)));
-        _locationH1 = OffsetByCenter(_locationH1, canvasRadius);
-
-        _locationH2 = FromPolar(new PolarPoint(HRadius(canvasRadius) - GetIndicatorRadiusPixels(),          (float)(Math.PI - angleH)));
-        _locationH2 = OffsetByCenter(_locationH2, canvasRadius);
+        var middle = OffsetByCenter(FromPolar(new PolarPoint(HRadius(canvasRadius),                                  angle)), canvasRadius);
+        var outer  = OffsetByCenter(FromPolar(new PolarPoint(HRadius(canvasRadius) + GetIndicatorRadiusPixels(),     angle)), canvasRadius);
+        var inner  = OffsetByCenter(FromPolar(new PolarPoint(HRadius(canvasRadius) - GetIndicatorRadiusPixels(),     angle)), canvasRadius);
+        return (outer, inner, middle);
     }
 
-    // Decode only the SV indicator. Hue is left untouched so the SV-only
-    // drag never roundtrips H through pixel quantization.
-    void UpdateColorsFromSv(float canvasRadius)
+    bool IsInHueRing(UnitPoint hUnit, float canvasRadius)
     {
-        var hsla = new HslaColor(_lastHue,
-                                 SelectedColor.GetSaturation(),
-                                 SelectedColor.GetLuminosity(),
-                                 SelectedColor.Alpha);
-
-        var svUnit = ToUnit(_locationSv, canvasRadius, SvRadius(canvasRadius));
-        hsla = Triangle.UpdateColor(svUnit, hsla);
-
-        WriteSelectedColor(hsla);
-    }
-
-    // Decode only the hue ring. SV is left untouched so dragging the hue
-    // ring (especially on the rotating triangle) never re-quantizes S/L
-    // through the encode/decode roundtrip — that was the source of the
-    // speed-dependent S/L drift.
-    void UpdateColorsFromH(float canvasRadius)
-    {
-        var hsla = new HslaColor(_lastHue,
-                                 SelectedColor.GetSaturation(),
-                                 SelectedColor.GetLuminosity(),
-                                 SelectedColor.Alpha);
-
-        var hUnit = ToUnit(_locationH1, canvasRadius, HRadius(canvasRadius));
-        hsla = _hueRing.UpdateColor(hUnit, hsla);
-
-        WriteSelectedColor(hsla);
+        // MAUI tolerance: ±indicatorPx in pixel space, expressed in unit space.
+        var tolUnits = GetIndicatorRadiusPixels() / (2F * HRadius(canvasRadius));
+        return Interaction.IsInH(hUnit, tolUnits);
     }
 
     void WriteSelectedColor(HslaColor hsla)
     {
-        var newColor = hsla.ToMauiColor();
-
-        if (_zeroSL && (newColor.GetSaturation() > 0))
-        {
-            newColor = Color.FromHsla(_lastHue, newColor.GetSaturation(), newColor.GetLuminosity(), newColor.Alpha);
-        }
-
-        _lastHue = hsla.H;
-        SelectedColor = newColor;
-    }
-
-    bool IsInSvArea(SKPoint point, float canvasRadius)
-        => Triangle.IsInActiveArea(ToUnit(point, canvasRadius, SvRadius(canvasRadius)), default);
-
-    bool IsInHArea(SKPoint point, float canvasRadius)
-    {
-        // MAUI tolerance: ±indicatorPx in pixel space.
-        var tolUnits = GetIndicatorRadiusPixels() / (2F * HRadius(canvasRadius));
-        return new HueRing(tolUnits).IsInActiveArea(ToUnit(point, canvasRadius, HRadius(canvasRadius)), default);
+        SelectedColor = hsla.ToMauiColor();
     }
 
     void PaintBackground(SKCanvas canvas, float canvasRadius)
@@ -321,9 +272,10 @@ public class ColorTriangleArea : SkiaPickerBase
 
     void PaintSvTriangle(SKCanvas canvas, float canvasRadius)
     {
+        var lastHue = Interaction.LastHue;
         canvas.Save();
 
-        var rotationHue = SKMatrix.CreateRotation(-(float)((2D * Math.PI * _lastHue) + (Math.PI / 2D)),
+        var rotationHue = SKMatrix.CreateRotation(-(float)((2D * Math.PI * lastHue) + (Math.PI / 2D)),
                                                    canvasRadius, canvasRadius);
 
         if (RotateTriangleByHue)
@@ -355,9 +307,9 @@ public class ColorTriangleArea : SkiaPickerBase
         var shader = SKShader.CreateSweepGradient(point3,
                                                    new SKColor[]
                                                    {
-                                                       Color.FromHsla(_lastHue, 1, 0.5).ToSKColor(),
+                                                       Color.FromHsla(lastHue, 1, 0.5).ToSKColor(),
                                                        Colors.White.ToSKColor(),
-                                                       Color.FromHsla(_lastHue, 1, 0.5).ToSKColor()
+                                                       Color.FromHsla(lastHue, 1, 0.5).ToSKColor()
                                                    },
                                                    new float[]
                                                    {
@@ -409,13 +361,6 @@ public class ColorTriangleArea : SkiaPickerBase
         canvas.DrawCircle(center, SvRadius(canvasRadius), paint);
     }
 
-    SKPoint LimitToSvTriangle(SKPoint point, float canvasRadius)
-    {
-        var unit = ToUnit(point, canvasRadius, SvRadius(canvasRadius));
-        var fit  = Triangle.FitToActiveArea(unit, default);
-        return FromUnit(fit, canvasRadius, SvRadius(canvasRadius));
-    }
-
     // Triangle constants — used by the SV-triangle rendering path (vertices,
     // gradient stretch). The encoding/decoding math has moved to
     // ColorPicker.Core.SaturationValueTriangle which carries its own copies.
@@ -423,25 +368,15 @@ public class ColorTriangleArea : SkiaPickerBase
     const float _triangleSide           = 0.8660244F;
     const float _triangleVerticalOffset = 0.5000001F;
 
-    void LimitToHRadius(SKPoint point, float canvasRadius)
-    {
-        var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        var pOuter = new PolarPoint(HRadius(canvasRadius) + GetIndicatorRadiusPixels(), polar.Angle);
-        var pInner = new PolarPoint(HRadius(canvasRadius) - GetIndicatorRadiusPixels(), polar.Angle);
-
-        _locationH1 = OffsetByCenter(FromPolar(pOuter), canvasRadius);
-        _locationH2 = OffsetByCenter(FromPolar(pInner), canvasRadius);
-    }
-
     static SKPoint OffsetByCenter(SKPoint p, float canvasRadius)
         => new(p.X + canvasRadius, p.Y + canvasRadius);
 
     // Pixel ↔ unit-square coordinate bridge (per active-area radius).
-    static UnitPoint ToUnit(SKPoint pixel, float canvasRadius, float activeRadius)
+    static UnitPoint PixelToUnit(SKPoint pixel, float canvasRadius, float activeRadius)
         => new((float)((pixel.X - canvasRadius) / (2.0 * activeRadius) + 0.5),
                (float)((pixel.Y - canvasRadius) / (2.0 * activeRadius) + 0.5));
 
-    static SKPoint FromUnit(UnitPoint unit, float canvasRadius, float activeRadius)
+    static SKPoint UnitToPixel(UnitPoint unit, float canvasRadius, float activeRadius)
         => new((float)((unit.X - 0.5) * 2.0 * activeRadius + canvasRadius),
                (float)((unit.Y - 0.5) * 2.0 * activeRadius + canvasRadius));
 
@@ -462,7 +397,7 @@ public class ColorTriangleArea : SkiaPickerBase
     float SvRadius(float canvasRadius) => canvasRadius - (2 * GetIndicatorRadiusPixels()) - 2;
     float HRadius(float canvasRadius) => canvasRadius - GetIndicatorRadiusPixels();
 
-    void PaintLinePicker(SKCanvas canvas)
+    void PaintLinePicker(SKCanvas canvas, SKPoint outer, SKPoint inner)
     {
         var paint = new SKPaint
         {
@@ -474,8 +409,8 @@ public class ColorTriangleArea : SkiaPickerBase
         paint.StrokeWidth = 4;
 
         using var pathTriangle = new SKPath();
-        pathTriangle.MoveTo(_locationH1);
-        pathTriangle.LineTo(_locationH2);
+        pathTriangle.MoveTo(outer);
+        pathTriangle.LineTo(inner);
 
         canvas.DrawPath(pathTriangle, paint);
     }

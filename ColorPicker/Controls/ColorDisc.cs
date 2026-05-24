@@ -1,17 +1,17 @@
 using ColorPicker.Core;
+using ColorPicker.Core.Interaction;
 
 namespace ColorPicker.Controls;
 
 public class ColorDisc : SkiaPickerBase
 {
-    static readonly HueSaturationDisc _hsDisc = new();
-    static readonly Core.LuminosityRing _lRing = new();
+    // Interaction state lives in a pure controller so the per-region
+    // split (HS-only updates from HS touches, L-only updates from L
+    // touches) can be exercised by deterministic Core unit tests.
+    readonly ColorDiscInteraction _interaction = new();
 
     long?   _locationHsProgressId    = null;
     long?   _locationLProgressId     = null;
-
-    SKPoint _locationHs              = new();
-    SKPoint _locationL               = new();
 
     readonly SKColor[] _sweepGradientColors = new SKColor[256];
 
@@ -68,17 +68,18 @@ public class ColorDisc : SkiaPickerBase
         var canvasRadius    = GetCanvasSize().Width / 2F;
         var point           = ConvertToPixel(args.Location);
 
-        if (_locationHsProgressId is null && IsInHsArea(point, canvasRadius))
+        var hsUnit = PixelToUnit(point, canvasRadius, HsRadius(canvasRadius));
+        var lUnit  = PixelToUnit(point, canvasRadius, LRadius(canvasRadius));
+
+        if (_locationHsProgressId is null && _interaction.IsInHs(hsUnit))
         {
             _locationHsProgressId = args.Id;
-            _locationHs = LimitToHsRadius(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            WriteSelectedColor(_interaction.UpdateFromHs(hsUnit));
         }
-        else if (_locationLProgressId is null && IsInLArea(point, canvasRadius))
+        else if (_locationLProgressId is null && IsInLRing(lUnit, canvasRadius))
         {
             _locationLProgressId = args.Id;
-            _locationL = LimitToLRadius(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            WriteSelectedColor(_interaction.UpdateFromL(lUnit));
         }
     }
 
@@ -89,13 +90,13 @@ public class ColorDisc : SkiaPickerBase
 
         if (_locationHsProgressId == args.Id)
         {
-            _locationHs = LimitToHsRadius(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            var hsUnit = PixelToUnit(point, canvasRadius, HsRadius(canvasRadius));
+            WriteSelectedColor(_interaction.UpdateFromHs(hsUnit));
         }
         else if (_locationLProgressId == args.Id)
         {
-            _locationL = LimitToLRadius(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            var lUnit = PixelToUnit(point, canvasRadius, LRadius(canvasRadius));
+            WriteSelectedColor(_interaction.UpdateFromL(lUnit));
         }
     }
 
@@ -107,14 +108,14 @@ public class ColorDisc : SkiaPickerBase
         if (_locationHsProgressId == args.Id)
         {
             _locationHsProgressId = null;
-            _locationHs = LimitToHsRadius(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            var hsUnit = PixelToUnit(point, canvasRadius, HsRadius(canvasRadius));
+            WriteSelectedColor(_interaction.UpdateFromHs(hsUnit));
         }
         else if (_locationLProgressId == args.Id)
         {
             _locationLProgressId = null;
-            _locationL = LimitToLRadius(point, canvasRadius);
-            UpdateColors(canvasRadius);
+            var lUnit = PixelToUnit(point, canvasRadius, LRadius(canvasRadius));
+            WriteSelectedColor(_interaction.UpdateFromL(lUnit));
         }
     }
 
@@ -130,23 +131,28 @@ public class ColorDisc : SkiaPickerBase
     {
         var canvasRadius = GetSize() / 2F;
 
-        UpdateLocations(SelectedColor, canvasRadius);
+        var locationHs = UnitToPixel(_interaction.LocationHs, canvasRadius, HsRadius(canvasRadius));
+        var locationL  = UnitToPixel(_interaction.LocationL,  canvasRadius, LRadius(canvasRadius));
+
         canvas.Clear();
         PaintBackground(canvas, canvasRadius);
 
         if (ShowLuminosityRing)
         {
             PaintLGradient(canvas, canvasRadius);
-            PaintIndicator(canvas, _locationL);
+            PaintIndicator(canvas, locationL);
         }
 
         PaintColorSweepGradient(canvas, canvasRadius);
         PaintGrayRadialGradient(canvas, canvasRadius);
-        PaintIndicator(canvas, _locationHs);
+        PaintIndicator(canvas, locationHs);
     }
 
     protected override void OnSelectedColorChanging(Color color)
-            => InvalidateSurface();
+    {
+        _interaction.SyncFromColor(color.ToHsla());
+        InvalidateSurface();
+    }
 
     protected override SizeRequest GetMeasure(double widthConstraint, double heightConstraint)
     {
@@ -165,46 +171,19 @@ public class ColorDisc : SkiaPickerBase
     protected override float GetSize(SKSize canvasSize) => canvasSize.Width;
     protected override float GetSize() => GetSize(GetCanvasSize());
 
-    void UpdateLocations(Color color, float canvasRadius)
+    void WriteSelectedColor(HslaColor hsla)
     {
-        var hsl = color.ToHsla();
-
-        if (color.GetLuminosity() != 0 || !IsInHsArea(_locationHs, canvasRadius))
-        {
-            var hsUnit = _hsDisc.ColorToPoint(hsl);
-            _locationHs = FromUnit(hsUnit, canvasRadius, HsRadius(canvasRadius));
-        }
-
-        var prevLUnit = ToUnit(_locationL, canvasRadius, LRadius(canvasRadius));
-        var lUnit     = _lRing.ColorToPoint(hsl, prevLUnit);
-        _locationL    = FromUnit(lUnit, canvasRadius, LRadius(canvasRadius));
+        SelectedColor = hsla.ToMauiColor();
     }
 
-    void UpdateColors(float canvasRadius)
-    {
-        var hsl = SelectedColor.ToHsla();
-        var hsUnit = ToUnit(_locationHs, canvasRadius, HsRadius(canvasRadius));
-        var lUnit  = ToUnit(_locationL,  canvasRadius, LRadius(canvasRadius));
-
-        hsl = _hsDisc.UpdateColor(hsUnit, hsl);
-        hsl = _lRing .UpdateColor(lUnit,  hsl);
-
-        SelectedColor = hsl.ToMauiColor();
-    }
-
-    bool IsInHsArea(SKPoint point, float canvasRadius)
-        => _hsDisc.IsInActiveArea(ToUnit(point, canvasRadius, HsRadius(canvasRadius)), default);
-
-    bool IsInLArea(SKPoint point, float canvasRadius)
+    bool IsInLRing(UnitPoint lUnit, float canvasRadius)
     {
         if (!ShowLuminosityRing)
             return false;
-
         // Hit tolerance lives in pixel space (half the indicator radius); convert
         // to unit-square units by scaling against the L-ring radius.
         var tolUnits = (GetIndicatorRadiusPixels() / 2F) / (2F * LRadius(canvasRadius));
-        var ring = new Core.LuminosityRing(tolUnits);
-        return ring.IsInActiveArea(ToUnit(point, canvasRadius, LRadius(canvasRadius)), default);
+        return _interaction.IsInL(lUnit, tolUnits);
     }
 
     void PaintBackground(SKCanvas canvas, float canvasRadius)
@@ -281,26 +260,12 @@ public class ColorDisc : SkiaPickerBase
         canvas.DrawPaint(paint);
     }
 
-    SKPoint LimitToHsRadius(SKPoint point, float canvasRadius)
-    {
-        var unit = ToUnit(point, canvasRadius, HsRadius(canvasRadius));
-        var fit  = _hsDisc.FitToActiveArea(unit, default);
-        return FromUnit(fit, canvasRadius, HsRadius(canvasRadius));
-    }
-
-    SKPoint LimitToLRadius(SKPoint point, float canvasRadius)
-    {
-        var unit = ToUnit(point, canvasRadius, LRadius(canvasRadius));
-        var fit  = _lRing.FitToActiveArea(unit, default);
-        return FromUnit(fit, canvasRadius, LRadius(canvasRadius));
-    }
-
     // Pixel ↔ unit-square coordinate bridge (per active-area radius).
-    static UnitPoint ToUnit(SKPoint pixel, float canvasRadius, float activeRadius)
+    static UnitPoint PixelToUnit(SKPoint pixel, float canvasRadius, float activeRadius)
         => new((float)((pixel.X - canvasRadius) / (2.0 * activeRadius) + 0.5),
                (float)((pixel.Y - canvasRadius) / (2.0 * activeRadius) + 0.5));
 
-    static SKPoint FromUnit(UnitPoint unit, float canvasRadius, float activeRadius)
+    static SKPoint UnitToPixel(UnitPoint unit, float canvasRadius, float activeRadius)
         => new((float)((unit.X - 0.5) * 2.0 * activeRadius + canvasRadius),
                (float)((unit.Y - 0.5) * 2.0 * activeRadius + canvasRadius));
 
