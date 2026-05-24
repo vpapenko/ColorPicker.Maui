@@ -25,34 +25,37 @@ public abstract class HslChannelSlider : IColorPickerArea
 
     public UnitPoint ColorToPoint(HslaColor color) => Track.PointFor(Read(color));
 
-    protected abstract double Read(HslaColor color);
-    protected abstract HslaColor Write(HslaColor color, double value);
+    /// <summary>Read this slider's channel from <paramref name="color"/>.</summary>
+    public abstract double Read(HslaColor color);
+
+    /// <summary>Return a copy of <paramref name="color"/> with this slider's channel set to <paramref name="value"/>.</summary>
+    public abstract HslaColor Write(HslaColor color, double value);
 }
 
 public sealed class HueSlider : HslChannelSlider
 {
     public HueSlider(bool vertical = false) : base(new LinearTrack(vertical)) { }
-    protected override double Read(HslaColor c) => c.H;
-    protected override HslaColor Write(HslaColor c, double v) => c.WithH(v);
+    public override double Read(HslaColor c) => c.H;
+    public override HslaColor Write(HslaColor c, double v) => c.WithH(v);
 }
 
 public sealed class SaturationSlider : HslChannelSlider
 {
     public SaturationSlider(bool vertical = false) : base(new LinearTrack(vertical)) { }
-    protected override double Read(HslaColor c) => c.S;
-    protected override HslaColor Write(HslaColor c, double v) => c.WithS(v);
+    public override double Read(HslaColor c) => c.S;
+    public override HslaColor Write(HslaColor c, double v) => c.WithS(v);
 }
 
 public sealed class LuminositySlider : HslChannelSlider
 {
     public LuminositySlider(bool vertical = false) : base(new LinearTrack(vertical)) { }
-    protected override double Read(HslaColor c) => c.L;
-    protected override HslaColor Write(HslaColor c, double v) => c.WithL(v);
+    public override double Read(HslaColor c) => c.L;
+    public override HslaColor Write(HslaColor c, double v) => c.WithL(v);
 }
 
 public sealed class AlphaSlider : HslChannelSlider
 {
     public AlphaSlider(bool vertical = false) : base(new LinearTrack(vertical)) { }
-    protected override double Read(HslaColor c) => c.A;
-    protected override HslaColor Write(HslaColor c, double v) => c.WithA(v);
+    public override double Read(HslaColor c) => c.A;
+    public override HslaColor Write(HslaColor c, double v) => c.WithA(v);
 }

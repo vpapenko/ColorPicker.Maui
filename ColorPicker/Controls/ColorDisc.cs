@@ -1,7 +1,12 @@
+using ColorPicker.Core;
+
 namespace ColorPicker.Controls;
 
 public class ColorDisc : SkiaPickerBase
 {
+    static readonly HueSaturationDisc _hsDisc = new();
+    static readonly Core.LuminosityRing _lRing = new();
+
     long?   _locationHsProgressId    = null;
     long?   _locationLProgressId     = null;
 
@@ -162,52 +167,44 @@ public class ColorDisc : SkiaPickerBase
 
     void UpdateLocations(Color color, float canvasRadius)
     {
+        var hsl = color.ToHsla();
+
         if (color.GetLuminosity() != 0 || !IsInHsArea(_locationHs, canvasRadius))
         {
-            var angleHs  = (0.5 - color.GetHue()) * (2 * Math.PI);
-            var radiusHs = HsRadius(canvasRadius) * color.GetSaturation();
-
-            var resultHs = FromPolar(new PolarPoint((float)radiusHs, (float)angleHs));
-            resultHs.X += canvasRadius;
-            resultHs.Y += canvasRadius;
-            _locationHs = resultHs;
+            var hsUnit = _hsDisc.ColorToPoint(hsl);
+            _locationHs = FromUnit(hsUnit, canvasRadius, HsRadius(canvasRadius));
         }
 
-        var polarL      = ToPolar(ToLCoordinates(_locationL, canvasRadius));
-        polarL.Angle -= (float)Math.PI / 2F;
-        var signOld     = polarL.Angle <= 0 ? 1 : -1;
-        var angleL      = color.GetLuminosity() * Math.PI * signOld;
-
-        var resultL     = FromPolar(new PolarPoint(LRadius(canvasRadius), (float)(angleL - (Math.PI / 2))));
-        resultL.X += canvasRadius;
-        resultL.Y += canvasRadius;
-        _locationL = resultL;
+        var prevLUnit = ToUnit(_locationL, canvasRadius, LRadius(canvasRadius));
+        var lUnit     = _lRing.ColorToPoint(hsl, prevLUnit);
+        _locationL    = FromUnit(lUnit, canvasRadius, LRadius(canvasRadius));
     }
 
     void UpdateColors(float canvasRadius)
     {
-        var hsPoint    = ToHsCoordinates(_locationHs, canvasRadius);
-        var lPoint     = ToLCoordinates(_locationL, canvasRadius);
+        var hsl = SelectedColor.ToHsla();
+        var hsUnit = ToUnit(_locationHs, canvasRadius, HsRadius(canvasRadius));
+        var lUnit  = ToUnit(_locationL,  canvasRadius, LRadius(canvasRadius));
 
-        var newColor        = WheelPointToColor(hsPoint, lPoint);
-        SelectedColor = newColor;
+        hsl = _hsDisc.UpdateColor(hsUnit, hsl);
+        hsl = _lRing .UpdateColor(lUnit,  hsl);
+
+        SelectedColor = hsl.ToMauiColor();
     }
 
     bool IsInHsArea(SKPoint point, float canvasRadius)
-    {
-        var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        return polar.Radius <= HsRadius(canvasRadius);
-    }
+        => _hsDisc.IsInActiveArea(ToUnit(point, canvasRadius, HsRadius(canvasRadius)), default);
 
     bool IsInLArea(SKPoint point, float canvasRadius)
     {
         if (!ShowLuminosityRing)
             return false;
 
-        var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-
-        return polar.Radius <= LRadius(canvasRadius) + (GetIndicatorRadiusPixels() / 2F)
-            && polar.Radius >= LRadius(canvasRadius) - (GetIndicatorRadiusPixels() / 2F);
+        // Hit tolerance lives in pixel space (half the indicator radius); convert
+        // to unit-square units by scaling against the L-ring radius.
+        var tolUnits = (GetIndicatorRadiusPixels() / 2F) / (2F * LRadius(canvasRadius));
+        var ring = new Core.LuminosityRing(tolUnits);
+        return ring.IsInActiveArea(ToUnit(point, canvasRadius, LRadius(canvasRadius)), default);
     }
 
     void PaintBackground(SKCanvas canvas, float canvasRadius)
@@ -284,84 +281,28 @@ public class ColorDisc : SkiaPickerBase
         canvas.DrawPaint(paint);
     }
 
-    SKPoint ToHsCoordinates(SKPoint point, float canvasRadius)
-    {
-        var result = new SKPoint(point.X, point.Y);
-
-        result.X -= canvasRadius;
-        result.Y -= canvasRadius;
-        result.X /= HsRadius(canvasRadius);
-        result.Y /= HsRadius(canvasRadius);
-
-        return result;
-    }
-
-    SKPoint ToLCoordinates(SKPoint point, float canvasRadius)
-    {
-        var result = new SKPoint(point.X, point.Y);
-
-        result.X -= canvasRadius;
-        result.Y -= canvasRadius;
-        result.X /= LRadius(canvasRadius);
-        result.Y /= LRadius(canvasRadius);
-
-        return result;
-    }
-
-    Color WheelPointToColor(SKPoint pointHS, SKPoint pointL)
-    {
-        var polarHS     = ToPolar(pointHS);
-        var polarL      = ToPolar(pointL);
-
-        polarL.Angle += (float)Math.PI / 2F;
-        polarL = ToPolar(FromPolar(polarL));
-
-        var h   = (Math.PI - polarHS.Angle) / (2 * Math.PI);
-        var s   = polarHS.Radius;
-        var l   = Math.Abs(polarL.Angle) / Math.PI;
-
-        return Color.FromHsla(h, s, l, SelectedColor.Alpha);
-    }
-
     SKPoint LimitToHsRadius(SKPoint point, float canvasRadius)
     {
-        var polar       = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        polar.Radius = polar.Radius < HsRadius(canvasRadius) ? polar.Radius : HsRadius(canvasRadius);
-        var result      = FromPolar(polar);
-
-        result.X += canvasRadius;
-        result.Y += canvasRadius;
-
-        return result;
+        var unit = ToUnit(point, canvasRadius, HsRadius(canvasRadius));
+        var fit  = _hsDisc.FitToActiveArea(unit, default);
+        return FromUnit(fit, canvasRadius, HsRadius(canvasRadius));
     }
 
     SKPoint LimitToLRadius(SKPoint point, float canvasRadius)
     {
-        var polar       = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        polar.Radius = LRadius(canvasRadius);
-        var result      = FromPolar(polar);
-
-        result.X += canvasRadius;
-        result.Y += canvasRadius;
-
-        return result;
+        var unit = ToUnit(point, canvasRadius, LRadius(canvasRadius));
+        var fit  = _lRing.FitToActiveArea(unit, default);
+        return FromUnit(fit, canvasRadius, LRadius(canvasRadius));
     }
 
-    static PolarPoint ToPolar(SKPoint point)
-    {
-        var radius    = (float)Math.Sqrt((point.X * point.X) + (point.Y * point.Y));
-        var angle     = (float)Math.Atan2(point.Y, point.X);
+    // Pixel ↔ unit-square coordinate bridge (per active-area radius).
+    static UnitPoint ToUnit(SKPoint pixel, float canvasRadius, float activeRadius)
+        => new((float)((pixel.X - canvasRadius) / (2.0 * activeRadius) + 0.5),
+               (float)((pixel.Y - canvasRadius) / (2.0 * activeRadius) + 0.5));
 
-        return new PolarPoint(radius, angle);
-    }
-
-    static SKPoint FromPolar(PolarPoint point)
-    {
-        var x     = (float)(point.Radius * Math.Cos(point.Angle));
-        var y     = (float)(point.Radius * Math.Sin(point.Angle));
-
-        return new SKPoint(x, y);
-    }
+    static SKPoint FromUnit(UnitPoint unit, float canvasRadius, float activeRadius)
+        => new((float)((unit.X - 0.5) * 2.0 * activeRadius + canvasRadius),
+               (float)((unit.Y - 0.5) * 2.0 * activeRadius + canvasRadius));
 
     // Small margin so the picker indicator (outer stroke + antialiasing)
     // does not get clipped at the canvas edge.
