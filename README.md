@@ -128,7 +128,6 @@ See the `ColorPickerTestApp` project for comprehensive examples of all controls 
 - Microsoft.Maui.Controls 8.0.100+
 - SkiaSharp 2.88.8+
 - SkiaSharp.Views.Maui.Controls 2.88.8+
-- ColorMinePortable 2.0.1+
 
 ## License
 
