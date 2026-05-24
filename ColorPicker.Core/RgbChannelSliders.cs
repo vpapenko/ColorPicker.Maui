@@ -37,27 +37,30 @@ public abstract class RgbChannelSlider : IColorPickerArea
     public UnitPoint ColorToPoint(HslaColor color)
         => Track.PointFor(Read(ColorConversions.HslToRgb(color)));
 
-    protected abstract double Read(RgbaColor c);
-    protected abstract RgbaColor Write(RgbaColor c, double value);
+    /// <summary>Read this slider's channel from <paramref name="c"/>.</summary>
+    public abstract double Read(RgbaColor c);
+
+    /// <summary>Return a copy of <paramref name="c"/> with this slider's channel set to <paramref name="value"/>.</summary>
+    public abstract RgbaColor Write(RgbaColor c, double value);
 }
 
 public sealed class RedSlider : RgbChannelSlider
 {
     public RedSlider(bool vertical = false) : base(new LinearTrack(vertical)) { }
-    protected override double Read(RgbaColor c) => c.R;
-    protected override RgbaColor Write(RgbaColor c, double v) => c.WithR(v);
+    public override double Read(RgbaColor c) => c.R;
+    public override RgbaColor Write(RgbaColor c, double v) => c.WithR(v);
 }
 
 public sealed class GreenSlider : RgbChannelSlider
 {
     public GreenSlider(bool vertical = false) : base(new LinearTrack(vertical)) { }
-    protected override double Read(RgbaColor c) => c.G;
-    protected override RgbaColor Write(RgbaColor c, double v) => c.WithG(v);
+    public override double Read(RgbaColor c) => c.G;
+    public override RgbaColor Write(RgbaColor c, double v) => c.WithG(v);
 }
 
 public sealed class BlueSlider : RgbChannelSlider
 {
     public BlueSlider(bool vertical = false) : base(new LinearTrack(vertical)) { }
-    protected override double Read(RgbaColor c) => c.B;
-    protected override RgbaColor Write(RgbaColor c, double v) => c.WithB(v);
+    public override double Read(RgbaColor c) => c.B;
+    public override RgbaColor Write(RgbaColor c, double v) => c.WithB(v);
 }

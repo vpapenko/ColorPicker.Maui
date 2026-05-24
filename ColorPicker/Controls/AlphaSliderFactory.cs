@@ -1,11 +1,16 @@
+using ColorPicker.Core;
+
 namespace ColorPicker.Controls;
 
 public static class AlphaSliderFactory
 {
-    public static float NewValueAlpha(Color color) => (float)color.Alpha;
+    static readonly Core.AlphaSlider _alpha = new();
+
+    public static float NewValueAlpha(Color color) => (float)_alpha.Read(color.ToHsla());
 
     public static Color GetNewColorAlpha(float newValue, Color oldColor)
-        => Color.FromRgba(oldColor.Red, oldColor.Green, oldColor.Blue, newValue);
+        => Color.FromRgba(oldColor.Red, oldColor.Green, oldColor.Blue,
+                          _alpha.Write(oldColor.ToHsla(), newValue).A);
 
     public static SKPaint GetPaintAlpha(Color color, SKPoint startPoint, SKPoint endPoint)
     {

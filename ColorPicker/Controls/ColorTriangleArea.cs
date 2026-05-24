@@ -1,7 +1,14 @@
+using ColorPicker.Core;
+using PolarPoint = ColorPicker.Classes.PolarPoint;
+
 namespace ColorPicker.Controls;
 
 public class ColorTriangleArea : SkiaPickerBase
 {
+    static readonly SaturationValueTriangle _triangleRotated = new(rotateByHue: true);
+    static readonly SaturationValueTriangle _triangleFixed   = new(rotateByHue: false);
+    static readonly HueRing                 _hueRing         = new();
+
     double _lastHue = 0;
     bool _zeroSL = false;
     long? _locationSvProgressId = null;
@@ -206,74 +213,65 @@ public class ColorTriangleArea : SkiaPickerBase
         return ((canvas.Width - size) / 2F, (canvas.Height - size) / 2F);
     }
 
+    SaturationValueTriangle Triangle => RotateTriangleByHue ? _triangleRotated : _triangleFixed;
+
     void UpdateLocations(Color color, float canvasRadius)
     {
-        ColorToHsv(color, out _, out var saturation, out var value);
+        // Use _lastHue (not color.GetHue()) so the SV indicator stays put when
+        // the selected color is grayscale — matches the existing MAUI behavior.
+        var hsla = new HslaColor(_lastHue,
+                                 color.GetSaturation(),
+                                 color.GetLuminosity(),
+                                 color.Alpha);
 
-        var luminosityX = -(float)((2 * _triangleSide * saturation) - _triangleSide);
-        var luminosityY = _triangleHeight;
-
-        var polarValue = ToPolar(new SKPoint(luminosityX, luminosityY));
-        polarValue.Radius *= (float)value;
-
-        _locationSv = FromPolar(polarValue);
-        _locationSv.X = -_locationSv.X;
-        _locationSv.Y -= 1;
-        _locationSv.X *= SvRadius(canvasRadius);
-        _locationSv.Y *= SvRadius(canvasRadius);
-
-        polarValue = ToPolar(new SKPoint(_locationSv.X, _locationSv.Y));
-        polarValue.Angle -= (float)(2 * Math.PI / 3);
-        _locationSv = FromPolar(polarValue);
-
-        _locationSv.X += canvasRadius;
-        _locationSv.Y += canvasRadius;
-
-        if (RotateTriangleByHue)
-        {
-            var rotationHue = SKMatrix.CreateRotation(-(float)((2D * Math.PI * _lastHue) + (Math.PI / 2D)), canvasRadius, canvasRadius);
-            _locationSv = rotationHue.MapPoint(_locationSv);
-        }
+        var svUnit = Triangle.ColorToPoint(hsla);
+        _locationSv = FromUnit(svUnit, canvasRadius, SvRadius(canvasRadius));
 
         var angleH = _lastHue * Math.PI * 2;
+        _locationMiddleH = FromPolar(new PolarPoint(HRadius(canvasRadius),                                  (float)(Math.PI - angleH)));
+        _locationMiddleH = OffsetByCenter(_locationMiddleH, canvasRadius);
 
-        _locationMiddleH = FromPolar(new PolarPoint(HRadius(canvasRadius), (float)(Math.PI - angleH)));
-        _locationMiddleH.X += canvasRadius;
-        _locationMiddleH.Y += canvasRadius;
+        _locationH1 = FromPolar(new PolarPoint(HRadius(canvasRadius) + GetIndicatorRadiusPixels(),          (float)(Math.PI - angleH)));
+        _locationH1 = OffsetByCenter(_locationH1, canvasRadius);
 
-        _locationH1 = FromPolar(new PolarPoint(HRadius(canvasRadius) + GetIndicatorRadiusPixels(), (float)(Math.PI - angleH)));
-        _locationH1.X += canvasRadius;
-        _locationH1.Y += canvasRadius;
-
-        _locationH2 = FromPolar(new PolarPoint(HRadius(canvasRadius) - GetIndicatorRadiusPixels(), (float)(Math.PI - angleH)));
-        _locationH2.X += canvasRadius;
-        _locationH2.Y += canvasRadius;
+        _locationH2 = FromPolar(new PolarPoint(HRadius(canvasRadius) - GetIndicatorRadiusPixels(),          (float)(Math.PI - angleH)));
+        _locationH2 = OffsetByCenter(_locationH2, canvasRadius);
     }
 
     void UpdateColors(float canvasRadius)
     {
-        var svPoint = ToSvCoordinates(_locationSv, canvasRadius);
-        var hPoint = ToHCoordinates(_locationH1, canvasRadius);
-        var newColor = WheelPointToColor(svPoint, hPoint);
+        var hsla = new HslaColor(_lastHue,
+                                 SelectedColor.GetSaturation(),
+                                 SelectedColor.GetLuminosity(),
+                                 SelectedColor.Alpha);
+
+        var svUnit = ToUnit(_locationSv, canvasRadius, SvRadius(canvasRadius));
+        // Decode SV with the OLD hue (_lastHue, baked into hsla.H) — same
+        // ordering MAUI uses: triangle decode then hue assignment.
+        hsla = Triangle.UpdateColor(svUnit, hsla);
+
+        var hUnit = ToUnit(_locationH1, canvasRadius, HRadius(canvasRadius));
+        hsla = _hueRing.UpdateColor(hUnit, hsla);
+
+        var newColor = hsla.ToMauiColor();
 
         if (_zeroSL && (newColor.GetSaturation() > 0))
         {
             newColor = Color.FromHsla(_lastHue, newColor.GetSaturation(), newColor.GetLuminosity(), newColor.Alpha);
         }
 
+        _lastHue = hsla.H;
         SelectedColor = newColor;
     }
 
     bool IsInSvArea(SKPoint point, float canvasRadius)
-    {
-        var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        return polar.Radius <= SvRadius(canvasRadius);
-    }
+        => Triangle.IsInActiveArea(ToUnit(point, canvasRadius, SvRadius(canvasRadius)), default);
 
     bool IsInHArea(SKPoint point, float canvasRadius)
     {
-        var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        return polar.Radius <= HRadius(canvasRadius) + GetIndicatorRadiusPixels() && polar.Radius >= HRadius(canvasRadius) - GetIndicatorRadiusPixels();
+        // MAUI tolerance: ±indicatorPx in pixel space.
+        var tolUnits = GetIndicatorRadiusPixels() / (2F * HRadius(canvasRadius));
+        return new HueRing(tolUnits).IsInActiveArea(ToUnit(point, canvasRadius, HRadius(canvasRadius)), default);
     }
 
     void PaintBackground(SKCanvas canvas, float canvasRadius)
@@ -393,93 +391,41 @@ public class ColorTriangleArea : SkiaPickerBase
         canvas.DrawCircle(center, SvRadius(canvasRadius), paint);
     }
 
-    SKPoint ToSvCoordinates(SKPoint point, float canvasRadius)
-    {
-        var result = new SKPoint(point.X, point.Y);
-
-        result.X -= canvasRadius;
-        result.Y -= canvasRadius;
-        result.X /= SvRadius(canvasRadius);
-        result.Y /= SvRadius(canvasRadius);
-
-        return result;
-    }
-
-    SKPoint ToHCoordinates(SKPoint point, float canvasRadius)
-    {
-        var result = new SKPoint(point.X, point.Y);
-
-        result.X -= canvasRadius;
-        result.Y -= canvasRadius;
-        result.X /= HRadius(canvasRadius);
-        result.Y /= HRadius(canvasRadius);
-
-        return result;
-    }
-
-    const float _triangleHeight = 1.5000001F;
-    const float _triangleSide = 0.8660244F;
-    const float _triangleVerticalOffset = 0.5000001F;
-
-    Color WheelPointToColor(SKPoint pointSV, SKPoint pointH)
-    {
-        if (RotateTriangleByHue)
-        {
-            var rotationHue = SKMatrix.CreateRotation((float)((2D * Math.PI * _lastHue) + (Math.PI / 2D)));
-            pointSV = rotationHue.MapPoint(pointSV);
-        }
-
-        var polarH = ToPolar(pointH);
-        var h = (-polarH.Angle + Math.PI) / (2 * Math.PI);
-
-        pointSV.Y = -pointSV.Y + _triangleVerticalOffset;
-        pointSV.X += _triangleSide;
-
-        var x1 = _triangleSide;
-        var y1 = _triangleHeight;
-        var x2 = x1 * 2;
-        var y2 = 0F;
-
-        var vCurrent = ((pointSV.X * (y2 - y1)) - (pointSV.Y * (x2 - x1)) + (x2 * y1) - (y2 * x1)) / Math.Sqrt(Math.Pow(y2 - y1, 2) + Math.Pow(x2 - x1, 2));
-        var v = (y1 - vCurrent) / y1;
-
-        var sMax = x2 - (vCurrent / Math.Sin(Math.PI / 3));
-        var sCurrent = pointSV.Y / Math.Sin(Math.PI / 3);
-        var s = sCurrent / sMax;
-
-        _lastHue = h;
-        var result = ColorFromHsv(h, s, v, SelectedColor.Alpha);
-
-        return result;
-    }
-
     SKPoint LimitToSvTriangle(SKPoint point, float canvasRadius)
     {
-        var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        polar.Radius = polar.Radius < SvRadius(canvasRadius) ? polar.Radius : SvRadius(canvasRadius);
-
-        var result = FromPolar(polar);
-        result.X += canvasRadius;
-        result.Y += canvasRadius;
-        return result;
+        var unit = ToUnit(point, canvasRadius, SvRadius(canvasRadius));
+        var fit  = Triangle.FitToActiveArea(unit, default);
+        return FromUnit(fit, canvasRadius, SvRadius(canvasRadius));
     }
+
+    // Triangle constants — used by the SV-triangle rendering path (vertices,
+    // gradient stretch). The encoding/decoding math has moved to
+    // ColorPicker.Core.SaturationValueTriangle which carries its own copies.
+    const float _triangleHeight         = 1.5000001F;
+    const float _triangleSide           = 0.8660244F;
+    const float _triangleVerticalOffset = 0.5000001F;
 
     void LimitToHRadius(SKPoint point, float canvasRadius)
     {
-        var point1 = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        point1.Radius = HRadius(canvasRadius) + GetIndicatorRadiusPixels();
+        var polar = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
+        var pOuter = new PolarPoint(HRadius(canvasRadius) + GetIndicatorRadiusPixels(), polar.Angle);
+        var pInner = new PolarPoint(HRadius(canvasRadius) - GetIndicatorRadiusPixels(), polar.Angle);
 
-        var point2 = ToPolar(new SKPoint(point.X - canvasRadius, point.Y - canvasRadius));
-        point1.Radius = HRadius(canvasRadius) - GetIndicatorRadiusPixels();
-
-        _locationH1 = FromPolar(point1);
-        _locationH2 = FromPolar(point2);
-
-        _locationH1.X += canvasRadius;
-        _locationH1.Y += canvasRadius;
-        _locationH2.X += canvasRadius;
-        _locationH2.Y += canvasRadius;
+        _locationH1 = OffsetByCenter(FromPolar(pOuter), canvasRadius);
+        _locationH2 = OffsetByCenter(FromPolar(pInner), canvasRadius);
     }
+
+    static SKPoint OffsetByCenter(SKPoint p, float canvasRadius)
+        => new(p.X + canvasRadius, p.Y + canvasRadius);
+
+    // Pixel ↔ unit-square coordinate bridge (per active-area radius).
+    static UnitPoint ToUnit(SKPoint pixel, float canvasRadius, float activeRadius)
+        => new((float)((pixel.X - canvasRadius) / (2.0 * activeRadius) + 0.5),
+               (float)((pixel.Y - canvasRadius) / (2.0 * activeRadius) + 0.5));
+
+    static SKPoint FromUnit(UnitPoint unit, float canvasRadius, float activeRadius)
+        => new((float)((unit.X - 0.5) * 2.0 * activeRadius + canvasRadius),
+               (float)((unit.Y - 0.5) * 2.0 * activeRadius + canvasRadius));
 
     static PolarPoint ToPolar(SKPoint point)
     {

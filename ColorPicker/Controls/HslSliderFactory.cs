@@ -1,19 +1,25 @@
+using ColorPicker.Core;
+
 namespace ColorPicker.Controls;
 
 public static class HslSliderFactory
 {
-    public static float NewValueH(Color color) => color.GetHue();
-    public static float NewValueS(Color color) => color.GetSaturation();
-    public static float NewValueL(Color color) => color.GetLuminosity();
+    static readonly HueSlider             _hue = new();
+    static readonly SaturationSlider      _sat = new();
+    static readonly Core.LuminositySlider _lum = new();
+
+    public static float NewValueH(Color color) => (float)_hue.Read(color.ToHsla());
+    public static float NewValueS(Color color) => (float)_sat.Read(color.ToHsla());
+    public static float NewValueL(Color color) => (float)_lum.Read(color.ToHsla());
 
     public static Color GetNewColorH(float newValue, Color oldColor)
-            => Color.FromHsla(newValue, oldColor.GetSaturation(), oldColor.GetLuminosity(), oldColor.Alpha);
+            => _hue.Write(oldColor.ToHsla(), newValue).ToMauiColor();
 
     public static Color GetNewColorS(float newValue, Color oldColor)
-            => Color.FromHsla(oldColor.GetHue(), newValue, oldColor.GetLuminosity(), oldColor.Alpha);
+            => _sat.Write(oldColor.ToHsla(), newValue).ToMauiColor();
 
     public static Color GetNewColorL(float newValue, Color oldColor)
-            => Color.FromHsla(oldColor.GetHue(), oldColor.GetSaturation(), newValue, oldColor.Alpha);
+            => _lum.Write(oldColor.ToHsla(), newValue).ToMauiColor();
 
     public static SKPaint GetPaintH(Color _, SKPoint startPoint, SKPoint endPoint)
     {
