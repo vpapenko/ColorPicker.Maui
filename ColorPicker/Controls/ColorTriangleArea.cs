@@ -156,6 +156,11 @@ public class ColorTriangleArea : SkiaPickerBase
         var canvasRadius = GetSize() / 2F;
         var (offX, offY) = GetDrawingOffset();
 
+        // Re-sync from SelectedColor each paint so the controller picks up
+        // any external bindable-property change (incl. the initial default
+        // that never fires OnSelectedColorChanging).
+        Interaction.SyncFromColor(SelectedColor.ToHsla());
+
         // Compute paint-time pixel positions of indicators from the
         // controller's unit-space locations.
         var locationSv = UnitToPixel(Interaction.LocationSv, canvasRadius, SvRadius(canvasRadius));

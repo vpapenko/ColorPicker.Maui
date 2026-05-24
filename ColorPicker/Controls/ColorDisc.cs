@@ -131,6 +131,12 @@ public class ColorDisc : SkiaPickerBase
     {
         var canvasRadius = GetSize() / 2F;
 
+        // Re-sync from SelectedColor each paint so the controller picks up
+        // any external bindable-property change (incl. the initial default
+        // that never fires OnSelectedColorChanging). Mirrors baseline's
+        // UpdateLocations(SelectedColor, ...) call.
+        _interaction.SyncFromColor(SelectedColor.ToHsla());
+
         var locationHs = UnitToPixel(_interaction.LocationHs, canvasRadius, HsRadius(canvasRadius));
         var locationL  = UnitToPixel(_interaction.LocationL,  canvasRadius, LRadius(canvasRadius));
 
