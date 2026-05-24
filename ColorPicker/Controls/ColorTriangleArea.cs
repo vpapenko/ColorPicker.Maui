@@ -1,5 +1,4 @@
 using ColorPicker.Core;
-using PolarPoint = ColorPicker.Classes.PolarPoint;
 
 namespace ColorPicker.Controls;
 
@@ -392,7 +391,7 @@ public class ColorTriangleArea : SkiaPickerBase
         var center = new SKPoint(canvasRadius, canvasRadius);
         var polar = ToPolar(new SKPoint(center.X - centerGradient.X, center.Y - centerGradient.Y));
 
-        polar.Radius *= _triangleHeight;
+        polar = polar.WithRadius(polar.Radius * _triangleHeight);
 
         var p2 = FromPolar(polar);
         p2.X += centerGradient.X;
@@ -479,21 +478,5 @@ public class ColorTriangleArea : SkiaPickerBase
         pathTriangle.LineTo(_locationH2);
 
         canvas.DrawPath(pathTriangle, paint);
-    }
-
-    public static void ColorToHsv(Color color, out double hue, out double saturation, out double value)
-    {
-        var rgb = new Rgb { R = Math.Round(color.Red * 255F), G = Math.Round(color.Green * 255F), B = Math.Round(color.Blue * 255F) };
-        var hsv = rgb.To<Hsv>();
-
-        hue = color.GetHue();
-        saturation = hsv.S;
-        value = hsv.V;
-    }
-
-    public static Color ColorFromHsv(double hue, double saturation, double value, double a)
-    {
-        var result = Color.FromHsv((float)hue, (float)saturation, (float)value);
-        return new Color(result.Red, result.Green, result.Blue, (float)a);
     }
 }

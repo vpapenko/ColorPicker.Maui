@@ -4,8 +4,6 @@ global using System.Collections.Generic;
 global using System.ComponentModel;
 global using System.Linq;
 
-global using ColorMine.ColorSpaces;
-
 global using ColorPicker.BaseClasses;
 global using ColorPicker.Behaviors;
 global using ColorPicker.Classes;
