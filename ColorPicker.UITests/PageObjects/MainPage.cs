@@ -167,6 +167,63 @@ public sealed class MainPage
         _driver.PerformActions(new List<ActionSequence> { seq });
     }
 
+    /// <summary>Drag along a circular arc inside the centered square of a control.
+    /// Used to exercise the hue ring of ColorTriangle / ColorDisc with many touch
+    /// samples per drag. Each segment is its own PerformActions call separated
+    /// by a real-time pause, so the UI thread can repaint between events —
+    /// the timing condition that triggered the rotating-triangle drift bug.
+    /// </summary>
+    /// <param name="element">Host element.</param>
+    /// <param name="radius">Radius as fraction of half-side (0..1). 0.95 ≈ rim.</param>
+    /// <param name="startDeg">Start angle in degrees (0=right, CCW positive).</param>
+    /// <param name="endDeg">End angle in degrees.</param>
+    /// <param name="segments">Number of straight chord segments.</param>
+    /// <param name="pauseMsBetweenSegments">Real-time gap between segments (lets UI repaint).</param>
+    public void DragArcInsideSquare(AppiumElement element,
+        double radius, double startDeg, double endDeg,
+        int segments, int pauseMsBetweenSegments)
+    {
+        var loc = element.Location;
+        var size = element.Size;
+        var side = Math.Min(size.Width, size.Height);
+        var cx = loc.X + size.Width  / 2.0;
+        var cy = loc.Y + size.Height / 2.0;
+        var r  = side / 2.0 * radius;
+
+        int Px(double deg) => (int)Math.Round(cx + r * Math.Cos(deg * Math.PI / 180.0));
+        int Py(double deg) => (int)Math.Round(cy + r * Math.Sin(deg * Math.PI / 180.0));
+
+        var finger = new PointerInputDevice(PointerKind.Touch, "finger");
+
+        // Press at the start point.
+        var press = new ActionSequence(finger, 0);
+        press.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport,
+            Px(startDeg), Py(startDeg), TimeSpan.Zero));
+        press.AddAction(finger.CreatePointerDown(MouseButton.Left));
+        _driver.PerformActions(new List<ActionSequence> { press });
+
+        try
+        {
+            for (int i = 1; i <= segments; i++)
+            {
+                var t = (double)i / segments;
+                var deg = startDeg + (endDeg - startDeg) * t;
+                var move = new ActionSequence(finger, 0);
+                move.AddAction(finger.CreatePointerMove(CoordinateOrigin.Viewport,
+                    Px(deg), Py(deg), TimeSpan.FromMilliseconds(10)));
+                _driver.PerformActions(new List<ActionSequence> { move });
+                if (pauseMsBetweenSegments > 0)
+                    Thread.Sleep(pauseMsBetweenSegments);
+            }
+        }
+        finally
+        {
+            var release = new ActionSequence(finger, 0);
+            release.AddAction(finger.CreatePointerUp(MouseButton.Left));
+            _driver.PerformActions(new List<ActionSequence> { release });
+        }
+    }
+
     private AppiumElement Find(string automationId) =>
         (AppiumElement)_driver.FindElement(MobileBy.AccessibilityId(automationId));
 
