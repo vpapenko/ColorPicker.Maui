@@ -21,6 +21,11 @@ public readonly struct RgbaColor : IEquatable<RgbaColor>
     public HslaColor ToHsla() => ColorConversions.RgbToHsl(this);
     public HsvaColor ToHsva() => ColorConversions.RgbToHsv(this);
 
+    public RgbaColor WithR(double r) => new(r, G, B, A);
+    public RgbaColor WithG(double g) => new(R, g, B, A);
+    public RgbaColor WithB(double b) => new(R, G, b, A);
+    public RgbaColor WithA(double a) => new(R, G, B, a);
+
     public bool Equals(RgbaColor other) => R == other.R && G == other.G && B == other.B && A == other.A;
     public override bool Equals(object? obj) => obj is RgbaColor other && Equals(other);
     public override int GetHashCode() => HashCode.Combine(R, G, B, A);
