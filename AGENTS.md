@@ -70,22 +70,25 @@ Appium server must be running; CI sets it up via a workflow step.
 
 ## CI pipeline
 
-Every PR runs 5 checks (workflow `.github/workflows/build-and-test.yml`):
+Every PR runs 6 checks (workflow `.github/workflows/build-and-test.yml`):
 
-1. Build Android (~3 min)
-2. Build Windows (~3 min)
-3. UI Tests (Windows) (~12 min) — the long one
-4. Pack NuGet (~2 min)
-5. Consumer Smoke (~2 min) — depends on Pack NuGet
+1. Core Unit Tests (~30 s) — ubuntu, fast
+2. Build Android (~3 min)
+3. Build Windows (~3 min)
+4. UI Tests (Windows) (~12 min) — the long one
+5. Pack NuGet (~2 min)
+6. Consumer Smoke (~2 min) — depends on Pack NuGet, so it starts late
 
-Expect ~12-13 minutes for full green.
+**Full green is ~23 min wall-clock**, not the sum of the parts: `Consumer Smoke`
+only starts after `Pack NuGet` and re-installs the MAUI workloads, so it finishes
+several minutes *after* the ~12-min UI Tests. Size any CI-watch/poll loop to **~25 min**.
 
 ## Branch protection / merging
 
 `main` is protected:
 
 - PRs required (no direct push)
-- **All 5 PR CI checks must pass**, strict (branch must be up-to-date with main before merge)
+- **All 6 PR CI checks must pass**, strict (branch must be up-to-date with main before merge)
 - 0 required reviews — solo project, so auto-merge from the author can fire as soon as CI is green
 - Force pushes / deletions disabled
 - Conversation resolution required
