@@ -18,6 +18,29 @@ Practical notes accumulated from prior coding sessions. Read before working in t
 - Library: `net8.0`, `net8.0-android34.0`, `net8.0-windows10.0.19041.0`
 - Test app: same three TFMs
 
+## Dependencies & prerequisites
+
+Everything needed to build/test/pack from a clean machine:
+
+| Dependency | Version | Why / notes |
+|---|---|---|
+| .NET SDK | **8.0.417** | Pinned in `global.json` (`rollForward: latestFeature`) |
+| .NET MAUI workloads | — | `dotnet workload install maui-android maui-windows` |
+| Android SDK | **API 34** + build-tools 34.0.0 + platform-tools | For `net8.0-android34.0` |
+| JDK | **17** (Microsoft OpenJDK) | Required by MAUI Android build; set `JAVA_HOME` |
+| Windows 10 SDK | 10.0.19041 | For `net8.0-windows10.0.19041.0` (+ `Microsoft.WindowsAppSDK`) |
+| Node.js | **20+** | For Appium (UI tests only) |
+| Appium | **2** + `appium-windows-driver` + WinAppDriver 1.2.1 + Windows Developer Mode | UI tests — full setup in [`ColorPicker.UITests/README.md`](ColorPicker.UITests/README.md) |
+
+Key NuGet: `SkiaSharp` 2.88.8, `Microsoft.Maui.Controls` 8.0.x, `Appium.WebDriver` (UITests), `MinVer` 5.0.0.
+**MinVer needs full git history + tags** to compute the pack version — clone with full depth (`fetch-depth: 0` in CI).
+
+Environment variables:
+- `JAVA_HOME` — JDK 17 path (Android builds)
+- `UITEST_APP_PATH` — CI-only; path to the built sample `.exe` the UI tests launch
+- `ColorPickerVersion` — nupkg version consumed by `samples/ConsumerSmoke`
+- `PROBE_OUT` — dev-only; enables `VisualProbe` scenario dumper (off in CI)
+
 ## Build
 
 Quick local build (Windows TFM only):
