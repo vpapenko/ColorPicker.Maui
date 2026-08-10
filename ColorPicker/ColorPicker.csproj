@@ -49,7 +49,7 @@
 
 	  <!-- Build-time only: derive Version from latest git tag, embed source links. -->
 	  <PackageReference Include="MinVer" Version="5.0.0" PrivateAssets="all" />
-	  <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
+	  <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.301" PrivateAssets="all" />
 	</ItemGroup>
 
 	<ItemGroup>
