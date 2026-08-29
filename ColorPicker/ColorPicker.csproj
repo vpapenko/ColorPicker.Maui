@@ -1,18 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0-android34.0</TargetFrameworks>
-        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx'))">$(TargetFrameworks);net8.0-ios;net8.0-maccatalyst</TargetFrameworks>
-        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
+		<TargetFrameworks>net10.0-android</TargetFrameworks>
+        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx'))">$(TargetFrameworks);net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
+        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
 		<UseMaui>true</UseMaui>
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>annotations</Nullable>
 		<CheckEolTargetFramework>false</CheckEolTargetFramework>
 
-		<SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net8.0-ios'">14.2</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net8.0-maccatalyst'">14.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net8.0-android34.0'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-ios'))">14.2</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-maccatalyst'))">14.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-android'))">21.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</TargetPlatformMinVersion>
 		<Platforms>AnyCPU;x64</Platforms>
@@ -42,11 +42,16 @@
 		<Deterministic>true</Deterministic>
 	</PropertyGroup>
 
+	<!-- MAUI 10 / SkiaSharp 4.x. MAUI is pinned to the version shipping with the
+	     global.json SDK band to avoid pulling unpublished runtime packs (NU1102);
+	     bump it in lockstep with the SDK. -->
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
-	  <PackageReference Include="SkiaSharp" Version="3.119.2" />
-	  <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.119.2" />
+	  <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
+	  <PackageReference Include="SkiaSharp" Version="4.151.0" />
+	  <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="4.151.0" />
+	</ItemGroup>
 
+	<ItemGroup>
 	  <!-- Build-time only: derive Version from latest git tag, embed source links. -->
 	  <PackageReference Include="MinVer" Version="5.0.0" PrivateAssets="all" />
 	  <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />

@@ -10,14 +10,18 @@ This library provides customizable color picker controls for .NET MAUI applicati
 - **RGB Sliders**: Individual sliders for Red, Green, Blue, and Alpha channels
 - **HSL Sliders**: Individual sliders for Hue, Saturation, Lightness, and Alpha channels
 
+## Supported frameworks
+
+Built for **.NET 10 / .NET MAUI 10** (`net10.0-android`, `net10.0-ios`, `net10.0-maccatalyst`, `net10.0-windows`) with SkiaSharp 4.x.
+
 ## Prerequisites
 
-- .NET 8 SDK or later
+- .NET 10 SDK (pinned in `global.json`)
 - .NET MAUI workload installed
 
 ### Installing Prerequisites
 
-1. Install .NET 8 SDK from https://dotnet.microsoft.com/download/dotnet/8.0
+1. Install .NET 10 SDK from https://dotnet.microsoft.com/download/dotnet/10.0
 
 2. Install MAUI workload:
    ```bash
