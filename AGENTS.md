@@ -15,8 +15,10 @@ Practical notes accumulated from prior coding sessions. Read before working in t
 
 ## Target frameworks
 
-- Library: `net8.0`, `net8.0-android34.0`, `net8.0-windows10.0.19041.0`
-- Test app: same three TFMs
+- Library: `net10.0-android`, `net10.0-windows10.0.19041.0` (+ `net10.0-ios`, `net10.0-maccatalyst` on macOS)
+- Test app: same TFMs
+- The package is **net10-only** (net8 was dropped in the .NET 10 migration; the package has no external consumers so back-compat wasn't required).
+- Test/tooling projects (`ColorPicker.Core`, `*.Tests`, `ColorPicker.UITests`, `tools/IconGen`) stay `net8.0`/`netstandard2.0` and run on the net8 runtime that CI also installs.
 
 ## Dependencies & prerequisites
 
@@ -24,16 +26,24 @@ Everything needed to build/test/pack from a clean machine:
 
 | Dependency | Version | Why / notes |
 |---|---|---|
-| .NET SDK | **8.0.417** | Pinned in `global.json` (`rollForward: latestFeature`) |
+| .NET SDK | **10.0.302** | Pinned in `global.json` (`rollForward: latestFeature`) |
+| .NET runtime (8.0.x) | — | CI also installs the net8 **runtime** so the `net8.0` test projects run |
 | .NET MAUI workloads | — | `dotnet workload install maui-android maui-windows` |
-| Android SDK | **API 34** + build-tools 34.0.0 + platform-tools | For `net8.0-android34.0` |
+| Android SDK | **API 36** platform + platform-tools | For `net10.0-android`. CI provisions it via `dotnet build -t:InstallAndroidDependencies -f net10.0-android -p:AcceptAndroidSDKLicenses=True` |
 | JDK | **17** (Microsoft OpenJDK) | Required by MAUI Android build; set `JAVA_HOME` |
-| Windows 10 SDK | 10.0.19041 | For `net8.0-windows10.0.19041.0` (+ `Microsoft.WindowsAppSDK`) |
+| Windows 10 SDK | 10.0.19041 | For `net10.0-windows10.0.19041.0` |
 | Node.js | **20+** | For Appium (UI tests only) |
 | Appium | **2** + `appium-windows-driver` + WinAppDriver 1.2.1 + Windows Developer Mode | UI tests — full setup in [`ColorPicker.UITests/README.md`](ColorPicker.UITests/README.md) |
 
-Key NuGet: `SkiaSharp` 2.88.8, `Microsoft.Maui.Controls` 8.0.x, `Appium.WebDriver` (UITests), `MinVer` 5.0.0.
+Key NuGet: `SkiaSharp` 4.151.0 + `SkiaSharp.Views.Maui.Controls` 4.151.0, `Microsoft.Maui.Controls` 10.0.20, `Appium.WebDriver` (UITests), `MinVer` 5.0.0.
 **MinVer needs full git history + tags** to compute the pack version — clone with full depth (`fetch-depth: 0` in CI).
+
+### .NET 10 / MAUI 10 gotchas (hard-won — don't rediscover)
+
+- **`Microsoft.Maui.Controls` is pinned to the SDK band** (10.0.20 ↔ SDK 10.0.302). Bumping MAUI out of lockstep (even a patch, e.g. 10.0.90) makes restore pull an unpublished runtime pack → `NU1102`. Dependabot ignores `Microsoft.Maui.*` for this reason; bump MAUI **and** the SDK together.
+- **`Directory.Build.props` sets `UseMonoRuntime=false` for Windows.** The .NET 10 MAUI Windows head otherwise tries to restore the deprecated `Microsoft.NETCore.App.Runtime.Mono.win-x64` pack (dotnet/maui#27215) → `NU1102`.
+- **Restore the Windows app scoped to its TFM.** `dotnet restore ColorPickerTestApp.csproj -r win-x64` on the multi-TFM project applies win-x64 across all TFMs and re-triggers the Mono-win-x64 bug; add `-p:TargetFramework=net10.0-windows10.0.19041.0`.
+- **net8 and net10 Android can't be multi-targeted in one build** — the .NET 10 Android workload only recognizes `net10.0-android`; the net8 SDK can't parse `net10.0-*`. (This is why the package went net10-only.)
 
 Environment variables:
 - `JAVA_HOME` — JDK 17 path (Android builds)
@@ -45,12 +55,12 @@ Environment variables:
 
 Quick local build (Windows TFM only):
 ```powershell
-dotnet build ColorPicker\ColorPicker.csproj -c Release -f net8.0-windows10.0.19041.0
+dotnet build ColorPicker\ColorPicker.csproj -c Release -f net10.0-windows10.0.19041.0
 ```
 
-**Important:** Some warnings only surface on the **Android** TFM (e.g. `CS8765` on `MainActivity.OnCreate(Bundle savedInstanceState)`). Always check Android too if you're hunting warnings:
+**Important:** Some warnings only surface on the **Android** TFM. Always check Android too if you're hunting warnings (needs the API-36 platform installed):
 ```powershell
-dotnet build ColorPicker\ColorPicker.csproj -c Release -f net8.0-android34.0
+dotnet build ColorPicker\ColorPicker.csproj -c Release -f net10.0-android
 ```
 …or rely on CI's "Build Android" job to surface them.
 
