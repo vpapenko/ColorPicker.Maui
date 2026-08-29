@@ -3,21 +3,22 @@
 	<PropertyGroup>
 		<!-- TFMs intentionally mirror the library (Android + Windows). iOS/Mac
 		     omitted because the smoke job runs on Windows runners only.
-		     If we add a macOS smoke job later, append net8.0-ios / net8.0-maccatalyst here. -->
-		<TargetFrameworks>net8.0-android34.0</TargetFrameworks>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
+		     If we add a macOS smoke job later, append net10.0-ios / net10.0-maccatalyst here. -->
+		<TargetFrameworks>net10.0-android</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
 
 		<UseMaui>true</UseMaui>
 		<SingleProject>true</SingleProject>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<CheckEolTargetFramework>false</CheckEolTargetFramework>
 
 		<!-- Class library, not an app: we only need compile-time validation
 		     that the published nupkg can be consumed. -->
 		<OutputType>Library</OutputType>
 		<IsPackable>false</IsPackable>
 
-		<SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net8.0-android34.0'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-android'))">21.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</TargetPlatformMinVersion>
 
@@ -32,8 +33,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- MAUI 8 no longer auto-adds Microsoft.Maui.Controls; required to silence MA002. -->
-		<PackageReference Include="Microsoft.Maui.Controls" Version="8.0.100" />
+		<!-- MAUI no longer auto-adds Microsoft.Maui.Controls; required to silence MA002. -->
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
 		<PackageReference Include="ColorPicker.Maui" Version="$(ColorPickerVersion)" />
 	</ItemGroup>
 

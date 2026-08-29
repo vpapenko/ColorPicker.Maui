@@ -20,6 +20,12 @@ updates:
           - "xunit*"
           - "Microsoft.NET.Test.Sdk"
           - "Appium*"
+    ignore:
+      # Microsoft.Maui.* is version-locked to the .NET SDK pinned in global.json
+      # (the workload ships a matching MAUI). Letting Dependabot bump it out of
+      # lockstep (even a patch) pulls runtime packs the SDK doesn't have -> NU1102.
+      # MAUI is upgraded deliberately, together with the SDK, during a migration.
+      - dependency-name: "Microsoft.Maui.*"
 
   # GitHub Actions versions.
   - package-ecosystem: github-actions

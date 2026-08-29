@@ -105,14 +105,14 @@ public abstract class AppFixtureBase : IDisposable
         {
             var candidate = Path.Combine(repoRoot,
                 "ColorPickerTestApp", "bin", cfg,
-                "net8.0-windows10.0.19041.0", "win-x64", "ColorPickerTestApp.exe");
+                "net10.0-windows10.0.19041.0", "win-x64", "ColorPickerTestApp.exe");
             if (File.Exists(candidate)) return candidate;
         }
 
         throw new FileNotFoundException(
             "ColorPickerTestApp.exe not found. Build with: " +
             "dotnet build ColorPickerTestApp/ColorPickerTestApp.csproj " +
-            "-c Release -f net8.0-windows10.0.19041.0 -r win-x64");
+            "-c Release -f net10.0-windows10.0.19041.0 -r win-x64");
     }
 
     private static string? FindRepoRoot(string start)

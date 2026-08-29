@@ -1,0 +1,22 @@
+<Project>
+
+  <!--
+    Workaround for dotnet/maui#27215 / #32968.
+
+    The .NET 10 MAUI *Windows* head incorrectly tries to restore the Mono
+    win-x64 runtime pack (Microsoft.NETCore.App.Runtime.Mono.win-x64), which
+    Microsoft deprecated and stopped publishing after .NET 9 preview.7. That
+    makes `dotnet build/publish -r win-x64` fail during restore with
+    NU1102 (package not found). WinUI runs on CoreCLR, never Mono, so we force
+    UseMonoRuntime=false for Windows targets / win RIDs.
+
+    This lives in Directory.Build.props (imported before the SDK props, and by
+    every project in the repo) so it also covers ProjectReference'd libraries,
+    which is where the restore graph actually pulls the bad pack. Remove once
+    the MAUI SDK stops requesting the Mono desktop runtime on Windows.
+  -->
+  <PropertyGroup Condition="$(TargetFramework.Contains('-windows')) Or $(RuntimeIdentifier.StartsWith('win'))">
+    <UseMonoRuntime>false</UseMonoRuntime>
+  </PropertyGroup>
+
+</Project>

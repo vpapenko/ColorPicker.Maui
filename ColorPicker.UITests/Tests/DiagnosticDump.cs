@@ -61,7 +61,7 @@ public sealed class DiagnosticDump
         foreach (var cfg in new[] { "Release", "Debug" })
         {
             var c = Path.Combine(dir.FullName, "ColorPickerTestApp", "bin", cfg,
-                "net8.0-windows10.0.19041.0", "win-x64", "ColorPickerTestApp.exe");
+                "net10.0-windows10.0.19041.0", "win-x64", "ColorPickerTestApp.exe");
             if (File.Exists(c)) return c;
         }
         throw new FileNotFoundException("test app not built");
