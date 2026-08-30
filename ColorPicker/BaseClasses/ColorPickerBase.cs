@@ -1,6 +1,6 @@
 namespace ColorPicker.BaseClasses;
 
-using System.ComponentModel;
+using ColorPicker.Core.Connection;
 
 /// <summary>
 /// ColorPicker base class
@@ -40,6 +40,18 @@ public abstract class ColorPickerBase : Layout, IColorPicker, IRegisterable
         get => (IColorPicker)GetValue(AttachedColorPickerProperty);
         set => SetValue(AttachedColorPickerProperty, value);
     }
+
+    //  Shared, cycle-safe connection graph. Every AttachedColorPicker link is an
+    //  undirected edge; all pickers in one connected component share a color.
+    //
+    static readonly ConnectionGraph<IColorPicker> ConnectionGraph = new();
+
+    //  Guards against update storms while a color change fans out across a
+    //  connected component: nested SelectedColor setters still repaint (via
+    //  OnSelectedColorChanging) but must not start their own propagation. This is
+    //  what makes cyclic links (A-B-C-A) safe.
+    //
+    [ThreadStatic] static bool _propagatingColor;
 
     //  ColorPicker Subclass must implement to intercept SelectedColor change
     //
@@ -118,47 +130,58 @@ public abstract class ColorPickerBase : Layout, IColorPicker, IRegisterable
         if (bindable is not ColorPickerBase viewBase)
             return;
 
-        if (oldValue != newValue)
+        if (Equals(oldValue, newValue))
+            return;
+
+        //  Repaint this control.
+        viewBase.OnSelectedColorChanging((Color)newValue);
+
+        //  Fan the new color out to every linked picker, exactly once. Nested
+        //  setters triggered during an in-flight propagation are skipped.
+        if (!_propagatingColor)
+            PropagateColor(viewBase, (Color)newValue);
+
+        viewBase.RaiseSelectedColorChanged((Color)oldValue, (Color)newValue);
+    }
+
+    //  Pushes a color to every picker in the source's connected component, once.
+    //
+    static void PropagateColor(IColorPicker source, Color color)
+    {
+        _propagatingColor = true;
+        try
         {
-            //  Calls subclass implementation
-            viewBase.OnSelectedColorChanging((Color)newValue);
-
-            if (viewBase.AttachedColorPicker is not null)
+            foreach (var picker in ConnectionGraph.ConnectedComponent(source))
             {
-                viewBase.AttachedColorPicker.SelectedColor = (Color)newValue;
+                if (!ReferenceEquals(picker, source))
+                    picker.SelectedColor = color;
             }
-
-            viewBase.RaiseSelectedColorChanged((Color)oldValue, (Color)newValue);
+        }
+        finally
+        {
+            _propagatingColor = false;
         }
     }
 
-    //  Connects to and/or disconnects from bound ColorPicker 
+    //  Connects to and/or disconnects from a bound ColorPicker. Links are stored
+    //  as undirected edges, so any picker can be attached to any other in any
+    //  order to form an arbitrary graph.
     //
     static void HandleConnectedColorPicker(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is not ColorPickerBase viewBase)
             return;
 
-        if (oldValue is not null)
-        {
-            ((IColorPicker)oldValue).PropertyChanged -= viewBase.BoundColorPicker_PropertyChanged;
-        }
+        if (oldValue is IColorPicker oldPeer)
+            ConnectionGraph.RemoveEdge(viewBase, oldPeer);
 
-        if (newValue is not null)
+        if (newValue is IColorPicker newPeer)
         {
-            ((IColorPicker)newValue).PropertyChanged += viewBase.BoundColorPicker_PropertyChanged;
-            ((IColorPicker)newValue).SelectedColor = viewBase.SelectedColor;
-        }
-    }
+            ConnectionGraph.AddEdge(viewBase, newPeer);
 
-    /// <summary>
-    /// Property changed event handler
-    /// </summary>
-    void BoundColorPicker_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(SelectedColor))
-        {
-            SelectedColor = ((IColorPicker)sender).SelectedColor;
+            //  Unify the freshly merged component on this control's color.
+            if (!_propagatingColor)
+                PropagateColor(viewBase, viewBase.SelectedColor);
         }
     }
 
