@@ -1,6 +1,6 @@
 namespace ColorPicker.Controls;
 
-public class DelegateSlider : SliderBase, Interfaces.ISlider
+public class DelegateSlider : SliderBase
 {
     readonly Func<Color, float>                     _newValue;
     readonly Func<float, Color, Color>              _getNewColor;
