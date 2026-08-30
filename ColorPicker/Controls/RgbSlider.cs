@@ -1,5 +1,6 @@
 namespace ColorPicker.Controls;
 
+/// <summary>A stack of Red, Green and Blue sliders, with an optional alpha slider.</summary>
 public class RgbSlider : SliderStackWithAlpha
 {
     protected override IEnumerable<SliderBase> GetSliders()

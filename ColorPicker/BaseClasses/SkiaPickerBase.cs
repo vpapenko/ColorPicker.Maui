@@ -9,6 +9,10 @@ using ColorPicker.Platforms.Droid;
 
 using SkiaSharp.Views.Maui.Controls;
 
+/// <summary>
+/// Base class for the SkiaSharp-drawn pickers (disc, triangle, sliders). Owns the
+/// canvas, touch handling, and the indicator dot.
+/// </summary>
 public abstract class SkiaPickerBase : ColorPickerBase
 {
     protected readonly SKCanvasView     CanvasView;
@@ -19,6 +23,7 @@ public abstract class SkiaPickerBase : ColorPickerBase
                                                     typeof(SkiaPickerBase),
                                                     0.05F,
                                                     propertyChanged: HandlePickerRadiusScaleSet);
+    /// <summary>Picker-dot radius as a fraction of the canvas.</summary>
     public float IndicatorRadiusScale
     {
         get => (float)GetValue(IndicatorRadiusScaleProperty);
@@ -27,6 +32,34 @@ public abstract class SkiaPickerBase : ColorPickerBase
 
     static void HandlePickerRadiusScaleSet(BindableObject bindable, object oldValue, object newValue)
             => ((SkiaPickerBase)bindable).InvalidateSurface();
+
+    public static readonly BindableProperty IndicatorPaddingProperty
+                         = BindableProperty.Create(nameof(IndicatorPadding),
+                                                    typeof(float),
+                                                    typeof(SkiaPickerBase),
+                                                    3F,
+                                                    propertyChanged: HandleIndicatorPaddingSet);
+
+    /// <summary>
+    /// Gap in pixels between the drawn content (with its indicator at the extreme)
+    /// and the canvas edge, so indicators never sit flush against the border.
+    /// Applied consistently to the wheel, triangle and sliders. Default <c>3</c>.
+    /// </summary>
+    public float IndicatorPadding
+    {
+        get => (float)GetValue(IndicatorPaddingProperty);
+        set => SetValue(IndicatorPaddingProperty, value);
+    }
+
+    static void HandleIndicatorPaddingSet(BindableObject bindable, object oldValue, object newValue)
+    {
+        if (!Equals(oldValue, newValue))
+        {
+            var picker = (SkiaPickerBase)bindable;
+            picker.InvalidateMeasure();
+            picker.InvalidateSurface();
+        }
+    }
 
     /// <summary>
     /// Constructor

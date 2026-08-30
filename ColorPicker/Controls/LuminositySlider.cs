@@ -1,5 +1,6 @@
 namespace ColorPicker.Controls;
 
+/// <summary>A single luminosity (lightness) slider.</summary>
 public class LuminositySlider : SliderStack
 {
     protected override IEnumerable<SliderBase> GetSliders()

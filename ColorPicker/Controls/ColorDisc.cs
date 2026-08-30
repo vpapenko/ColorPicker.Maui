@@ -3,6 +3,10 @@ using ColorPicker.Core.Interaction;
 
 namespace ColorPicker.Controls;
 
+/// <summary>
+/// The raw hue/saturation disc that powers <see cref="ColorWheel"/>. Can be used on
+/// its own; shows an optional luminosity ring.
+/// </summary>
 public class ColorDisc : SkiaPickerBase
 {
     // Interaction state lives in a pure controller so the per-region
@@ -21,6 +25,7 @@ public class ColorDisc : SkiaPickerBase
                                                     typeof(ColorDisc),
                                                     true,
                                                     propertyChanged: HandleShowLuminosity);
+    /// <summary>Whether to draw the luminosity ring around the disc. Default <c>true</c>.</summary>
     public bool ShowLuminosityRing
     {
         get => (bool)GetValue(ShowLuminosityRingProperty);
@@ -38,6 +43,7 @@ public class ColorDisc : SkiaPickerBase
                                                     typeof(ColorDisc),
                                                     Colors.Transparent,
                                                     propertyChanged: HandleCanvasBackgroundColor);
+    /// <summary>Fill drawn behind the disc. Default <see cref="Colors.Transparent"/>.</summary>
     public Color CanvasBackgroundColor
     {
         get => (Color)GetValue(CanvasBackgroundColorProperty);
@@ -275,14 +281,13 @@ public class ColorDisc : SkiaPickerBase
         => new((float)((unit.X - 0.5) * 2.0 * activeRadius + canvasRadius),
                (float)((unit.Y - 0.5) * 2.0 * activeRadius + canvasRadius));
 
-    // Small margin so the picker indicator (outer stroke + antialiasing)
-    // does not get clipped at the canvas edge.
-    const float PickerEdgeMargin = 3F;
-
+    // Uses the bindable IndicatorPadding (default 3px) so the indicator's outer
+    // stroke + antialiasing never clip at the canvas edge, consistently with the
+    // triangle and sliders.
     float HsRadius(float canvasRadius)
-       => !ShowLuminosityRing ? canvasRadius - GetIndicatorRadiusPixels() - PickerEdgeMargin
+       => !ShowLuminosityRing ? canvasRadius - GetIndicatorRadiusPixels() - IndicatorPadding
                                 : canvasRadius - (3 * GetIndicatorRadiusPixels()) - 2;
 
     float LRadius(float canvasRadius)
-       => canvasRadius - GetIndicatorRadiusPixels() - PickerEdgeMargin;
+       => canvasRadius - GetIndicatorRadiusPixels() - IndicatorPadding;
 }
