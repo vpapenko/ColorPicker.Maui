@@ -103,6 +103,30 @@ public class ColorTriangle : ColorPickerBase
         }
     }
 
+    public static readonly BindableProperty IndicatorPaddingProperty
+                         = BindableProperty.Create(nameof(IndicatorPadding),
+                                                    typeof(float),
+                                                    typeof(ColorTriangle),
+                                                    3F,
+                                                    propertyChanged: HandleIndicatorPadding);
+
+    /// <summary>Gap in pixels between the drawn content and the canvas edge, so
+    /// indicators never sit flush against the border. Default <c>3</c>.</summary>
+    public float IndicatorPadding
+    {
+        get => (float)GetValue(IndicatorPaddingProperty);
+        set => SetValue(IndicatorPaddingProperty, value);
+    }
+    static void HandleIndicatorPadding(BindableObject bindable, object oldValue, object newValue)
+    {
+        if (!Equals(oldValue, newValue))
+        {
+            var triangle = (ColorTriangle)bindable;
+            triangle._area.IndicatorPadding = (float)newValue;
+            triangle._alphaSlider.IndicatorPadding = (float)newValue;
+        }
+    }
+
     /// <summary>
     /// Constructor
     /// </summary>

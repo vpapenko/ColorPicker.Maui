@@ -178,6 +178,7 @@ jobs:
           name: ui-test-results
           path: |
             ColorPicker.UITests/TestResults/**
+            ColorPicker.UITests/References/**
             appium-server.log
           if-no-files-found: ignore
 
