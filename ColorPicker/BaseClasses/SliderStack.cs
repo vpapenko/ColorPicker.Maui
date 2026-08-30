@@ -1,5 +1,8 @@
 namespace ColorPicker.BaseClasses;
 
+/// <summary>
+/// Base class for the stacked single-channel sliders (HSL, RGB, alpha, luminosity).
+/// </summary>
 public abstract class SliderStack : SkiaPickerBase
 {
     readonly List<SliderBounds> _sliders = new();
@@ -22,6 +25,7 @@ public abstract class SliderStack : SkiaPickerBase
                                                     typeof(SliderStack),
                                                     false,
                                                     propertyChanged: HandleVerticalSet);
+    /// <summary>Lay the sliders vertically instead of horizontally. Default <c>false</c>.</summary>
     public bool Vertical
     {
         get => (bool)GetValue(VerticalProperty);
@@ -218,7 +222,7 @@ public abstract class SliderStack : SkiaPickerBase
             if (slider.LocationProgressId is null)
             {
                 var pr = GetIndicatorRadiusPixels();
-                var left = (pr * 1.1F) + (SlidersWidht(canvasSize) * slider.Slider.NewValue(color));
+                var left = EndMargin() + (SlidersWidht(canvasSize) * slider.Slider.NewValue(color));
                 slider.Location = Vertical
                     ? new SKPoint(slider.GetSliderOffset(pr), left)
                     : new SKPoint(left, slider.GetSliderOffset(pr));
@@ -226,16 +230,19 @@ public abstract class SliderStack : SkiaPickerBase
         }
     }
 
+    // Distance from each end of the track to the canvas edge: room for the indicator
+    // (1.1x its radius) plus the consistent border gap (IndicatorPadding).
+    float EndMargin() => (GetIndicatorRadiusPixels() * 1.1F) + IndicatorPadding;
+
     float SlidersWidht(SKSize canvasSize)
-       => Vertical ? canvasSize.Height - (GetIndicatorRadiusPixels() * 2.2F)
-                   : canvasSize.Width - (GetIndicatorRadiusPixels() * 2.2F);
+       => Vertical ? canvasSize.Height - (2F * EndMargin())
+                   : canvasSize.Width - (2F * EndMargin());
 
     void UpdateColors(SliderBounds slider, SKSize canvasSize)
     {
         var newColor = SelectedColor;
-        var pr = GetIndicatorRadiusPixels();
-        var newValue = Vertical ? (slider.Location.Y - (pr * 1.1F)) / SlidersWidht(canvasSize)
-                                : (slider.Location.X - (pr * 1.1F)) / SlidersWidht(canvasSize);
+        var newValue = Vertical ? (slider.Location.Y - EndMargin()) / SlidersWidht(canvasSize)
+                                : (slider.Location.X - EndMargin()) / SlidersWidht(canvasSize);
 
         newColor = slider.Slider.GetNewColor(newValue, newColor);
 
@@ -253,13 +260,13 @@ public abstract class SliderStack : SkiaPickerBase
 
         if (Vertical)
         {
-            startPoint = new SKPoint(sliderTop, pickerRadiusPixels * 1.1F);
-            endPoint = new SKPoint(sliderTop, canvasSize.Height - (pickerRadiusPixels * 1.1F));
+            startPoint = new SKPoint(sliderTop, EndMargin());
+            endPoint = new SKPoint(sliderTop, canvasSize.Height - EndMargin());
         }
         else
         {
-            startPoint = new SKPoint(pickerRadiusPixels * 1.1F, sliderTop);
-            endPoint = new SKPoint(canvasSize.Width - (pickerRadiusPixels * 1.1F), sliderTop);
+            startPoint = new SKPoint(EndMargin(), sliderTop);
+            endPoint = new SKPoint(canvasSize.Width - EndMargin(), sliderTop);
         }
 
         var paint = slider.Slider.GetPaint(SelectedColor, startPoint, endPoint);
@@ -336,7 +343,7 @@ public abstract class SliderStack : SkiaPickerBase
     SKPoint LimitToSliderLocation(SKPoint point, float slidersOffset, SKSize canvasSize)
     {
         var result = new SKPoint(point.X, point.Y);
-        var endMargin = GetIndicatorRadiusPixels() * 1.1F;
+        var endMargin = EndMargin();
 
         if (Vertical)
         {

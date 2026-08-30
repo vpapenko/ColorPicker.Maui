@@ -400,7 +400,9 @@ public class ColorTriangleArea : SkiaPickerBase
     }
 
     float SvRadius(float canvasRadius) => canvasRadius - (2 * GetIndicatorRadiusPixels()) - 2;
-    float HRadius(float canvasRadius) => canvasRadius - GetIndicatorRadiusPixels();
+    // Inset the hue ring by the indicator radius (so it fits) plus IndicatorPadding
+    // (the consistent border gap), matching the disc/wheel.
+    float HRadius(float canvasRadius) => canvasRadius - GetIndicatorRadiusPixels() - IndicatorPadding;
 
     void PaintLinePicker(SKCanvas canvas, SKPoint outer, SKPoint inner)
     {
