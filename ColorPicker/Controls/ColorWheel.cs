@@ -258,12 +258,6 @@ public class ColorWheel : ColorPickerBase
         return bounds.Size;
     }
 
-    void BoundColorPicker_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(SelectedColor))
-            SelectedColor = ((IColorPicker)sender).SelectedColor;
-    }
-
     void UpdateAlphaSlider(bool show)
     {
         if (show)
