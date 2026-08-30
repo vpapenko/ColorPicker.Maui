@@ -26,7 +26,7 @@ jobs:
     name: Core Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: actions/setup-dotnet@v6
@@ -43,7 +43,7 @@ jobs:
     name: Build Android
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # MinVer needs full history + tags
       - uses: actions/setup-dotnet@v6
@@ -66,7 +66,7 @@ jobs:
     name: Build Windows
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: actions/setup-dotnet@v6
@@ -90,7 +90,7 @@ jobs:
     runs-on: windows-latest
     needs: [ build-windows ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: actions/setup-dotnet@v6
@@ -189,7 +189,7 @@ jobs:
     outputs:
       version: ${{ steps.minver.outputs.version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # MinVer needs full history + tags
       - uses: actions/setup-dotnet@v6
@@ -232,7 +232,7 @@ jobs:
     runs-on: windows-latest
     needs: [ pack ]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
