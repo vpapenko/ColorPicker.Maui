@@ -5,7 +5,7 @@ namespace ColorPicker.Controls;
 /// a new color, and painting the track gradient — is supplied as delegates, so custom
 /// single-channel sliders can be built without a dedicated subclass.
 /// </summary>
-public class DelegateSlider : SliderBase, Interfaces.ISlider
+public class DelegateSlider : SliderBase
 {
     readonly Func<Color, float>                     _newValue;
     readonly Func<float, Color, Color>              _getNewColor;

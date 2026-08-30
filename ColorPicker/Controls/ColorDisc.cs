@@ -281,14 +281,13 @@ public class ColorDisc : SkiaPickerBase
         => new((float)((unit.X - 0.5) * 2.0 * activeRadius + canvasRadius),
                (float)((unit.Y - 0.5) * 2.0 * activeRadius + canvasRadius));
 
-    // Small margin so the picker indicator (outer stroke + antialiasing)
-    // does not get clipped at the canvas edge.
-    const float PickerEdgeMargin = 3F;
-
+    // Uses the bindable IndicatorPadding (default 3px) so the indicator's outer
+    // stroke + antialiasing never clip at the canvas edge, consistently with the
+    // triangle and sliders.
     float HsRadius(float canvasRadius)
-       => !ShowLuminosityRing ? canvasRadius - GetIndicatorRadiusPixels() - PickerEdgeMargin
+       => !ShowLuminosityRing ? canvasRadius - GetIndicatorRadiusPixels() - IndicatorPadding
                                 : canvasRadius - (3 * GetIndicatorRadiusPixels()) - 2;
 
     float LRadius(float canvasRadius)
-       => canvasRadius - GetIndicatorRadiusPixels() - PickerEdgeMargin;
+       => canvasRadius - GetIndicatorRadiusPixels() - IndicatorPadding;
 }

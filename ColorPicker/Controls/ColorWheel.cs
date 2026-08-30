@@ -136,6 +136,31 @@ public class ColorWheel : ColorPickerBase
         }
     }
 
+    public static readonly BindableProperty IndicatorPaddingProperty
+                         = BindableProperty.Create(nameof(IndicatorPadding),
+                                                    typeof(float),
+                                                    typeof(ColorWheel),
+                                                    3F,
+                                                    propertyChanged: HandleIndicatorPadding);
+
+    /// <summary>Gap in pixels between the drawn content and the canvas edge, so
+    /// indicators never sit flush against the border. Default <c>3</c>.</summary>
+    public float IndicatorPadding
+    {
+        get => (float)GetValue(IndicatorPaddingProperty);
+        set => SetValue(IndicatorPaddingProperty, value);
+    }
+    static void HandleIndicatorPadding(BindableObject bindable, object oldValue, object newValue)
+    {
+        if (!Equals(oldValue, newValue))
+        {
+            var wheel = (ColorWheel)bindable;
+            wheel._disc.IndicatorPadding = (float)newValue;
+            wheel._alphaSlider.IndicatorPadding = (float)newValue;
+            wheel._luminositySlider.IndicatorPadding = (float)newValue;
+        }
+    }
+
 
     /// <summary>
     /// Constructor
