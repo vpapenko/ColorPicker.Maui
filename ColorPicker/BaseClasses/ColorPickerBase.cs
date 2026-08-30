@@ -29,12 +29,17 @@ public abstract class ColorPickerBase : Layout, IColorPicker, IRegisterable
 
     //  Backing store
     //
+    /// <summary>The currently selected color. Bindable (two-way); changes raise
+    /// <see cref="SelectedColorChanged"/> and propagate to any linked pickers.</summary>
     public Color SelectedColor
     {
         get => (Color)GetValue(SelectedColorProperty);
         set => SetValue(SelectedColorProperty, value);
     }
 
+    /// <summary>Another picker to keep in sync with this one. Links are undirected
+    /// and transitive, so pickers can be connected in any order to form a group
+    /// that shares a single color; cyclic links are handled safely.</summary>
     public IColorPicker AttachedColorPicker
     {
         get => (IColorPicker)GetValue(AttachedColorPickerProperty);
@@ -186,7 +191,7 @@ public abstract class ColorPickerBase : Layout, IColorPicker, IRegisterable
     }
 
     /// <summary>
-    /// Custom event handler for changes in SelectedColor
+    /// Raised after <see cref="SelectedColor"/> changes, with the old and new color.
     /// </summary>
     public event EventHandler<ColorChangedEventArgs> SelectedColorChanged;
 

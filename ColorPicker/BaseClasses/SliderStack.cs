@@ -1,5 +1,8 @@
 namespace ColorPicker.BaseClasses;
 
+/// <summary>
+/// Base class for the stacked single-channel sliders (HSL, RGB, alpha, luminosity).
+/// </summary>
 public abstract class SliderStack : SkiaPickerBase
 {
     readonly List<SliderBounds> _sliders = new();
@@ -22,6 +25,7 @@ public abstract class SliderStack : SkiaPickerBase
                                                     typeof(SliderStack),
                                                     false,
                                                     propertyChanged: HandleVerticalSet);
+    /// <summary>Lay the sliders vertically instead of horizontally. Default <c>false</c>.</summary>
     public bool Vertical
     {
         get => (bool)GetValue(VerticalProperty);

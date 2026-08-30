@@ -1,5 +1,10 @@
 namespace ColorPicker.Controls;
 
+/// <summary>
+/// An interactive hue/saturation color wheel with an optional luminosity ring and
+/// optional luminosity and alpha sliders. The selected color is available via the
+/// bindable <see cref="ColorPicker.BaseClasses.ColorPickerBase.SelectedColor"/>.
+/// </summary>
 public class ColorWheel : ColorPickerBase
 {
     readonly ColorDisc        _disc        = new();
@@ -51,6 +56,7 @@ public class ColorWheel : ColorPickerBase
                                                     false,
                                                     propertyChanged: HandleVertical);
 
+    /// <summary>Whether to draw the luminosity ring around the disc. Default <c>true</c>.</summary>
     public bool ShowLuminosityRing
     {
         get => (bool)GetValue(ShowLuminosityRingProperty);
@@ -60,6 +66,7 @@ public class ColorWheel : ColorPickerBase
             => ((ColorWheel)bindable)._disc.ShowLuminosityRing = (bool)newValue;
 
 
+    /// <summary>Whether to show a separate luminosity slider. Default <c>false</c>.</summary>
     public bool ShowLuminositySlider
     {
         get => (bool)GetValue(ShowLuminositySliderProperty);
@@ -69,6 +76,7 @@ public class ColorWheel : ColorPickerBase
             => ((ColorWheel)bindable).UpdateLuminositySlider((bool)newValue);
 
 
+    /// <summary>Whether to show an alpha (opacity) slider. Default <c>false</c>.</summary>
     public bool ShowAlphaSlider
     {
         get => (bool)GetValue(ShowAlphaSliderProperty);
@@ -78,6 +86,7 @@ public class ColorWheel : ColorPickerBase
             => ((ColorWheel)bindable).UpdateAlphaSlider((bool)newValue);
 
 
+    /// <summary>Fill drawn behind the wheel. Default <see cref="Colors.Transparent"/>.</summary>
     public Color CanvasBackgroundColor
     {
         get => (Color)GetValue(CanvasBackgroundColorProperty);
@@ -89,6 +98,7 @@ public class ColorWheel : ColorPickerBase
             ((ColorWheel)bindable)._disc.CanvasBackgroundColor = (Color)newValue;
     }
 
+    /// <summary>Picker-dot radius as a fraction of the canvas. Default <c>0.05</c>.</summary>
     public float IndicatorRadiusScale
     {
         get => (float)GetValue(IndicatorRadiusScaleProperty);
@@ -109,6 +119,7 @@ public class ColorWheel : ColorPickerBase
         }
     }
 
+    /// <summary>Lay the attached sliders beside the wheel instead of below it. Default <c>false</c>.</summary>
     public bool Vertical
     {
         get => (bool)GetValue(VerticalProperty);

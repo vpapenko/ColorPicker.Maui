@@ -1,5 +1,6 @@
 namespace ColorPicker.Controls;
 
+/// <summary>A stack of Hue, Saturation and Lightness sliders, with an optional alpha slider.</summary>
 public class HslSlider : SliderStackWithAlpha
 {
     protected override IEnumerable<SliderBase> GetSliders()

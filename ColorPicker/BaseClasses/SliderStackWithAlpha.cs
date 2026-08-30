@@ -1,5 +1,8 @@
 namespace ColorPicker.BaseClasses;
 
+/// <summary>
+/// A <see cref="SliderStack"/> that can append an alpha (opacity) slider.
+/// </summary>
 public abstract class SliderStackWithAlpha : SliderStack
 {
     public static readonly BindableProperty ShowAlphaSliderProperty
@@ -8,6 +11,7 @@ public abstract class SliderStackWithAlpha : SliderStack
                                                     typeof(SliderStackWithAlpha),
                                                     true,
                                                     propertyChanged: HandleShowLuminositySet);
+    /// <summary>Whether to append an alpha (opacity) slider. Default <c>true</c>.</summary>
     public bool ShowAlphaSlider
     {
         get => (bool)GetValue(ShowAlphaSliderProperty);

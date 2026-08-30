@@ -9,6 +9,10 @@ using ColorPicker.Platforms.Droid;
 
 using SkiaSharp.Views.Maui.Controls;
 
+/// <summary>
+/// Base class for the SkiaSharp-drawn pickers (disc, triangle, sliders). Owns the
+/// canvas, touch handling, and the indicator dot.
+/// </summary>
 public abstract class SkiaPickerBase : ColorPickerBase
 {
     protected readonly SKCanvasView     CanvasView;
@@ -19,6 +23,7 @@ public abstract class SkiaPickerBase : ColorPickerBase
                                                     typeof(SkiaPickerBase),
                                                     0.05F,
                                                     propertyChanged: HandlePickerRadiusScaleSet);
+    /// <summary>Picker-dot radius as a fraction of the canvas.</summary>
     public float IndicatorRadiusScale
     {
         get => (float)GetValue(IndicatorRadiusScaleProperty);

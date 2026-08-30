@@ -1,5 +1,11 @@
 namespace ColorPicker.Controls;
 
+/// <summary>
+/// A saturation/value triangle color picker. The triangle can rotate to follow the
+/// selected hue (<see cref="RotateTriangleByHue"/>) and can show an optional alpha
+/// slider. Often linked to a <see cref="ColorWheel"/> via
+/// <see cref="ColorPicker.BaseClasses.ColorPickerBase.AttachedColorPicker"/>.
+/// </summary>
 public class ColorTriangle : ColorPickerBase
 {
     readonly ColorTriangleArea  _area           = new();
@@ -40,6 +46,7 @@ public class ColorTriangle : ColorPickerBase
                                                     0.035F,
                                                     propertyChanged: HandleIndicatorRadiusScale);
 
+    /// <summary>Whether to show an alpha (opacity) slider. Default <c>false</c>.</summary>
     public bool ShowAlphaSlider
     {
         get => (bool)GetValue(ShowAlphaSliderProperty);
@@ -48,6 +55,7 @@ public class ColorTriangle : ColorPickerBase
     static void HandleShowAlphaSlider(BindableObject bindable, object oldValue, object newValue)
             => ((ColorTriangle)bindable).UpdateAlphaSlider((bool)newValue);
 
+    /// <summary>Lay the alpha slider beside the triangle instead of below it. Default <c>false</c>.</summary>
     public bool Vertical
     {
         get => (bool)GetValue(VerticalProperty);
@@ -63,6 +71,8 @@ public class ColorTriangle : ColorPickerBase
         }
     }
 
+    /// <summary>Rotate the saturation/value triangle so its hue corner follows the
+    /// selected hue. Default <c>true</c>.</summary>
     public bool RotateTriangleByHue
     {
         get => (bool)GetValue(RotateTriangleByHueProperty);
@@ -74,6 +84,7 @@ public class ColorTriangle : ColorPickerBase
             ((ColorTriangle)bindable)._area.RotateTriangleByHue = (bool)newValue;
     }
 
+    /// <summary>Fill drawn behind the triangle. Default <see cref="Colors.Transparent"/>.</summary>
     public Color CanvasBackgroundColor
     {
         get => (Color)GetValue(CanvasBackgroundColorProperty);
@@ -85,6 +96,7 @@ public class ColorTriangle : ColorPickerBase
             ((ColorTriangle)bindable)._area.CanvasBackgroundColor = (Color)newValue;
     }
 
+    /// <summary>Picker-dot radius as a fraction of the canvas. Default <c>0.035</c>.</summary>
     public float IndicatorRadiusScale
     {
         get => (float)GetValue(IndicatorRadiusScaleProperty);
