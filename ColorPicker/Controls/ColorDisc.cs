@@ -3,6 +3,10 @@ using ColorPicker.Core.Interaction;
 
 namespace ColorPicker.Controls;
 
+/// <summary>
+/// The raw hue/saturation disc that powers <see cref="ColorWheel"/>. Can be used on
+/// its own; shows an optional luminosity ring.
+/// </summary>
 public class ColorDisc : SkiaPickerBase
 {
     // Interaction state lives in a pure controller so the per-region
@@ -21,6 +25,7 @@ public class ColorDisc : SkiaPickerBase
                                                     typeof(ColorDisc),
                                                     true,
                                                     propertyChanged: HandleShowLuminosity);
+    /// <summary>Whether to draw the luminosity ring around the disc. Default <c>true</c>.</summary>
     public bool ShowLuminosityRing
     {
         get => (bool)GetValue(ShowLuminosityRingProperty);
@@ -38,6 +43,7 @@ public class ColorDisc : SkiaPickerBase
                                                     typeof(ColorDisc),
                                                     Colors.Transparent,
                                                     propertyChanged: HandleCanvasBackgroundColor);
+    /// <summary>Fill drawn behind the disc. Default <see cref="Colors.Transparent"/>.</summary>
     public Color CanvasBackgroundColor
     {
         get => (Color)GetValue(CanvasBackgroundColorProperty);
