@@ -1,5 +1,6 @@
 namespace ColorPicker.Controls;
 
+/// <summary>A single alpha (opacity) slider.</summary>
 public class AlphaSlider : SliderStack
 {
     protected override IEnumerable<SliderBase> GetSliders()

@@ -10,6 +10,13 @@
 		<Nullable>annotations</Nullable>
 		<CheckEolTargetFramework>false</CheckEolTargetFramework>
 
+		<!-- Ship XML docs in the package for consumer IntelliSense. CS1591 (missing
+		     doc on a public member) is suppressed so undocumented internals-that-
+		     happen-to-be-public don't add warning noise; the consumer-facing API is
+		     documented. -->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
+
 		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-ios'))">14.2</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-maccatalyst'))">14.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$(TargetFramework.Contains('-android'))">21.0</SupportedOSPlatformVersion>
@@ -54,7 +61,7 @@
 	<ItemGroup>
 	  <!-- Build-time only: derive Version from latest git tag, embed source links. -->
 	  <PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all" />
-	  <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
+	  <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.400" PrivateAssets="all" />
 	</ItemGroup>
 
 	<ItemGroup>
