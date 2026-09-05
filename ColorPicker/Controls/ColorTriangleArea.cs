@@ -1,5 +1,6 @@
 using ColorPicker.Core;
 using ColorPicker.Core.Interaction;
+using ColorPicker.Rendering;
 
 namespace ColorPicker.Controls;
 
@@ -19,7 +20,7 @@ public class ColorTriangleArea : SkiaPickerBase
     long? _locationSvProgressId = null;
     long? _locationHProgressId = null;
 
-    readonly SKColor[] _sweepGradientColors = new SKColor[256];
+    readonly ColorGradient _hueGradient;
 
     public static readonly BindableProperty CanvasBackgroundColorProperty
                          = BindableProperty.Create(nameof(CanvasBackgroundColor),
@@ -69,10 +70,12 @@ public class ColorTriangleArea : SkiaPickerBase
         HorizontalOptions = LayoutOptions.Center;
         VerticalOptions = LayoutOptions.Center;
         IndicatorRadiusScale = 0.035F;
+        var colors = new SKColor[256];
         for (var i = 128; i >= -127; i--)
         {
-            _sweepGradientColors[255 - (i + 127)] = Color.FromHsla((i < 0 ? 255 + i : i) / 255D, 1, 0.5).ToSKColor();
+            colors[255 - (i + 127)] = Color.FromHsla((i < 0 ? 255 + i : i) / 255D, 1, 0.5).ToSKColor();
         }
+        _hueGradient = new ColorGradient(colors);
     }
 
     public override float GetIndicatorRadiusPixels(SKSize canvasSize) => GetSize(canvasSize) * IndicatorRadiusScale;
@@ -99,6 +102,7 @@ public class ColorTriangleArea : SkiaPickerBase
             _locationHProgressId = args.Id;
             WriteSelectedColor(Interaction.UpdateFromH(hUnit));
         }
+        InvalidateSurface();
     }
 
     protected override void OnTouchActionMoved(TouchActionEventArgs args)
@@ -119,6 +123,7 @@ public class ColorTriangleArea : SkiaPickerBase
             var hUnit = PixelToUnit(point, canvasRadius, HRadius(canvasRadius));
             WriteSelectedColor(Interaction.UpdateFromH(hUnit));
         }
+        InvalidateSurface();
     }
 
     protected override void OnTouchActionReleased(TouchActionEventArgs args)
@@ -141,6 +146,7 @@ public class ColorTriangleArea : SkiaPickerBase
             var hUnit = PixelToUnit(point, canvasRadius, HRadius(canvasRadius));
             WriteSelectedColor(Interaction.UpdateFromH(hUnit));
         }
+        InvalidateSurface();
     }
 
     protected override void OnTouchActionCancelled(TouchActionEventArgs args)
@@ -149,12 +155,16 @@ public class ColorTriangleArea : SkiaPickerBase
             _locationSvProgressId = null;
         else if (_locationHProgressId == args.Id)
             _locationHProgressId = null;
+        InvalidateSurface();
     }
 
     protected override void OnPaintSurface(SKCanvas canvas, int width, int height)
     {
+        var canvasSize = new SKSize(width, height);
         var canvasRadius = GetSize() / 2F;
         var (offX, offY) = GetDrawingOffset();
+        var center = new SKPoint(canvasRadius + offX, canvasRadius + offY);
+        var indicatorRadius = GetIndicatorRadiusPixels();
 
         // Re-sync from SelectedColor each paint so the controller picks up
         // any external bindable-property change (incl. the initial default
@@ -164,26 +174,85 @@ public class ColorTriangleArea : SkiaPickerBase
         // Compute paint-time pixel positions of indicators from the
         // controller's unit-space locations.
         var locationSv = UnitToPixel(Interaction.LocationSv, canvasRadius, SvRadius(canvasRadius));
+        locationSv.Offset(offX, offY);
 
         var hLocations = ComputeHueIndicatorPixels(canvasRadius);
+        hLocations.outer.Offset(offX, offY);
+        hLocations.inner.Offset(offX, offY);
+        hLocations.middle.Offset(offX, offY);
 
-        canvas.Clear();
+        var rotationRadians = RotateTriangleByHue
+            ? -(float)((2D * Math.PI * Interaction.LastHue) + (Math.PI / 2D))
+            : 0;
+        var triangleRadius = SvRadius(canvasRadius);
+        var triangle = ComputeTriangleGeometry(center, triangleRadius, rotationRadians);
 
-        canvas.Save();
-        canvas.Translate(offX, offY);
-
-        PaintBackground(canvas, canvasRadius);
-        PaintHGradient(canvas, canvasRadius);
+        RenderElement(canvas, new CanvasDrawingContext(canvasSize, SelectedColor));
+        RenderElement(canvas, new CircularBackgroundDrawingContext(
+            canvasSize,
+            SelectedColor,
+            center,
+            canvasRadius,
+            CanvasBackgroundColor,
+            CircularBackgroundRole.ColorTriangle));
+        RenderElement(canvas, new HueRingDrawingContext(
+            canvasSize,
+            SelectedColor,
+            center,
+            HRadius(canvasRadius),
+            indicatorRadius,
+            _hueGradient));
 
         if (RotateTriangleByHue)
-            PaintLinePicker(canvas, hLocations.outer, hLocations.inner);
+        {
+            RenderElement(canvas, new HueLineIndicatorDrawingContext(
+                canvasSize,
+                SelectedColor,
+                hLocations.outer,
+                hLocations.inner,
+                AngleFromCenter(hLocations.middle, center),
+                _locationHProgressId is not null));
+        }
         else
-            PaintIndicator(canvas, hLocations.middle);
+        {
+            RenderElement(canvas, new IndicatorDrawingContext(
+                canvasSize,
+                SelectedColor,
+                hLocations.middle,
+                indicatorRadius,
+                IndicatorRole.Hue,
+                NormalizedPosition: new SKPoint(
+                    Interaction.LocationH.X,
+                    Interaction.LocationH.Y),
+                AngleRadians: AngleFromCenter(hLocations.middle, center),
+                IsActive: _locationHProgressId is not null));
+        }
 
-        PaintSvTriangle(canvas, canvasRadius);
-        PaintIndicator(canvas, locationSv);
-
-        canvas.Restore();
+        RenderElement(canvas, new SaturationValueTriangleDrawingContext(
+            canvasSize,
+            SelectedColor,
+            center,
+            triangleRadius,
+            Interaction.LastHue,
+            rotationRadians,
+            RotateTriangleByHue,
+            triangle.transform,
+            triangle.localHue,
+            triangle.localWhite,
+            triangle.localBlack,
+            triangle.hue,
+            triangle.white,
+            triangle.black));
+        RenderElement(canvas, new IndicatorDrawingContext(
+            canvasSize,
+            SelectedColor,
+            locationSv,
+            indicatorRadius,
+            IndicatorRole.SaturationValue,
+            NormalizedPosition: new SKPoint(
+                Interaction.LocationSv.X,
+                Interaction.LocationSv.Y),
+            IsActive: _locationSvProgressId is not null));
     }
 
     protected override void OnSelectedColorChanging(Color color)
@@ -248,128 +317,9 @@ public class ColorTriangleArea : SkiaPickerBase
         SelectedColor = hsla.ToMauiColor();
     }
 
-    void PaintBackground(SKCanvas canvas, float canvasRadius)
-    {
-        var center = new SKPoint(canvasRadius, canvasRadius);
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Color = CanvasBackgroundColor.ToSKColor()
-        };
-
-        canvas.DrawCircle(center, canvasRadius, paint);
-    }
-
-    void PaintHGradient(SKCanvas canvas, float canvasRadius)
-    {
-        var center = new SKPoint(canvasRadius, canvasRadius);
-        var shader = SKShader.CreateSweepGradient(center, _sweepGradientColors, null);
-
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Shader = shader,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = GetIndicatorRadiusPixels() * 2
-        };
-        canvas.DrawCircle(center, HRadius(canvasRadius), paint);
-    }
-
-    void PaintSvTriangle(SKCanvas canvas, float canvasRadius)
-    {
-        var lastHue = Interaction.LastHue;
-        canvas.Save();
-
-        var rotationHue = SKMatrix.CreateRotation(-(float)((2D * Math.PI * lastHue) + (Math.PI / 2D)),
-                                                   canvasRadius, canvasRadius);
-
-        if (RotateTriangleByHue)
-        {
-            canvas.Concat(ref rotationHue);
-        }
-
-        var point1 = new SKPoint(canvasRadius, canvasRadius - SvRadius(canvasRadius));
-        var point2 = new SKPoint(canvasRadius + (_triangleSide * SvRadius(canvasRadius))
-                , canvasRadius + (_triangleVerticalOffset * SvRadius(canvasRadius)));
-
-        var point3 = new SKPoint(canvasRadius - (_triangleSide * SvRadius(canvasRadius))
-                , canvasRadius + (_triangleVerticalOffset * SvRadius(canvasRadius)));
-
-        using (var pathTriangle = new SKPath())
-        {
-            pathTriangle.MoveTo(point1);
-            pathTriangle.LineTo(point2);
-            pathTriangle.LineTo(point3);
-
-            canvas.ClipPath(pathTriangle, SKClipOperation.Intersect, true);
-        }
-
-        canvas.Save();
-
-        var gradientRotation = SKMatrix.CreateRotation(-(float)Math.PI / 3F, point3.X, point3.Y);
-        canvas.Concat(ref gradientRotation);
-
-        var shader = SKShader.CreateSweepGradient(point3,
-                                                   new SKColor[]
-                                                   {
-                                                       Color.FromHsla(lastHue, 1, 0.5).ToSKColor(),
-                                                       Colors.White.ToSKColor(),
-                                                       Color.FromHsla(lastHue, 1, 0.5).ToSKColor()
-                                                   },
-                                                   new float[]
-                                                   {
-                                                       0F, 0.16666666666666F, 1F
-                                                   });
-
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Shader      = shader,
-            Style       = SKPaintStyle.Fill
-        };
-
-        canvas.DrawCircle(point3, SvRadius(canvasRadius) * 2, paint);
-
-        canvas.Restore();
-
-        var colors = new SKColor[]
-        {
-            SKColors.Black,
-            SKColors.Transparent
-        };
-
-        PaintGradient(canvas, canvasRadius, colors, point3);
-
-        canvas.Restore();
-    }
-
-    void PaintGradient(SKCanvas canvas, float canvasRadius, SKColor[] colors, SKPoint centerGradient)
-    {
-        var center = new SKPoint(canvasRadius, canvasRadius);
-        var polar = ToPolar(new SKPoint(center.X - centerGradient.X, center.Y - centerGradient.Y));
-
-        polar = polar.WithRadius(polar.Radius * _triangleHeight);
-
-        var p2 = FromPolar(polar);
-        p2.X += centerGradient.X;
-        p2.Y += centerGradient.Y;
-
-        var shader = SKShader.CreateLinearGradient(centerGradient, p2, colors, null, SKShaderTileMode.Clamp);
-
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Shader      = shader,
-            Style       = SKPaintStyle.Fill
-        };
-
-        canvas.DrawCircle(center, SvRadius(canvasRadius), paint);
-    }
-
     // Triangle constants — used by the SV-triangle rendering path (vertices,
     // gradient stretch). The encoding/decoding math has moved to
     // ColorPicker.Core.SaturationValueTriangle which carries its own copies.
-    const float _triangleHeight         = 1.5000001F;
     const float _triangleSide           = 0.8660244F;
     const float _triangleVerticalOffset = 0.5000001F;
 
@@ -404,21 +354,37 @@ public class ColorTriangleArea : SkiaPickerBase
     // (the consistent border gap), matching the disc/wheel.
     float HRadius(float canvasRadius) => canvasRadius - GetIndicatorRadiusPixels() - IndicatorPadding;
 
-    void PaintLinePicker(SKCanvas canvas, SKPoint outer, SKPoint inner)
+    static (
+        SKMatrix transform,
+        SKPoint localHue,
+        SKPoint localWhite,
+        SKPoint localBlack,
+        SKPoint hue,
+        SKPoint white,
+        SKPoint black) ComputeTriangleGeometry(
+        SKPoint center,
+        float radius,
+        float rotationRadians)
     {
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Style       = SKPaintStyle.Stroke
-        };
+        var localHue = new SKPoint(center.X, center.Y - radius);
+        var localWhite = new SKPoint(
+            center.X + (_triangleSide * radius),
+            center.Y + (_triangleVerticalOffset * radius));
+        var localBlack = new SKPoint(
+            center.X - (_triangleSide * radius),
+            center.Y + (_triangleVerticalOffset * radius));
+        var transform = SKMatrix.CreateRotation(rotationRadians, center.X, center.Y);
 
-        paint.Color = Colors.Black.ToSKColor();
-        paint.StrokeWidth = 4;
-
-        using var pathTriangle = new SKPath();
-        pathTriangle.MoveTo(outer);
-        pathTriangle.LineTo(inner);
-
-        canvas.DrawPath(pathTriangle, paint);
+        return (
+            transform,
+            localHue,
+            localWhite,
+            localBlack,
+            transform.MapPoint(localHue),
+            transform.MapPoint(localWhite),
+            transform.MapPoint(localBlack));
     }
+
+    static float AngleFromCenter(SKPoint point, SKPoint center)
+        => MathF.Atan2(point.Y - center.Y, point.X - center.X);
 }

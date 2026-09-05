@@ -1,3 +1,5 @@
+using ColorPicker.Rendering;
+
 namespace ColorPicker.Controls;
 
 /// <summary>A single luminosity (lightness) slider.</summary>
@@ -8,6 +10,7 @@ public class LuminositySlider : SliderStack
             {
                 new DelegateSlider(HslSliderFactory.NewValueL,
                             HslSliderFactory.GetNewColorL,
-                            HslSliderFactory.GetPaintL)
+                            HslSliderFactory.GetGradientL,
+                            SliderChannel.Luminosity)
             };
 }

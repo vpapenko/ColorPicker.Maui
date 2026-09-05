@@ -1,3 +1,5 @@
+using ColorPicker.Rendering;
+
 namespace ColorPicker.BaseClasses;
 
 /// <summary>
@@ -80,12 +82,20 @@ public abstract class SliderStack : SkiaPickerBase
     {
         var canvasSize = new SKSize(width, height);
         UpdateLocations(SelectedColor, canvasSize);
-        canvas.Clear();
+        RenderElement(canvas, new CanvasDrawingContext(canvasSize, SelectedColor));
 
         foreach (var slider in _sliders)
         {
-            PaintSlider(canvas, slider, canvasSize);
-            PaintIndicator(canvas, slider.Location);
+            RenderSlider(canvas, slider, canvasSize);
+            RenderElement(canvas, new IndicatorDrawingContext(
+                canvasSize,
+                SelectedColor,
+                slider.Location,
+                GetIndicatorRadiusPixels(),
+                IndicatorRole.Slider,
+                slider.Slider.Channel,
+                new SKPoint(slider.Slider.NewValue(SelectedColor), 0.5F),
+                IsActive: slider.LocationProgressId is not null));
         }
     }
 
@@ -106,6 +116,7 @@ public abstract class SliderStack : SkiaPickerBase
                 UpdateColors(slider, canvasSize);
             }
         }
+        InvalidateSurface();
     }
 
     protected override void OnTouchActionMoved(TouchActionEventArgs args)
@@ -122,6 +133,7 @@ public abstract class SliderStack : SkiaPickerBase
                 UpdateColors(slider, canvasSize);
             }
         }
+        InvalidateSurface();
     }
 
     protected override void OnTouchActionReleased(TouchActionEventArgs args)
@@ -139,6 +151,7 @@ public abstract class SliderStack : SkiaPickerBase
                 UpdateColors(slider, canvasSize);
             }
         }
+        InvalidateSurface();
     }
 
     protected override void OnTouchActionCancelled(TouchActionEventArgs args)
@@ -150,6 +163,7 @@ public abstract class SliderStack : SkiaPickerBase
                 slider.LocationProgressId = null;
             }
         }
+        InvalidateSurface();
     }
 
     protected override SizeRequest GetMeasure(double widthConstraint, double heightConstraint)
@@ -250,7 +264,7 @@ public abstract class SliderStack : SkiaPickerBase
         InvalidateSurface();
     }
 
-    void PaintSlider(SKCanvas canvas, SliderBounds slider, SKSize canvasSize)
+    void RenderSlider(SKCanvas canvas, SliderBounds slider, SKSize canvasSize)
     {
         var pickerRadiusPixels = GetIndicatorRadiusPixels();
         var sliderTop = slider.GetSliderOffset(pickerRadiusPixels);
@@ -269,71 +283,29 @@ public abstract class SliderStack : SkiaPickerBase
             endPoint = new SKPoint(canvasSize.Width - EndMargin(), sliderTop);
         }
 
-        var paint = slider.Slider.GetPaint(SelectedColor, startPoint, endPoint);
-        paint.StrokeWidth = pickerRadiusPixels * 1.3F;
-
         if (slider.Slider.PaintChessPattern)
         {
-            PaintChessPattern(canvas, slider, canvasSize);
+            RenderElement(canvas, new SliderTransparencyDrawingContext(
+                canvasSize,
+                SelectedColor,
+                Vertical,
+                startPoint,
+                endPoint,
+                pickerRadiusPixels,
+                IndicatorPadding,
+                slider.Slider.Channel));
         }
 
-        canvas.DrawLine(startPoint, endPoint, paint);
-    }
-
-    void PaintChessPattern(SKCanvas canvas, SliderBounds slider, SKSize canvasSize)
-    {
-        var pickerRadiusPixels  = GetIndicatorRadiusPixels();
-        var sliderTop           = slider.GetSliderOffset(pickerRadiusPixels);
-        var scale               = pickerRadiusPixels / 3;
-        var path                = new SKPath();
-
-        path.MoveTo(-1 * scale, -1 * scale);
-        path.LineTo(0 * scale, -1 * scale);
-        path.LineTo(0 * scale, 0 * scale);
-        path.LineTo(1 * scale, 0 * scale);
-        path.LineTo(1 * scale, 1 * scale);
-        path.LineTo(0 * scale, 1 * scale);
-        path.LineTo(0 * scale, 0 * scale);
-        path.LineTo(-1 * scale, 0 * scale);
-        path.LineTo(-1 * scale, -1 * scale);
-
-        var matrix = SKMatrix.CreateScale(2 * scale, 2 * scale);
-        var paint = new SKPaint
-        {
-            PathEffect = SKPathEffect.Create2DPath(matrix, path),
-            Color = Colors.LightGray.ToSKColor(),
-            IsAntialias = true
-        };
-
-        SKRect patternRect;
-        SKRect clipRect;
-        SKRoundRect clipRoundRect;
-
-        // Slider line center spans [pr*1.1, length - pr*1.1] but its round-cap stroke
-        // (thickness = 1.3*pr) extends 0.65*pr beyond each endpoint, so the visible
-        // pill spans [pr*0.45, length - pr*0.45]. Chess clip must match that pill.
-        float endInset = pickerRadiusPixels * 0.45F;
-        if (Vertical)
-        {
-            patternRect = new SKRect(sliderTop - pickerRadiusPixels, endInset
-                   , sliderTop + pickerRadiusPixels, canvasSize.Height - endInset);
-            clipRect = new SKRect(sliderTop - (pickerRadiusPixels * 0.65f), endInset
-                 , sliderTop + (pickerRadiusPixels * 0.65f), canvasSize.Height - endInset);
-            clipRoundRect = new SKRoundRect(clipRect, pickerRadiusPixels * 0.65f, pickerRadiusPixels * 0.65f);
-        }
-        else
-        {
-            patternRect = new SKRect(endInset, sliderTop - pickerRadiusPixels
-               , canvasSize.Width - endInset, sliderTop + pickerRadiusPixels);
-            clipRect = new SKRect(endInset, sliderTop - (pickerRadiusPixels * 0.65f)
-               , canvasSize.Width - endInset, sliderTop + (pickerRadiusPixels * 0.65f));
-            clipRoundRect = new SKRoundRect(clipRect, pickerRadiusPixels * 0.65f, pickerRadiusPixels * 0.65f);
-        }
-
-        canvas.Save();
-        canvas.ClipRoundRect(clipRoundRect);
-        canvas.DrawRect(patternRect, paint);
-        canvas.Restore();
+        RenderElement(canvas, new SliderTrackDrawingContext(
+            canvasSize,
+            SelectedColor,
+            startPoint,
+            endPoint,
+            pickerRadiusPixels,
+            slider.Slider.NewValue(SelectedColor),
+            Vertical,
+            slider.Slider.Channel,
+            slider.Slider.GetGradient(SelectedColor)));
     }
 
     bool IsInSliderArea(SKPoint point, float slidersHeight)

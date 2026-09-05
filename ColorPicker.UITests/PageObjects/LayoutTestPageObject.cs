@@ -1,7 +1,7 @@
+using ColorPicker.UITests.Infrastructure;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
-using ColorPicker.UITests.Infrastructure;
 
 namespace ColorPicker.UITests.PageObjects;
 
@@ -174,6 +174,38 @@ public sealed class LayoutTestPageObject
     {
         var path = CaptureCanvas(timeout);
         return PixelImage.Load(path);
+    }
+
+    public int WaitForWindowColorPixels(
+        Pixel expected,
+        int minimumCount,
+        TimeSpan? timeout = null)
+    {
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(5));
+        var count = 0;
+        while (DateTime.UtcNow < deadline)
+        {
+            using var image = Infrastructure.Screenshot.Capture(_driver);
+            count = CountExactPixels(image, expected);
+            if (count >= minimumCount)
+                return count;
+            Thread.Sleep(100);
+        }
+        return count;
+    }
+
+    static int CountExactPixels(PixelImage image, Pixel expected)
+    {
+        var count = 0;
+        for (var y = 0; y < image.Height; y++)
+        {
+            for (var x = 0; x < image.Width; x++)
+            {
+                if (image[x, y] == expected)
+                    count++;
+            }
+        }
+        return count;
     }
 
     static string SafeText(AppiumElement e) { try { return e.Text ?? ""; } catch { return ""; } }

@@ -1,4 +1,5 @@
 using ColorPicker.Core;
+using ColorPicker.Rendering;
 
 namespace ColorPicker.Controls;
 
@@ -12,24 +13,13 @@ public static class AlphaSliderFactory
         => Color.FromRgba(oldColor.Red, oldColor.Green, oldColor.Blue,
                           _alpha.Write(oldColor.ToHsla(), newValue).A);
 
-    public static SKPaint GetPaintAlpha(Color color, SKPoint startPoint, SKPoint endPoint)
+    public static ColorGradient GetGradientAlpha(Color color)
     {
         var startColor = Color.FromRgba(color.Red, color.Green, color.Blue, 0).ToSKColor();
         var endColor = Color.FromRgba(color.Red, color.Green, color.Blue, 1).ToSKColor();
-        return GetPaint(startColor, endColor, startPoint, endPoint);
+        return GetGradient(startColor, endColor);
     }
 
-    public static SKPaint GetPaint(SKColor startColor, SKColor endColor, SKPoint startPoint, SKPoint endPoint)
-    {
-        var paint = new SKPaint()
-        {
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            StrokeCap = SKStrokeCap.Round,
-            StrokeJoin = SKStrokeJoin.Round,
-            Shader = SKShader.CreateLinearGradient(startPoint, endPoint
-                    , new SKColor[] { startColor, endColor }, new float[] { 0, 1 }, SKShaderTileMode.Clamp)
-        };
-        return paint;
-    }
+    public static ColorGradient GetGradient(SKColor startColor, SKColor endColor)
+        => new(new[] { startColor, endColor }, new[] { 0F, 1F });
 }

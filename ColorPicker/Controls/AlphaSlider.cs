@@ -1,3 +1,5 @@
+using ColorPicker.Rendering;
+
 namespace ColorPicker.Controls;
 
 /// <summary>A single alpha (opacity) slider.</summary>
@@ -8,7 +10,8 @@ public class AlphaSlider : SliderStack
         {
             new DelegateSlider(AlphaSliderFactory.NewValueAlpha,
                         AlphaSliderFactory.GetNewColorAlpha,
-                        AlphaSliderFactory.GetPaintAlpha)
+                        AlphaSliderFactory.GetGradientAlpha,
+                        SliderChannel.Alpha)
             {
                 PaintChessPattern = true
             }

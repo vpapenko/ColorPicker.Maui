@@ -27,8 +27,8 @@ data-bindable — and any number of pickers can be linked so they stay in sync.
   `DelegateSlider` for building custom single-channel sliders.
 - **Two-way `SelectedColor` binding** and a `SelectedColorChanged` event.
 - **Linked pickers** — set `AttachedColorPicker` and multiple controls edit the same color.
-- **Customizable** — horizontal/vertical orientation, indicator (picker-dot) size, and a
-  canvas background color.
+- **Fully customizable rendering** — configure the bundled classic renderer or replace
+  any visual element with your own SkiaSharp drawing code.
 
 ## Install
 
@@ -96,6 +96,7 @@ All pickers derive from `ColorPickerBase` and share these members:
 |---|---|---|---|
 | `SelectedColor` | `Color` | `HSL(0, 0, 0.5)` (mid-gray) | The current color. Bindable, two-way. |
 | `AttachedColorPicker` | `IColorPicker` | `null` | Another picker to keep in sync with this one. |
+| `Renderer` | `IColorPickerRenderer` | `ClassicColorPickerRenderer` | Draws every visual element; replace it globally or per control. |
 | `SelectedColorChanged` | `event` | — | Raised on change; args expose `OldColor` / `NewColor`. |
 
 ### `ColorWheel`
@@ -118,6 +119,87 @@ All pickers derive from `ColorPickerBase` and share these members:
 | `Vertical` | `bool` | `false` | Place the alpha slider beside the triangle instead of below it. |
 | `CanvasBackgroundColor` | `Color` | `Transparent` | Fill drawn behind the triangle. |
 | `IndicatorRadiusScale` | `float` | `0.035` | Picker-dot radius as a fraction of the canvas. |
+
+## Custom rendering
+
+All picker geometry, color math, layout, and hit testing remain owned by the controls.
+Rendering is delegated to an `IColorPickerRenderer`, which receives an `SKCanvas` and an
+immutable semantic context containing the relevant pixel coordinates, radii, colors,
+angles, normalized values, channel role, and interaction state.
+
+The default `ClassicColorPickerRenderer` reproduces the standard appearance and exposes
+bindable high-level properties:
+
+```xml
+<ContentPage
+    ...
+    xmlns:cp="clr-namespace:ColorPicker.Controls;assembly=ColorPicker"
+    xmlns:cpr="clr-namespace:ColorPicker.Rendering;assembly=ColorPicker">
+
+    <cp:ColorWheel>
+        <cp:ColorWheel.Renderer>
+            <cpr:ClassicColorPickerRenderer
+                IndicatorOuterColor="DarkBlue"
+                IndicatorOuterThickness="3"
+                IndicatorHighlightColor="White"
+                SliderTrackThicknessScale="1.5"
+                AlphaPatternLightColor="LightGray"
+                AlphaPatternDarkColor="White" />
+        </cp:ColorWheel.Renderer>
+    </cp:ColorWheel>
+</ContentPage>
+```
+
+Common classic-renderer options include:
+
+| Property group | Options |
+|---|---|
+| Indicator | Fill, outer/highlight/inner colors, outline thicknesses, and outline insets |
+| Slider | Track-thickness scale, stroke cap, and stroke join |
+| Alpha pattern | Light/dark colors and cell-size scale |
+| Rings | Hue-ring and luminosity-ring thickness scales |
+| Triangle hue marker | Color, thickness, and stroke cap |
+| General | Antialiasing |
+
+Renderer instances can also be placed in a resource dictionary and shared by controls.
+Use literal property values when sharing a renderer. A renderer with bindings should only
+be shared by controls that use the same binding context; renderer objects are not visual
+elements, so MAUI dynamic-resource lookup is not available on them.
+
+To replace only one element, inherit the classic renderer and override the corresponding
+protected method. All other elements continue to use the classic implementation:
+
+```csharp
+using ColorPicker.Rendering;
+using SkiaSharp;
+
+public sealed class SquareIndicatorRenderer : ClassicColorPickerRenderer
+{
+    protected override void DrawIndicator(
+        SKCanvas canvas,
+        IndicatorDrawingContext context)
+    {
+        using var paint = new SKPaint
+        {
+            Color = SKColors.White,
+            Style = SKPaintStyle.Fill,
+            IsAntialias = true,
+        };
+
+        var radius = context.Radius;
+        canvas.DrawRect(
+            context.Center.X - radius,
+            context.Center.Y - radius,
+            radius * 2,
+            radius * 2,
+            paint);
+    }
+}
+```
+
+For a completely independent visual language, inherit `ColorPickerRenderer` or implement
+`IColorPickerRenderer` and handle each context directly. Bundled renderer source code is
+also intended to serve as a complete implementation reference.
 
 ## Linking pickers
 

@@ -1,5 +1,6 @@
 using ColorPicker.Core;
 using ColorPicker.Core.Interaction;
+using ColorPicker.Rendering;
 
 namespace ColorPicker.Controls;
 
@@ -17,7 +18,7 @@ public class ColorDisc : SkiaPickerBase
     long?   _locationHsProgressId    = null;
     long?   _locationLProgressId     = null;
 
-    readonly SKColor[] _sweepGradientColors = new SKColor[256];
+    readonly ColorGradient _hueGradient;
 
     public static readonly BindableProperty ShowLuminosityRingProperty
                          = BindableProperty.Create(nameof(ShowLuminosityRing),
@@ -62,8 +63,10 @@ public class ColorDisc : SkiaPickerBase
     /// </summary>
     public ColorDisc()
     {
+        var colors = new SKColor[256];
         for (var i = 128; i >= -127; i--)
-            _sweepGradientColors[255 - (i + 127)] = Color.FromHsla((i < 0 ? 255 + i : i) / 255D, 1, 0.5).ToSKColor();
+            colors[255 - (i + 127)] = Color.FromHsla((i < 0 ? 255 + i : i) / 255D, 1, 0.5).ToSKColor();
+        _hueGradient = new ColorGradient(colors);
     }
 
     public override float GetIndicatorRadiusPixels() => GetIndicatorRadiusPixels(GetCanvasSize());
@@ -87,6 +90,7 @@ public class ColorDisc : SkiaPickerBase
             _locationLProgressId = args.Id;
             WriteSelectedColor(_interaction.UpdateFromL(lUnit));
         }
+        InvalidateSurface();
     }
 
     protected override void OnTouchActionMoved(TouchActionEventArgs args)
@@ -104,6 +108,7 @@ public class ColorDisc : SkiaPickerBase
             var lUnit = PixelToUnit(point, canvasRadius, LRadius(canvasRadius));
             WriteSelectedColor(_interaction.UpdateFromL(lUnit));
         }
+        InvalidateSurface();
     }
 
     protected override void OnTouchActionReleased(TouchActionEventArgs args)
@@ -123,6 +128,7 @@ public class ColorDisc : SkiaPickerBase
             var lUnit = PixelToUnit(point, canvasRadius, LRadius(canvasRadius));
             WriteSelectedColor(_interaction.UpdateFromL(lUnit));
         }
+        InvalidateSurface();
     }
 
     protected override void OnTouchActionCancelled(TouchActionEventArgs args)
@@ -131,11 +137,15 @@ public class ColorDisc : SkiaPickerBase
             _locationHsProgressId = null;
         else if (_locationLProgressId == args.Id)
             _locationLProgressId = null;
+        InvalidateSurface();
     }
 
     protected override void OnPaintSurface(SKCanvas canvas, int width, int height)
     {
+        var canvasSize = new SKSize(width, height);
         var canvasRadius = GetSize() / 2F;
+        var center = new SKPoint(canvasRadius, canvasRadius);
+        var indicatorRadius = GetIndicatorRadiusPixels();
 
         // Re-sync from SelectedColor each paint so the controller picks up
         // any external bindable-property change (incl. the initial default
@@ -146,18 +156,53 @@ public class ColorDisc : SkiaPickerBase
         var locationHs = UnitToPixel(_interaction.LocationHs, canvasRadius, HsRadius(canvasRadius));
         var locationL  = UnitToPixel(_interaction.LocationL,  canvasRadius, LRadius(canvasRadius));
 
-        canvas.Clear();
-        PaintBackground(canvas, canvasRadius);
+        RenderElement(canvas, new CanvasDrawingContext(canvasSize, SelectedColor));
+        RenderElement(canvas, new CircularBackgroundDrawingContext(
+            canvasSize,
+            SelectedColor,
+            center,
+            canvasRadius - indicatorRadius,
+            CanvasBackgroundColor,
+            CircularBackgroundRole.ColorDisc));
 
         if (ShowLuminosityRing)
         {
-            PaintLGradient(canvas, canvasRadius);
-            PaintIndicator(canvas, locationL);
+            RenderElement(canvas, new LuminosityRingDrawingContext(
+                canvasSize,
+                SelectedColor,
+                center,
+                LRadius(canvasRadius),
+                indicatorRadius));
+            RenderElement(canvas, new IndicatorDrawingContext(
+                canvasSize,
+                SelectedColor,
+                locationL,
+                indicatorRadius,
+                IndicatorRole.Luminosity,
+                NormalizedPosition: new SKPoint(
+                    _interaction.LocationL.X,
+                    _interaction.LocationL.Y),
+                AngleRadians: AngleFromCenter(locationL, center),
+                IsActive: _locationLProgressId is not null));
         }
 
-        PaintColorSweepGradient(canvas, canvasRadius);
-        PaintGrayRadialGradient(canvas, canvasRadius);
-        PaintIndicator(canvas, locationHs);
+        RenderElement(canvas, new HueSaturationDiscDrawingContext(
+            canvasSize,
+            SelectedColor,
+            center,
+            HsRadius(canvasRadius),
+            _hueGradient));
+        RenderElement(canvas, new IndicatorDrawingContext(
+            canvasSize,
+            SelectedColor,
+            locationHs,
+            indicatorRadius,
+            IndicatorRole.HueSaturation,
+            NormalizedPosition: new SKPoint(
+                _interaction.LocationHs.X,
+                _interaction.LocationHs.Y),
+            AngleRadians: AngleFromCenter(locationHs, center),
+            IsActive: _locationHsProgressId is not null));
     }
 
     protected override void OnSelectedColorChanging(Color color)
@@ -198,80 +243,6 @@ public class ColorDisc : SkiaPickerBase
         return _interaction.IsInL(lUnit, tolUnits);
     }
 
-    void PaintBackground(SKCanvas canvas, float canvasRadius)
-    {
-        var center = new SKPoint(canvasRadius, canvasRadius);
-
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Color = CanvasBackgroundColor.ToSKColor()
-        };
-
-        canvas.DrawCircle(center, canvasRadius - GetIndicatorRadiusPixels(), paint);
-    }
-
-    void PaintLGradient(SKCanvas canvas, float canvasRadius)
-    {
-        var center = new SKPoint(canvasRadius, canvasRadius);
-
-        var colors = new List<SKColor>()
-        {
-            Color.FromHsla(SelectedColor.GetHue(), SelectedColor.GetSaturation(), 0.5).ToSKColor(),
-            Color.FromHsla(SelectedColor.GetHue(), SelectedColor.GetSaturation(), 1.0).ToSKColor(),
-            Color.FromHsla(SelectedColor.GetHue(), SelectedColor.GetSaturation(), 0.5).ToSKColor(),
-            Color.FromHsla(SelectedColor.GetHue(), SelectedColor.GetSaturation(), 0.0).ToSKColor(),
-            Color.FromHsla(SelectedColor.GetHue(), SelectedColor.GetSaturation(), 0.5).ToSKColor()
-        };
-
-        var shader = SKShader.CreateSweepGradient(center, colors.ToArray(), null);
-
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Shader      = shader,
-            Style       = SKPaintStyle.Stroke,
-            StrokeWidth = GetIndicatorRadiusPixels()
-        };
-        canvas.DrawCircle(center, LRadius(canvasRadius), paint);
-    }
-
-    void PaintColorSweepGradient(SKCanvas canvas, float canvasRadius)
-    {
-        var center = new SKPoint(canvasRadius, canvasRadius);
-
-        var shader = SKShader.CreateSweepGradient(center, _sweepGradientColors, null);
-
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Shader      = shader,
-            Style       = SKPaintStyle.Fill
-        };
-        canvas.DrawCircle(center, HsRadius(canvasRadius), paint);
-    }
-
-    void PaintGrayRadialGradient(SKCanvas canvas, float canvasRadius)
-    {
-        var center = new SKPoint(canvasRadius, canvasRadius);
-
-        var colors = new SKColor[]
-        {
-            SKColors.Gray,
-            SKColors.Transparent
-        };
-
-        var shader = SKShader.CreateRadialGradient(center, HsRadius(canvasRadius), colors, null, SKShaderTileMode.Clamp);
-
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Shader      = shader,
-            Style       = SKPaintStyle.Fill
-        };
-        canvas.DrawPaint(paint);
-    }
-
     // Pixel ↔ unit-square coordinate bridge (per active-area radius).
     static UnitPoint PixelToUnit(SKPoint pixel, float canvasRadius, float activeRadius)
         => new((float)((pixel.X - canvasRadius) / (2.0 * activeRadius) + 0.5),
@@ -290,4 +261,7 @@ public class ColorDisc : SkiaPickerBase
 
     float LRadius(float canvasRadius)
        => canvasRadius - GetIndicatorRadiusPixels() - IndicatorPadding;
+
+    static float AngleFromCenter(SKPoint point, SKPoint center)
+        => MathF.Atan2(point.Y - center.Y, point.X - center.X);
 }
