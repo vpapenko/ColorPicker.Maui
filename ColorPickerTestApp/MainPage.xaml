@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:ColorPicker.Controls;assembly=ColorPicker"
+    xmlns:rendering="clr-namespace:ColorPicker.Rendering;assembly=ColorPicker"
     xmlns:cvt="clr-namespace:ColorPickerTestApp.Converters"
     xmlns:skia="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls">
 
@@ -162,7 +163,13 @@
                 ShowAlphaSlider="{Binding Source={x:Reference ShowAlphaSwitch}, Path=IsToggled}"
                 ShowLuminositySlider="{Binding Source={x:Reference ShowLuminositySlider}, Path=IsToggled}"
                 ShowLuminosityRing="{Binding Source={x:Reference ShowLuminosityRing}, Path=IsToggled}"
-                Vertical="{Binding Source={x:Reference ShowVerticalSlider}, Path=IsToggled}" />
+                Vertical="{Binding Source={x:Reference ShowVerticalSlider}, Path=IsToggled}">
+                <controls:ColorWheel.Renderer>
+                    <rendering:ClassicColorPickerRenderer
+                        IndicatorOuterThickness="1"
+                        SliderTrackThicknessScale="1.3" />
+                </controls:ColorWheel.Renderer>
+            </controls:ColorWheel>
         </Border>
 
         <Border

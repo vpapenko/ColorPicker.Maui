@@ -1,3 +1,5 @@
+using ColorPicker.Rendering;
+
 namespace ColorPicker.Controls;
 
 /// <summary>A stack of Hue, Saturation and Lightness sliders, with an optional alpha slider.</summary>
@@ -9,22 +11,26 @@ public class HslSlider : SliderStackWithAlpha
             {
                 new DelegateSlider(HslSliderFactory.NewValueH,
                             HslSliderFactory.GetNewColorH,
-                            HslSliderFactory.GetPaintH),
+                            HslSliderFactory.GetGradientH,
+                            SliderChannel.Hue),
 
                 new DelegateSlider(HslSliderFactory.NewValueS,
                             HslSliderFactory.GetNewColorS,
-                            HslSliderFactory.GetPaintS),
+                            HslSliderFactory.GetGradientS,
+                            SliderChannel.Saturation),
 
                 new DelegateSlider(HslSliderFactory.NewValueL,
                             HslSliderFactory.GetNewColorL,
-                            HslSliderFactory.GetPaintL)
+                            HslSliderFactory.GetGradientL,
+                            SliderChannel.Luminosity)
             };
 
         if (ShowAlphaSlider)
         {
             var slider = new DelegateSlider(AlphaSliderFactory.NewValueAlpha,
                                      AlphaSliderFactory.GetNewColorAlpha,
-                                     AlphaSliderFactory.GetPaintAlpha)
+                                     AlphaSliderFactory.GetGradientAlpha,
+                                     SliderChannel.Alpha)
             {
                 PaintChessPattern = true
             };

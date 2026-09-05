@@ -1,4 +1,5 @@
 using ColorPicker.Core;
+using ColorPicker.Rendering;
 
 namespace ColorPicker.Controls;
 
@@ -7,6 +8,7 @@ public static class HslSliderFactory
     static readonly HueSlider             _hue = new();
     static readonly SaturationSlider      _sat = new();
     static readonly Core.LuminositySlider _lum = new();
+    static readonly ColorGradient          _hueGradient = CreateHueGradient();
 
     public static float NewValueH(Color color) => (float)_hue.Read(color.ToHsla());
     public static float NewValueS(Color color) => (float)_sat.Read(color.ToHsla());
@@ -21,7 +23,9 @@ public static class HslSliderFactory
     public static Color GetNewColorL(float newValue, Color oldColor)
             => _lum.Write(oldColor.ToHsla(), newValue).ToMauiColor();
 
-    public static SKPaint GetPaintH(Color _, SKPoint startPoint, SKPoint endPoint)
+    public static ColorGradient GetGradientH(Color _) => _hueGradient;
+
+    static ColorGradient CreateHueGradient()
     {
         var colors = new List<SKColor>();
 
@@ -37,10 +41,10 @@ public static class HslSliderFactory
             colorPos.Add(i / 255F);
         }
 
-        return GetPaint(colors.ToArray(), colorPos.ToArray(), startPoint, endPoint);
+        return new ColorGradient(colors, colorPos);
     }
 
-    public static SKPaint GetPaintS(Color color, SKPoint startPoint, SKPoint endPoint)
+    public static ColorGradient GetGradientS(Color color)
     {
         var colors = new SKColor[]
             {
@@ -49,10 +53,10 @@ public static class HslSliderFactory
             };
 
         var colorPos = new float[] { 0F, 1F };
-        return GetPaint(colors, colorPos, startPoint, endPoint);
+        return new ColorGradient(colors, colorPos);
     }
 
-    public static SKPaint GetPaintL(Color color, SKPoint startPoint, SKPoint endPoint)
+    public static ColorGradient GetGradientL(Color color)
     {
         var colors = new SKColor[]
             {
@@ -62,21 +66,6 @@ public static class HslSliderFactory
             };
 
         var colorPos = new float[] { 0F, 0.5F, 1F };
-        return GetPaint(colors, colorPos, startPoint, endPoint);
-    }
-
-    public static SKPaint GetPaint(SKColor[] colors, float[] colorPos, SKPoint startPoint, SKPoint endPoint)
-    {
-        var shader = SKShader.CreateLinearGradient(startPoint, endPoint,
-                                                        colors, colorPos, SKShaderTileMode.Clamp);
-        var paint = new SKPaint()
-        {
-            IsAntialias = true,
-            Style       = SKPaintStyle.Stroke,
-            StrokeCap   = SKStrokeCap.Round,
-            StrokeJoin  = SKStrokeJoin.Round,
-            Shader      = shader
-        };
-        return paint;
+        return new ColorGradient(colors, colorPos);
     }
 }

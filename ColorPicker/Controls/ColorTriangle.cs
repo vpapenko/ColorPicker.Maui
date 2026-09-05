@@ -1,3 +1,5 @@
+using ColorPicker.Rendering;
+
 namespace ColorPicker.Controls;
 
 /// <summary>
@@ -144,6 +146,7 @@ public class ColorTriangle : ColorPickerBase
     /// </summary>
     public ColorTriangle()
     {
+        _area.Renderer = Renderer;
         _area.AttachedColorPicker = this;
 
         HorizontalOptions = LayoutOptions.Center;
@@ -151,12 +154,21 @@ public class ColorTriangle : ColorPickerBase
 
         Children.Add(_area);
 
+        _alphaSlider.Renderer = Renderer;
         _alphaSlider.AttachedColorPicker = this;
 
         UpdateAlphaSlider(ShowAlphaSlider);
     }
 
     protected override void OnSelectedColorChanging(Color color) { }
+
+    protected override void OnRendererChanged(
+        IColorPickerRenderer oldRenderer,
+        IColorPickerRenderer newRenderer)
+    {
+        _area.Renderer = newRenderer;
+        _alphaSlider.Renderer = newRenderer;
+    }
 
     protected override Size MeasureOverride(double widthConstraint, double heightConstraint)
     {
@@ -254,5 +266,6 @@ public class ColorTriangle : ColorPickerBase
         {
             Children.Remove(_alphaSlider);
         }
+        RestoreRendererBindingContext();
     }
 }

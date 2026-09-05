@@ -1,3 +1,5 @@
+using ColorPicker.Rendering;
+
 namespace ColorPicker.Controls;
 
 /// <summary>A stack of Red, Green and Blue sliders, with an optional alpha slider.</summary>
@@ -9,22 +11,26 @@ public class RgbSlider : SliderStackWithAlpha
             {
                 new DelegateSlider(RgbSliderFactory.NewValueR,
                             RgbSliderFactory.GetNewColorR,
-                            RgbSliderFactory.GetPaintR),
+                            RgbSliderFactory.GetGradientR,
+                            SliderChannel.Red),
 
                 new DelegateSlider(RgbSliderFactory.NewValueG,
                             RgbSliderFactory.GetNewColorG,
-                            RgbSliderFactory.GetPaintG),
+                            RgbSliderFactory.GetGradientG,
+                            SliderChannel.Green),
 
                 new DelegateSlider(RgbSliderFactory.NewValueB,
                             RgbSliderFactory.GetNewColorB,
-                            RgbSliderFactory.GetPaintB)
+                            RgbSliderFactory.GetGradientB,
+                            SliderChannel.Blue)
             };
 
         if (ShowAlphaSlider)
         {
             var slider = new DelegateSlider(AlphaSliderFactory.NewValueAlpha,
                                      AlphaSliderFactory.GetNewColorAlpha,
-                                     AlphaSliderFactory.GetPaintAlpha)
+                                     AlphaSliderFactory.GetGradientAlpha,
+                                     SliderChannel.Alpha)
             {
                 PaintChessPattern = true
             };

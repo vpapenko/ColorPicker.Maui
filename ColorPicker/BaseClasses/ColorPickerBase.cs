@@ -1,6 +1,7 @@
-namespace ColorPicker.BaseClasses;
-
 using ColorPicker.Core.Connection;
+using ColorPicker.Rendering;
+
+namespace ColorPicker.BaseClasses;
 
 /// <summary>
 /// ColorPicker base class
@@ -27,6 +28,15 @@ public abstract class ColorPickerBase : Layout, IColorPicker, IRegisterable
                                                     null,
                                                     propertyChanged: HandleConnectedColorPicker);
 
+    public static readonly BindableProperty RendererProperty
+                         = BindableProperty.Create(nameof(Renderer),
+                                                    typeof(IColorPickerRenderer),
+                                                    typeof(ColorPickerBase),
+                                                    defaultValueCreator: _ => ColorPickerRenderers.CreateClassic(),
+                                                    coerceValue: (_, value) =>
+                                                        value ?? ColorPickerRenderers.CreateClassic(),
+                                                    propertyChanged: HandleRenderer);
+
     //  Backing store
     //
     /// <summary>The currently selected color. Bindable (two-way); changes raise
@@ -46,6 +56,16 @@ public abstract class ColorPickerBase : Layout, IColorPicker, IRegisterable
         set => SetValue(AttachedColorPickerProperty, value);
     }
 
+    /// <summary>
+    /// Renderer responsible for every visual element. Defaults to
+    /// <see cref="ClassicColorPickerRenderer"/>.
+    /// </summary>
+    public IColorPickerRenderer Renderer
+    {
+        get => (IColorPickerRenderer)GetValue(RendererProperty);
+        set => SetValue(RendererProperty, value);
+    }
+
     //  Shared, cycle-safe connection graph. Every AttachedColorPicker link is an
     //  undirected edge; all pickers in one connected component share a color.
     //
@@ -57,6 +77,14 @@ public abstract class ColorPickerBase : Layout, IColorPicker, IRegisterable
     //  what makes cyclic links (A-B-C-A) safe.
     //
     [ThreadStatic] static bool _propagatingColor;
+
+    bool _rendererSubscribed;
+
+    protected ColorPickerBase()
+    {
+        Loaded += HandleLoaded;
+        Unloaded += HandleUnloaded;
+    }
 
     //  ColorPicker Subclass must implement to intercept SelectedColor change
     //
@@ -81,6 +109,28 @@ public abstract class ColorPickerBase : Layout, IColorPicker, IRegisterable
             ((IView)child).Arrange(bounds);
         }
         return bounds.Size;
+    }
+
+    protected virtual void OnRendererChanged(
+        IColorPickerRenderer oldRenderer,
+        IColorPickerRenderer newRenderer)
+    {
+    }
+
+    protected virtual void OnRendererInvalidated()
+    {
+    }
+
+    protected override void OnBindingContextChanged()
+    {
+        base.OnBindingContextChanged();
+        RestoreRendererBindingContext();
+    }
+
+    protected void RestoreRendererBindingContext()
+    {
+        if (Renderer is BindableObject renderer)
+            SetInheritedBindingContext(renderer, BindingContext);
     }
 
     private class ColorPickerLayoutManager : ILayoutManager
@@ -189,6 +239,49 @@ public abstract class ColorPickerBase : Layout, IColorPicker, IRegisterable
                 PropagateColor(viewBase, viewBase.SelectedColor);
         }
     }
+
+    static void HandleRenderer(BindableObject bindable, object oldValue, object newValue)
+    {
+        if (bindable is not ColorPickerBase picker ||
+            oldValue is not IColorPickerRenderer oldRenderer ||
+            newValue is not IColorPickerRenderer newRenderer ||
+            ReferenceEquals(oldRenderer, newRenderer))
+        {
+            return;
+        }
+
+        if (picker._rendererSubscribed)
+        {
+            oldRenderer.Invalidated -= picker.HandleRendererInvalidated;
+            newRenderer.Invalidated += picker.HandleRendererInvalidated;
+        }
+        if (newRenderer is BindableObject renderer)
+            SetInheritedBindingContext(renderer, picker.BindingContext);
+        picker.OnRendererChanged(oldRenderer, newRenderer);
+        picker.RestoreRendererBindingContext();
+        picker.OnRendererInvalidated();
+    }
+
+    void HandleLoaded(object? sender, EventArgs e)
+    {
+        if (_rendererSubscribed)
+            return;
+
+        Renderer.Invalidated += HandleRendererInvalidated;
+        _rendererSubscribed = true;
+    }
+
+    void HandleUnloaded(object? sender, EventArgs e)
+    {
+        if (!_rendererSubscribed)
+            return;
+
+        Renderer.Invalidated -= HandleRendererInvalidated;
+        _rendererSubscribed = false;
+    }
+
+    void HandleRendererInvalidated(object? sender, EventArgs e)
+        => OnRendererInvalidated();
 
     /// <summary>
     /// Raised after <see cref="SelectedColor"/> changes, with the old and new color.

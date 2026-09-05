@@ -1,13 +1,19 @@
+using System.ComponentModel;
 using ColorPicker.BaseClasses;
 using ColorPicker.Controls;
+using ColorPicker.Rendering;
+using ColorPickerTestApp.Renderers;
 
 namespace ColorPickerTestApp;
 
 public partial class LayoutTestPage : ContentPage
 {
+    readonly RendererSettings _rendererSettings = new();
+
     public LayoutTestPage()
     {
         InitializeComponent();
+        BindingContext = _rendererSettings;
         // Apply default scenario on initial render so a test that doesn't
         // explicitly set one still has something to query.
         Loaded += (_, _) => ApplyScenario(ScenarioEntry.Text);
@@ -102,7 +108,7 @@ public partial class LayoutTestPage : ContentPage
             foreach (var o in opts)
             {
                 var t = o.Trim().ToLowerInvariant();
-                if (t is "alpha" or "lumslider" or "nolumwheel" or "vertical")
+                if (t is "alpha" or "lumslider" or "nolumwheel" or "vertical" or "customindicator")
                     flags.Add(t);
             }
             flags.Sort(StringComparer.Ordinal);
@@ -114,7 +120,7 @@ public partial class LayoutTestPage : ContentPage
             foreach (var o in opts)
             {
                 var t = o.Trim().ToLowerInvariant();
-                if (t is "norotate" or "rotate") flags.Add(t);
+                if (t is "norotate" or "rotate" or "customindicator") flags.Add(t);
             }
             flags.Sort(StringComparer.Ordinal);
             return string.Join(",", flags);
@@ -125,7 +131,7 @@ public partial class LayoutTestPage : ContentPage
             foreach (var o in opts)
             {
                 var t = o.Trim().ToLowerInvariant();
-                if (t is "vertical" or "noalpha") flags.Add(t);
+                if (t is "vertical" or "noalpha" or "customindicator") flags.Add(t);
                 // IndicatorRadiusScale change affects measure; rebuild to be safe.
                 else if (t.StartsWith("prs=")) flags.Add(t);
             }
@@ -261,6 +267,8 @@ public partial class LayoutTestPage : ContentPage
 
             var (control, wMode, wValue, hMode, hValue, opts) = Parse(spec);
             T($"PARSED:{control} {wMode}={wValue} x {hMode}={hValue} opts=[{string.Join(",", opts)}]");
+            _rendererSettings.IndicatorFillColor =
+                ParseColorOpt(opts, "bindfill") ?? Colors.Transparent;
 
             // Update _lastSpec FIRST so SizeChanged events triggered by the
             // WidthRequest/HeightRequest assignments below report the new spec.
@@ -314,6 +322,7 @@ public partial class LayoutTestPage : ContentPage
             };
             T($"BUILT-CHILD type={child.GetType().Name}");
             ScenarioContent.Content = child;
+            ApplyPostAttachOptions(child, opts);
             T($"CONTENT-SET; hb.W={HostBorder.Width:0} hb.H={HostBorder.Height:0} sc.W={ScenarioContent.Width:0} sc.H={ScenarioContent.Height:0}");
             _lastControl = control; _lastSizeKey = sizeKey; _lastFeatureKey = featureKey;
 
@@ -339,6 +348,7 @@ public partial class LayoutTestPage : ContentPage
             w.ShowLuminosityRing = true;
             w.Vertical = false;
             w.CanvasBackgroundColor = Colors.Transparent;
+            ApplyRenderer(w, opts);
             foreach (var opt in opts)
             {
                 if (IsKvOpt(opt, out _, out _)) continue; // handled separately
@@ -348,6 +358,14 @@ public partial class LayoutTestPage : ContentPage
                     case "lumslider": w.ShowLuminositySlider = true; break;
                     case "nolumwheel": w.ShowLuminosityRing = false; break;
                     case "vertical": w.Vertical = true; break;
+                    case "customindicator": break;
+                    case "overrestore": break;
+                    case "zerostrokes": break;
+                    case "zerostrokestransparent": break;
+                    case "removealphaafterattach":
+                        w.ShowAlphaSlider = true;
+                        w.ShowAlphaSlider = false;
+                        break;
                     case "": break;
                     default: throw new ArgumentException("Unknown option: " + opt);
                 }
@@ -360,6 +378,7 @@ public partial class LayoutTestPage : ContentPage
         {
             t.CanvasBackgroundColor = ParseColorOpt(opts, "wbg") ?? Colors.Transparent;
             t.RotateTriangleByHue = true;
+            ApplyRenderer(t, opts);
             foreach (var opt in opts)
             {
                 if (IsKvOpt(opt, out _, out _)) continue;
@@ -367,6 +386,10 @@ public partial class LayoutTestPage : ContentPage
                 {
                     case "norotate": t.RotateTriangleByHue = false; break;
                     case "rotate": t.RotateTriangleByHue = true; break;
+                    case "customindicator": break;
+                    case "overrestore": break;
+                    case "zerostrokes": break;
+                    case "zerostrokestransparent": break;
                     case "": break;
                     default: throw new ArgumentException("Unknown option: " + opt);
                 }
@@ -378,6 +401,7 @@ public partial class LayoutTestPage : ContentPage
             s.Vertical = false;
             s.ShowAlphaSlider = true;
             s.IndicatorRadiusScale = 0F;
+            ApplyRenderer(s, opts);
             foreach (var opt in opts)
             {
                 if (IsKvOpt(opt, out _, out _)) continue;
@@ -385,6 +409,10 @@ public partial class LayoutTestPage : ContentPage
                 {
                     case "vertical": s.Vertical = true; break;
                     case "noalpha": s.ShowAlphaSlider = false; break;
+                    case "customindicator": break;
+                    case "overrestore": break;
+                    case "zerostrokes": break;
+                    case "zerostrokestransparent": break;
                     case "": break;
                     default: throw new ArgumentException("Unknown option: " + opt);
                 }
@@ -401,6 +429,7 @@ public partial class LayoutTestPage : ContentPage
     static T MakeSliders<T>(string[] opts) where T : SliderStackWithAlpha, new()
     {
         var s = new T { AutomationId = "ScenarioControl" };
+        ApplyRenderer(s, opts);
         foreach (var opt in opts)
         {
             if (IsKvOpt(opt, out _, out _)) continue;
@@ -408,6 +437,10 @@ public partial class LayoutTestPage : ContentPage
             {
                 case "vertical": s.Vertical = true; break;
                 case "noalpha": s.ShowAlphaSlider = false; break;
+                case "customindicator": break;
+                case "overrestore": break;
+                case "zerostrokes": break;
+                case "zerostrokestransparent": break;
                 case "": break;
                 default: throw new ArgumentException("Unknown option: " + opt);
             }
@@ -420,6 +453,7 @@ public partial class LayoutTestPage : ContentPage
     static ColorWheel MakeWheel(string[] opts)
     {
         var wheel = new ColorWheel { AutomationId = "ScenarioControl" };
+        ApplyRenderer(wheel, opts);
         foreach (var opt in opts)
         {
             if (IsKvOpt(opt, out _, out _)) continue;
@@ -430,6 +464,11 @@ public partial class LayoutTestPage : ContentPage
                 case "noLumWheel":
                 case "nolumwheel": wheel.ShowLuminosityRing = false; break;
                 case "vertical": wheel.Vertical = true; break;
+                case "customindicator": break;
+                case "overrestore": break;
+                case "zerostrokes": break;
+                case "zerostrokestransparent": break;
+                case "removealphaafterattach": wheel.ShowAlphaSlider = true; break;
                 case "": break;
                 default: throw new ArgumentException("Unknown option: " + opt);
             }
@@ -441,6 +480,7 @@ public partial class LayoutTestPage : ContentPage
     static ColorTriangle MakeTriangle(string[] opts)
     {
         var t = new ColorTriangle { AutomationId = "ScenarioControl" };
+        ApplyRenderer(t, opts);
         foreach (var opt in opts)
         {
             if (IsKvOpt(opt, out _, out _)) continue;
@@ -448,6 +488,10 @@ public partial class LayoutTestPage : ContentPage
             {
                 case "norotate": t.RotateTriangleByHue = false; break;
                 case "rotate": t.RotateTriangleByHue = true; break;
+                case "customindicator": break;
+                case "overrestore": break;
+                case "zerostrokes": break;
+                case "zerostrokestransparent": break;
                 case "": break;
                 default: throw new ArgumentException("Unknown option: " + opt);
             }
@@ -455,6 +499,99 @@ public partial class LayoutTestPage : ContentPage
         var wbg = ParseColorOpt(opts, "wbg");
         if (wbg is not null) t.CanvasBackgroundColor = wbg;
         return t;
+    }
+
+    static void ApplyRenderer(ColorPickerBase picker, string[] opts)
+    {
+        if (opts.Any(opt => opt.Trim().Equals(
+            "overrestore",
+            StringComparison.OrdinalIgnoreCase)))
+        {
+            if (picker.Renderer is not TestOverRestoreRenderer)
+                picker.Renderer = new TestOverRestoreRenderer();
+            return;
+        }
+
+        if (opts.Any(opt => opt.Trim().Equals(
+            "customindicator",
+            StringComparison.OrdinalIgnoreCase)))
+        {
+            if (picker.Renderer is not TestIndicatorRenderer)
+                picker.Renderer = new TestIndicatorRenderer();
+            return;
+        }
+
+        var renderer = picker.Renderer.GetType() == typeof(ClassicColorPickerRenderer)
+            ? (ClassicColorPickerRenderer)picker.Renderer
+            : new ClassicColorPickerRenderer();
+        if (ParseColorOpt(opts, "bindfill") is not null)
+        {
+            renderer.SetBinding(
+                ClassicColorPickerRenderer.IndicatorFillColorProperty,
+                nameof(RendererSettings.IndicatorFillColor));
+        }
+        else
+        {
+            renderer.RemoveBinding(ClassicColorPickerRenderer.IndicatorFillColorProperty);
+            renderer.IndicatorFillColor = ParseColorOpt(opts, "ifill") ?? Colors.Transparent;
+        }
+
+        renderer.IndicatorOuterColor = Colors.Black;
+        renderer.IndicatorHighlightColor = Colors.White;
+        renderer.IndicatorInnerColor = Colors.Black;
+        renderer.IndicatorOuterThickness = 1;
+        renderer.IndicatorHighlightThickness = 2;
+        renderer.IndicatorInnerThickness = 1;
+
+        var zeroStrokes = opts.Any(opt => opt.Trim().Equals(
+            "zerostrokes",
+            StringComparison.OrdinalIgnoreCase));
+        var transparentZeroStrokes = opts.Any(opt => opt.Trim().Equals(
+            "zerostrokestransparent",
+            StringComparison.OrdinalIgnoreCase));
+        if (zeroStrokes || transparentZeroStrokes)
+        {
+            renderer.IndicatorOuterColor = zeroStrokes ? Color.FromArgb("#010203") : Colors.Transparent;
+            renderer.IndicatorHighlightColor = zeroStrokes ? Color.FromArgb("#040506") : Colors.Transparent;
+            renderer.IndicatorInnerColor = zeroStrokes ? Color.FromArgb("#070809") : Colors.Transparent;
+            renderer.IndicatorOuterThickness = 0;
+            renderer.IndicatorHighlightThickness = 0;
+            renderer.IndicatorInnerThickness = 0;
+        }
+        picker.Renderer = renderer;
+    }
+
+    static void ApplyPostAttachOptions(View child, string[] opts)
+    {
+        if (child is ColorWheel wheel &&
+            opts.Any(opt => opt.Trim().Equals(
+                "removealphaafterattach",
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            wheel.ShowAlphaSlider = false;
+        }
+    }
+
+    sealed class RendererSettings : INotifyPropertyChanged
+    {
+        Color _indicatorFillColor = Colors.Transparent;
+
+        public Color IndicatorFillColor
+        {
+            get => _indicatorFillColor;
+            set
+            {
+                if (_indicatorFillColor == value)
+                    return;
+
+                _indicatorFillColor = value;
+                PropertyChanged?.Invoke(
+                    this,
+                    new PropertyChangedEventArgs(nameof(IndicatorFillColor)));
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
     }
 
     static bool IsKvOpt(string opt, out string key, out string value)

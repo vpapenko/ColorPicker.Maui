@@ -1,6 +1,5 @@
-namespace ColorPicker.BaseClasses;
-
 using ColorPicker.Behaviors;
+using ColorPicker.Rendering;
 #if WINDOWS
 using ColorPicker.Platforms.WinUI;
 #elif ANDROID
@@ -8,6 +7,8 @@ using ColorPicker.Platforms.Droid;
 #endif
 
 using SkiaSharp.Views.Maui.Controls;
+
+namespace ColorPicker.BaseClasses;
 
 /// <summary>
 /// Base class for the SkiaSharp-drawn pickers (disc, triangle, sliders). Owns the
@@ -103,6 +104,8 @@ public abstract class SkiaPickerBase : ColorPickerBase
     protected abstract void OnTouchActionReleased(TouchActionEventArgs args);
     protected abstract void OnTouchActionCancelled(TouchActionEventArgs args);
 
+    protected override void OnRendererInvalidated() => InvalidateSurface();
+
     protected override Size MeasureOverride(double widthConstraint, double heightConstraint)
     {
         // Apply WidthRequest/HeightRequest as constraints
@@ -156,22 +159,14 @@ public abstract class SkiaPickerBase : ColorPickerBase
         InvalidateSurface();
     }
 
-    protected void PaintIndicator(SKCanvas canvas, SKPoint point)
+    protected void RenderElement(SKCanvas canvas, ColorPickerDrawingContext context)
     {
-        var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke
-        };
-
-        paint.Color = Colors.White.ToSKColor();
-        paint.StrokeWidth = 2;
-        canvas.DrawCircle(point, GetIndicatorRadiusPixels() - 2, paint);
-
-        paint.Color = Colors.Black.ToSKColor();
-        paint.StrokeWidth = 1;
-        canvas.DrawCircle(point, GetIndicatorRadiusPixels() - 4, paint);
-        canvas.DrawCircle(point, GetIndicatorRadiusPixels(), paint);
+        using var recorder = new SKPictureRecorder();
+        var bounds = new SKRect(0, 0, context.CanvasSize.Width, context.CanvasSize.Height);
+        var isolatedCanvas = recorder.BeginRecording(bounds);
+        Renderer.Render(isolatedCanvas, context);
+        using var picture = recorder.EndRecording();
+        canvas.DrawPicture(picture);
     }
 
     void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)

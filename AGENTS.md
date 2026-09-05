@@ -175,5 +175,6 @@ Uses **SkiaSharp**, not ImageSharp (replaced in checkpoint 038). When working wi
 
 - `ColorPicker/BaseClasses/` — `ColorPickerBase`, `SkiaPickerBase`, `SliderBase`, `SliderStack`, `SliderStackWithAlpha`
 - `ColorPicker/Controls/` — `ColorWheel`, `ColorTriangle`, `ColorDisc`, `HslSlider`, `RgbSlider`, `AlphaSlider`, `LuminositySlider`, `DelegateSlider`
+- `ColorPicker/Rendering/` — renderer contracts, semantic drawing contexts, gradients, and bundled renderer implementations
 - `ColorPicker/Behaviors/` — touch handling (`TouchBehavior`, `TouchActionEventArgs`)
 - `ColorPicker/Platforms/{Android,Windows}/` — touch behavior implementations per platform

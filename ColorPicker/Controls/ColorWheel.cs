@@ -1,3 +1,5 @@
+using ColorPicker.Rendering;
+
 namespace ColorPicker.Controls;
 
 /// <summary>
@@ -167,6 +169,7 @@ public class ColorWheel : ColorPickerBase
     /// </summary>
     public ColorWheel()
     {
+        _disc.Renderer = Renderer;
         _disc.AttachedColorPicker = this;
 
         HorizontalOptions = LayoutOptions.Center;
@@ -174,7 +177,9 @@ public class ColorWheel : ColorPickerBase
 
         Children.Add(_disc);
 
+        _alphaSlider.Renderer = Renderer;
         _alphaSlider.AttachedColorPicker = this;
+        _luminositySlider.Renderer = Renderer;
         _luminositySlider.AttachedColorPicker = this;
 
         UpdateAlphaSlider(ShowAlphaSlider);
@@ -182,6 +187,15 @@ public class ColorWheel : ColorPickerBase
     }
 
     protected override void OnSelectedColorChanging(Color color) { }
+
+    protected override void OnRendererChanged(
+        IColorPickerRenderer oldRenderer,
+        IColorPickerRenderer newRenderer)
+    {
+        _disc.Renderer = newRenderer;
+        _alphaSlider.Renderer = newRenderer;
+        _luminositySlider.Renderer = newRenderer;
+    }
 
     protected override Size MeasureOverride(double widthConstraint, double heightConstraint)
     {
@@ -300,6 +314,7 @@ public class ColorWheel : ColorPickerBase
             Children.Add(_alphaSlider);
         else
             Children.Remove(_alphaSlider);
+        RestoreRendererBindingContext();
     }
 
     void UpdateLuminositySlider(bool show)
@@ -308,5 +323,6 @@ public class ColorWheel : ColorPickerBase
             Children.Add(_luminositySlider);
         else
             Children.Remove(_luminositySlider);
+        RestoreRendererBindingContext();
     }
 }
