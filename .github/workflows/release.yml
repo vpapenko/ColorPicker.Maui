@@ -6,8 +6,8 @@ name: Release
 # GitHub Release with auto-drafted notes.
 #
 # Cutting a release:
-#   git tag v1.0.0 && git push origin v1.0.0
-#   git tag v1.1.0-preview.1 && git push origin v1.1.0-preview.1
+#   git tag v2.0.0 && git push origin v2.0.0
+#   git tag v2.1.0-preview.1 && git push origin v2.1.0-preview.1
 
 on:
   push:
@@ -57,11 +57,52 @@ jobs:
         with:
           user: VictorPapenko
       - name: Push to nuget.org
+        env:
+          VERSION: ${{ needs.build-and-test.outputs.package-version }}
         run: |
-          dotnet nuget push "nupkgs/*.nupkg" \
-            --source https://api.nuget.org/v3/index.json \
-            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
-            --skip-duplicate
+          for package_id in ColorPicker.Maui.Core ColorPicker.Maui; do
+            package="nupkgs/${package_id}.${VERSION}.nupkg"
+            if [ ! -f "$package" ]; then
+              echo "::error::Expected package not found: $package"
+              exit 1
+            fi
+
+            lowercase_id="${package_id,,}"
+            lowercase_version="${VERSION,,}"
+            existing_package="$(mktemp)"
+            status="$(curl --silent --show-error --location \
+              --output "$existing_package" \
+              --write-out "%{http_code}" \
+              "https://api.nuget.org/v3-flatcontainer/${lowercase_id}/${lowercase_version}/${lowercase_id}.${lowercase_version}.nupkg")"
+
+            if [ "$status" = "200" ]; then
+              local_commit="$(unzip -p "$package" '*.nuspec' |
+                sed -n 's/.*<repository[^>]* commit="\([^"]*\)".*/\1/p' |
+                head -n 1)"
+              existing_commit="$(unzip -p "$existing_package" '*.nuspec' |
+                sed -n 's/.*<repository[^>]* commit="\([^"]*\)".*/\1/p' |
+                head -n 1)"
+              if [ -z "$local_commit" ] || [ "$local_commit" != "$existing_commit" ]; then
+                echo "::error::${package_id} ${VERSION} already exists from commit '${existing_commit:-unknown}', not '$local_commit'."
+                rm -f "$existing_package"
+                exit 1
+              fi
+              echo "${package_id} ${VERSION} already exists from the same commit; continuing a safe retry."
+            elif [ "$status" != "404" ]; then
+              echo "::error::NuGet package lookup for ${package_id} ${VERSION} returned HTTP $status."
+              rm -f "$existing_package"
+              exit 1
+            fi
+            rm -f "$existing_package"
+          done
+
+          for package_id in ColorPicker.Maui.Core ColorPicker.Maui; do
+            dotnet nuget push "nupkgs/${package_id}.${VERSION}.nupkg" \
+              --source https://api.nuget.org/v3/index.json \
+              --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
+              --no-symbols \
+              --skip-duplicate
+          done
           dotnet nuget push "nupkgs/*.snupkg" \
             --source https://api.nuget.org/v3/index.json \
             --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \

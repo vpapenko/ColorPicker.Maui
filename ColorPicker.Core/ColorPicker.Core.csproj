@@ -9,17 +9,50 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <RootNamespace>ColorPicker.Core</RootNamespace>
-    <AssemblyName>ColorPicker.Core</AssemblyName>
+    <AssemblyName>ColorPicker.Maui.Core</AssemblyName>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>ColorPicker.Maui.Core</PackageId>
+    <Authors>Victor Papenko</Authors>
+    <Company>Victor Papenko</Company>
+    <Copyright>Copyright (c) $([System.DateTime]::Now.Year) Victor Papenko</Copyright>
     <Description>Platform-agnostic math for the ColorPicker.Maui library: HSL/RGB conversions, polar geometry, unit-square color-picker primitives.</Description>
-    <PackageTags>colorpicker;hsl;hsv;rgb;color;math</PackageTags>
+    <PackageTags>colorpicker;color-picker;hsl;hsv;rgb;color;math;geometry</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/vpapenko/ColorPicker.Maui</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/vpapenko/ColorPicker.Maui</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <Deterministic>true</Deterministic>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="ColorPicker.Core.Tests" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="Microsoft.Bcl.HashCode" Version="6.0.0" />
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.400" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Bcl.HashCode"
+                      Version="6.0.0"
+                      Condition="'$(TargetFramework)' == 'netstandard2.0'" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\ColorPicker\icon.png" Pack="true" PackagePath="\" Link="icon.png" />
+  </ItemGroup>
+
+  <PropertyGroup Label="MinVer">
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
 
 </Project>

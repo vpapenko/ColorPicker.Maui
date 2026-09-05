@@ -36,6 +36,17 @@ data-bindable — and any number of pickers can be linked so they stay in sync.
 dotnet add package ColorPicker.Maui
 ```
 
+For platform-independent color conversion and picker geometry without MAUI or
+SkiaSharp, install the companion package:
+
+```bash
+dotnet add package ColorPicker.Maui.Core
+```
+
+`ColorPicker.Maui.Core` targets `netstandard2.0` and `net8.0`. It is installed
+transitively by `ColorPicker.Maui`; reference it directly only when using the
+core APIs from a non-MAUI project.
+
 > Preview builds are published to **GitHub Packages** on every push to `main`; stable
 > releases go to **nuget.org**.
 

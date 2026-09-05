@@ -94,17 +94,29 @@ jobs:
           Write-Host "Restoring ConsumerSmoke against ColorPicker.Maui = $env:VERSION from GitHub Packages"
           dotnet restore samples/ConsumerSmoke/ConsumerSmoke.csproj `
             -p:ColorPickerVersion=$env:VERSION
+          Write-Host "Restoring CoreConsumerSmoke against ColorPicker.Maui.Core = $env:VERSION from GitHub Packages"
+          dotnet restore samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj `
+            --configfile samples/ConsumerSmoke/NuGet.config `
+            -p:ColorPickerVersion=$env:VERSION
+          Write-Host "Restoring PackageCompatibilitySmoke against ColorPicker.Maui = $env:VERSION from GitHub Packages"
+          dotnet restore samples/PackageCompatibilitySmoke/PackageCompatibilitySmoke.csproj `
+            --configfile samples/ConsumerSmoke/NuGet.config `
+            -p:ColorPickerVersion=$env:VERSION
       - name: Install Android SDK platform (API 36)
         run: dotnet build ColorPicker/ColorPicker.csproj -t:InstallAndroidDependencies -f net10.0-android -p:AcceptAndroidSDKLicenses=True
       - name: Build consumer (Android)
         run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-android -p:ColorPickerVersion=${{ needs.build-and-test.outputs.package-version }}
       - name: Build consumer (Windows)
         run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-windows10.0.19041.0 -p:ColorPickerVersion=${{ needs.build-and-test.outputs.package-version }}
+      - name: Build Core consumer
+        run: dotnet build samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj --configuration Release --no-restore -p:ColorPickerVersion=${{ needs.build-and-test.outputs.package-version }}
+      - name: Verify package assembly compatibility
+        run: dotnet run --project samples/PackageCompatibilitySmoke/PackageCompatibilitySmoke.csproj --configuration Release --no-restore -p:ColorPickerVersion=${{ needs.build-and-test.outputs.package-version }}
       - name: Job summary
         shell: pwsh
         run: |
           "## Consumer E2E passed" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          "Consumed `ColorPicker.Maui` **${{ needs.build-and-test.outputs.package-version }}** from GitHub Packages." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          "Consumed `ColorPicker.Maui` and `ColorPicker.Maui.Core` **${{ needs.build-and-test.outputs.package-version }}** from GitHub Packages and verified the Core type-forwarding contract." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
 
   draft-release-notes:
     name: Update release draft

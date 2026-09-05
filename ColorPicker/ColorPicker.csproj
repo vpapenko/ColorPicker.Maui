@@ -69,16 +69,8 @@
 	  <None Include="icon.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
-	<!--
-	  Embed the platform-agnostic ColorPicker.Core math sources directly so the
-	  MAUI package ships as a single nupkg with no extra runtime dependency.
-	  Core remains an independently-buildable project for cross-platform unit
-	  tests; promoting it to a separate NuGet later is a one-line swap.
-	-->
 	<ItemGroup>
-	  <Compile Include="..\ColorPicker.Core\**\*.cs"
-	           Exclude="..\ColorPicker.Core\bin\**;..\ColorPicker.Core\obj\**"
-	           LinkBase="Core" />
+	  <ProjectReference Include="..\ColorPicker.Core\ColorPicker.Core.csproj" />
 	</ItemGroup>
 
 	<PropertyGroup Label="MinVer">
@@ -87,4 +79,3 @@
 	</PropertyGroup>
 
 </Project>
-

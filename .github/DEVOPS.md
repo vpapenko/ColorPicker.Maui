@@ -17,7 +17,7 @@ run at least once on the default branch**. Easiest order:
    the job names).
 4. Configure branch protection (section 1a) in one pass, including required
    checks.
-5. Tag `v0.1.0-preview.1` to dry-run `release.yml` (section 5).
+5. Tag `v2.0.0-preview.1` to dry-run `release.yml` (section 5).
 
 ## 1a. Branch protection on `main`
 
@@ -62,7 +62,7 @@ the repo, nothing to rotate.
    | Repository           | `ColorPicker.Maui`                                   |
    | Workflow File        | `release.yml`                                        |
    | Environment          | `nuget-prod`                                         |
-   | Package Glob / IDs   | `ColorPicker.Maui`                                   |
+   | Package Glob / IDs   | `ColorPicker.Maui*`                                  |
 
 3. Save. First push from `release.yml` (after the package exists) will
    bind the policy to the package owner — that's normal.
@@ -70,7 +70,7 @@ the repo, nothing to rotate.
 If the package doesn't exist on nuget.org yet, the **very first** publish
 still needs a one-shot API key:
 - Generate at https://www.nuget.org/account/apikeys
-  scope **Push new packages and package versions**, Glob `ColorPicker.Maui`,
+  scope **Push new packages and package versions**, Glob `ColorPicker.Maui*`,
   expires in **1 day**.
 - Add as repo secret `NUGET_API_KEY` temporarily.
 - Temporarily change `release.yml` to use `${{ secrets.NUGET_API_KEY }}`
@@ -105,6 +105,7 @@ dotnet nuget add source https://nuget.pkg.github.com/vpapenko/index.json \
   --username <your-github-username> \
   --password <a-github-pat-with-read:packages>
 dotnet add package ColorPicker.Maui --prerelease
+dotnet add package ColorPicker.Maui.Core --prerelease
 ```
 
 ### 4a. Consumer-smoke validation of the packed nupkg
@@ -119,10 +120,15 @@ jobs close that gap:
 | `build-and-test.yml → consumer-smoke` | every PR (when `pack: true`) | local feed = the just-packed `nupkgs/` artifact | catch packaging bugs **before merge** |
 | `ci.yml → consumer-e2e-github-packages` | every push to `main` | GitHub Packages (just-published preview) | catch upload/index/auth issues that only show up via the real feed |
 
-Both build the [`samples/ConsumerSmoke/`](../samples/ConsumerSmoke/README.md)
-class library against the version under test, on Android **and** Windows
-TFMs. If either job fails on a PR, the underlying package is broken and
-must not be promoted to a release tag.
+Both jobs build [`samples/ConsumerSmoke/`](../samples/ConsumerSmoke/README.md)
+against `ColorPicker.Maui` on Android and Windows,
+[`samples/CoreConsumerSmoke/`](../samples/CoreConsumerSmoke/README.md) against
+`ColorPicker.Maui.Core` on `netstandard2.0` and `net8.0`, and run
+`samples/PackageCompatibilitySmoke/` to verify the Core assembly identity and
+every type forwarder in `ColorPicker.dll`. The MAUI package also consumes Core
+transitively, so the smoke pass verifies the dependency between the two
+packages. If either job fails on a PR, the packages must not be
+promoted to a release tag.
 
 ---
 
@@ -132,19 +138,20 @@ After this PR merges:
 
 ```sh
 git checkout main && git pull
-git tag v0.1.0-preview.1
-git push origin v0.1.0-preview.1
+git tag v2.0.0-preview.1
+git push origin v2.0.0-preview.1
 ```
 
 Watch `release.yml` run; approve the `nuget-prod` deployment when prompted.
-After it succeeds you should see `0.1.0-preview.1` on
-https://www.nuget.org/packages/ColorPicker.Maui.
+After it succeeds you should see `2.0.0-preview.1` on
+https://www.nuget.org/packages/ColorPicker.Maui and
+https://www.nuget.org/packages/ColorPicker.Maui.Core.
 
 When you're confident in the API, cut a stable release:
 
 ```sh
-git tag v0.1.0
-git push origin v0.1.0
+git tag v2.0.0
+git push origin v2.0.0
 ```
 
 ---
@@ -152,10 +159,10 @@ git push origin v0.1.0
 ## 6. Versioning rules (enforced by MinVer)
 
 - No tag yet → `0.0.0-preview.0.<height>` on every push to main.
-- Tag `v1.0.0-preview.5` → that commit packs as `1.0.0-preview.5`.
-  Subsequent commits pack as `1.0.0-preview.5.<height>`.
-- Tag `v1.0.0` → packs as exactly `1.0.0`. Subsequent commits pack as
-  `1.0.1-preview.0.<height>` (next-patch preview).
+- Tag `v2.0.0-preview.5` → that commit packs as `2.0.0-preview.5`.
+  Subsequent commits pack as `2.0.0-preview.5.<height>`.
+- Tag `v2.0.0` → packs as exactly `2.0.0`. Subsequent commits pack as
+  `2.0.1-preview.0.<height>` (next-patch preview).
 - Bumping major/minor: just push a tag. No file edits, no PRs.
 
 ---

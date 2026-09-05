@@ -208,17 +208,31 @@ jobs:
         id: minver
         shell: pwsh
         run: |
+          dotnet pack ColorPicker.Core/ColorPicker.Core.csproj `
+            --configuration Release `
+            --no-restore `
+            --output ${{ github.workspace }}/nupkgs `
+            -p:ContinuousIntegrationBuild=true
           dotnet pack ColorPicker/ColorPicker.csproj `
             --configuration Release `
             --no-restore `
             --output ${{ github.workspace }}/nupkgs `
             -p:ContinuousIntegrationBuild=true
-          $pkg = Get-ChildItem ${{ github.workspace }}/nupkgs -Filter "*.nupkg" | Select-Object -First 1
-          if (-not $pkg) { throw "No .nupkg produced." }
-          # Filename: ColorPicker.Maui.<version>.nupkg
-          $version = $pkg.BaseName -replace '^ColorPicker\.Maui\.', ''
+          $packages = Get-ChildItem ${{ github.workspace }}/nupkgs -Filter "*.nupkg"
+          $mauiPackages = @($packages | Where-Object Name -NotLike "ColorPicker.Maui.Core.*")
+          $corePackages = @($packages | Where-Object Name -Like "ColorPicker.Maui.Core.*")
+          if ($mauiPackages.Count -ne 1 -or $corePackages.Count -ne 1) {
+            throw "Expected one package of each type; found Maui=$($mauiPackages.Count) Core=$($corePackages.Count)."
+          }
+          $mauiPkg = $mauiPackages[0]
+          $corePkg = $corePackages[0]
+          $version = $mauiPkg.BaseName -replace '^ColorPicker\.Maui\.', ''
+          $coreVersion = $corePkg.BaseName -replace '^ColorPicker\.Maui\.Core\.', ''
+          if ($version -ne $coreVersion) {
+            throw "Package versions differ: Maui=$version Core=$coreVersion"
+          }
           echo "version=$version" >> $env:GITHUB_OUTPUT
-          Write-Host "Packed version: $version"
+          Write-Host "Packed ColorPicker.Maui and ColorPicker.Maui.Core version: $version"
       - name: Upload nupkgs
         uses: actions/upload-artifact@v7
         with:
@@ -259,14 +273,26 @@ jobs:
           Write-Host "Restoring ConsumerSmoke against ColorPicker.Maui = $env:VERSION"
           dotnet restore samples/ConsumerSmoke/ConsumerSmoke.csproj `
             -p:ColorPickerVersion=$env:VERSION
+          Write-Host "Restoring CoreConsumerSmoke against ColorPicker.Maui.Core = $env:VERSION"
+          dotnet restore samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj `
+            --configfile samples/ConsumerSmoke/NuGet.config `
+            -p:ColorPickerVersion=$env:VERSION
+          Write-Host "Restoring PackageCompatibilitySmoke against ColorPicker.Maui = $env:VERSION"
+          dotnet restore samples/PackageCompatibilitySmoke/PackageCompatibilitySmoke.csproj `
+            --configfile samples/ConsumerSmoke/NuGet.config `
+            -p:ColorPickerVersion=$env:VERSION
       - name: Install Android SDK platform (API 36)
         run: dotnet build ColorPicker/ColorPicker.csproj -t:InstallAndroidDependencies -f net10.0-android -p:AcceptAndroidSDKLicenses=True
       - name: Build consumer (Android)
         run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-android -p:ColorPickerVersion=${{ needs.pack.outputs.version }}
       - name: Build consumer (Windows)
         run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-windows10.0.19041.0 -p:ColorPickerVersion=${{ needs.pack.outputs.version }}
+      - name: Build Core consumer
+        run: dotnet build samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj --configuration Release --no-restore -p:ColorPickerVersion=${{ needs.pack.outputs.version }}
+      - name: Verify package assembly compatibility
+        run: dotnet run --project samples/PackageCompatibilitySmoke/PackageCompatibilitySmoke.csproj --configuration Release --no-restore -p:ColorPickerVersion=${{ needs.pack.outputs.version }}
       - name: Job summary
         shell: pwsh
         run: |
           "## Consumer smoke passed" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          "Consumed `ColorPicker.Maui` **${{ needs.pack.outputs.version }}** from local feed." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          "Consumed `ColorPicker.Maui` and `ColorPicker.Maui.Core` **${{ needs.pack.outputs.version }}** from local feed and verified the Core type-forwarding contract." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
