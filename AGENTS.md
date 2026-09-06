@@ -52,6 +52,10 @@ coherent same-run version pair.
 - **`Microsoft.Maui.Controls` is pinned to the SDK band** (10.0.20 ↔ SDK 10.0.302). Bumping MAUI out of lockstep (even a patch, e.g. 10.0.90) makes restore pull an unpublished runtime pack → `NU1102`. Dependabot ignores `Microsoft.Maui.*` for this reason; bump MAUI **and** the SDK together.
 - **`Directory.Build.props` sets `UseMonoRuntime=false` for Windows.** The .NET 10 MAUI Windows head otherwise tries to restore the deprecated `Microsoft.NETCore.App.Runtime.Mono.win-x64` pack (dotnet/maui#27215) → `NU1102`.
 - **Restore the Windows app scoped to its TFM.** `dotnet restore ColorPickerTestApp.csproj -r win-x64` on the multi-TFM project applies win-x64 across all TFMs and re-triggers the Mono-win-x64 bug; add `-p:TargetFramework=net10.0-windows10.0.19041.0`.
+- **Restore `ColorPicker.Core` again after that scoped Windows app restore.**
+  The scoped restore propagates through project references and replaces Core's
+  assets file with a single-target graph; without the final Core restore,
+  `--no-restore` builds fail with `NETSDK1005` for `net8.0`.
 - **net8 and net10 Android can't be multi-targeted in one build** — the .NET 10 Android workload only recognizes `net10.0-android`; the net8 SDK can't parse `net10.0-*`. (This is why the package went net10-only.)
 
 Environment variables:

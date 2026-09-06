@@ -103,6 +103,7 @@ jobs:
         run: |
           dotnet restore ColorPicker.Maui.sln
           dotnet restore ColorPickerTestApp/ColorPickerTestApp.csproj -r win-x64 -p:TargetFramework=net10.0-windows10.0.19041.0
+          dotnet restore ColorPicker.Core/ColorPicker.Core.csproj
       - name: Build library (Windows)
         run: dotnet build ColorPicker/ColorPicker.csproj --configuration Release --no-restore -f net10.0-windows10.0.19041.0
       - name: Build sample (Windows)
@@ -130,6 +131,7 @@ jobs:
         run: |
           dotnet restore ColorPicker.Maui.sln
           dotnet restore ColorPickerTestApp/ColorPickerTestApp.csproj -r win-x64 -p:TargetFramework=net10.0-windows10.0.19041.0
+          dotnet restore ColorPicker.Core/ColorPicker.Core.csproj
       - name: Build sample (Windows)
         run: dotnet build ColorPickerTestApp/ColorPickerTestApp.csproj --configuration Release --no-restore -f net10.0-windows10.0.19041.0 -r win-x64
       - name: Enable Windows Developer Mode
