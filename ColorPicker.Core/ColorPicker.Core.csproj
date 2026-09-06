@@ -10,6 +10,9 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <RootNamespace>ColorPicker.Core</RootNamespace>
     <AssemblyName>ColorPicker.Maui.Core</AssemblyName>
+    <Version Condition="'$(ColorPickerCoreVersion)' != ''">$(ColorPickerCoreVersion)</Version>
+    <Version Condition="'$(ColorPickerCoreVersion)' == ''">0.0.0-local</Version>
+    <PackageVersion>$(Version)</PackageVersion>
 
     <IsPackable>true</IsPackable>
     <PackageId>ColorPicker.Maui.Core</PackageId>
@@ -38,7 +41,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.400" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Bcl.HashCode"
                       Version="6.0.0"
@@ -49,10 +51,5 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="..\ColorPicker\icon.png" Pack="true" PackagePath="\" Link="icon.png" />
   </ItemGroup>
-
-  <PropertyGroup Label="MinVer">
-    <MinVerTagPrefix>v</MinVerTagPrefix>
-    <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
-  </PropertyGroup>
 
 </Project>

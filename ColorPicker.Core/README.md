@@ -14,6 +14,10 @@ dotnet add package ColorPicker.Maui.Core
 
 `ColorPicker.Maui` already references this package, so MAUI applications do not
 need to install it separately. Add it directly when color conversion, normalized
+
+Core and the MAUI controls are developed together in the same repository through
+a direct project reference. Their stable NuGet versions are independent, so a
+Picker-only release does not republish unchanged Core binaries. Add it directly when color conversion, normalized
 picker geometry, or interaction logic is needed in a platform-independent
 project.
 

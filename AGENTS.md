@@ -42,8 +42,10 @@ Everything needed to build/test/pack from a clean machine:
 | Node.js | **20+** | For Appium (UI tests only) |
 | Appium | **2** + `appium-windows-driver` + WinAppDriver 1.2.1 + Windows Developer Mode | UI tests — full setup in [`ColorPicker.UITests/README.md`](ColorPicker.UITests/README.md) |
 
-Key NuGet: `SkiaSharp` 4.151.1 + `SkiaSharp.Views.Maui.Controls` 4.151.1, `Microsoft.Maui.Controls` 10.0.20, `Appium.WebDriver` (UITests), `MinVer` 7.0.0.
-**MinVer needs full git history + tags** to compute the pack version — clone with full depth (`fetch-depth: 0` in CI).
+Key NuGet: `SkiaSharp` 4.151.1 + `SkiaSharp.Views.Maui.Controls` 4.151.1, `Microsoft.Maui.Controls` 10.0.20, `Appium.WebDriver` (UITests).
+Package versions are supplied by CI. Stable `ColorPicker.Maui` and
+`ColorPicker.Maui.Core` versions are independent; main-branch previews use a
+coherent same-run version pair.
 
 ### .NET 10 / MAUI 10 gotchas (hard-won — don't rediscover)
 
@@ -55,7 +57,9 @@ Key NuGet: `SkiaSharp` 4.151.1 + `SkiaSharp.Views.Maui.Controls` 4.151.1, `Micro
 Environment variables:
 - `JAVA_HOME` — JDK 17 path (Android builds)
 - `UITEST_APP_PATH` — CI-only; path to the built sample `.exe` the UI tests launch
-- `ColorPickerVersion` — shared package version consumed by both smoke projects
+- `ColorPickerVersion` — package version consumed by an individual smoke project
+- `ColorPickerMauiVersion` / `ColorPickerCoreVersion` — package versions supplied during pack
+- `ColorPickerCoreDependencyVersion` — exact version or compatible range used when packaging Picker
 - `PROBE_OUT` — dev-only; enables `VisualProbe` scenario dumper (off in CI)
 
 ## Build
@@ -74,6 +78,11 @@ dotnet build ColorPicker\ColorPicker.csproj -c Release -f net10.0-android
 ### ConsumerSmoke pitfall
 
 All three smoke projects reference packages from the local `nupkgs/` feed, not project references, and are intentionally excluded from the solution. Build or run them only after packing both packages and registering that local feed.
+
+Normal development always uses the `ColorPicker` → `ColorPicker.Core`
+`ProjectReference`. Package jobs set `UseCorePackageReference=true` so Picker is
+compiled against the actual Core nupkg. This prevents a Picker-only release from
+silently depending on unreleased Core source.
 
 ## Tests
 
@@ -99,6 +108,13 @@ Every PR runs 6 checks (workflow `.github/workflows/build-and-test.yml`):
 **Full green is ~23 min wall-clock**, not the sum of the parts: `Consumer Smoke`
 only starts after `Pack NuGet` and re-installs the MAUI workloads, so it finishes
 several minutes *after* the ~12-min UI Tests. Size any CI-watch/poll loop to **~25 min**.
+
+Every merge to `main` publishes both packages to GitHub Packages with the same
+`0.0.0-preview.<run>` version and an exact Picker → Core dependency. Workflow
+retries reuse the same version.
+Stable nuget.org releases are started from **Actions → Release → Run workflow**,
+where the target is `picker`, `core`, or `both` and stable versions are entered
+independently.
 
 ## Branch protection / merging
 

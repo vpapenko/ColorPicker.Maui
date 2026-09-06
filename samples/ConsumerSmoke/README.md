@@ -24,8 +24,8 @@ dotnet restore samples/ConsumerSmoke/ConsumerSmoke.csproj \
 ## Run locally
 
 ```powershell
-# After packing both ColorPicker.Core and ColorPicker into nupkgs/:
+# After packing the selected package set into nupkgs/:
 dotnet nuget add source (Resolve-Path ./nupkgs) -n local-colorpicker --configfile samples/ConsumerSmoke/NuGet.config
-dotnet restore samples/ConsumerSmoke/ConsumerSmoke.csproj -p:ColorPickerVersion=<version>
+dotnet restore samples/ConsumerSmoke/ConsumerSmoke.csproj -p:ColorPickerVersion=<picker-version>
 dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj -f net10.0-windows10.0.19041.0
 ```

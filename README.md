@@ -47,8 +47,9 @@ dotnet add package ColorPicker.Maui.Core
 transitively by `ColorPicker.Maui`; reference it directly only when using the
 core APIs from a non-MAUI project.
 
-> Preview builds are published to **GitHub Packages** on every push to `main`; stable
-> releases go to **nuget.org**.
+> A matching preview pair is published to **GitHub Packages** on every push to
+> `main`. Stable `ColorPicker.Maui` and `ColorPicker.Maui.Core` releases go to
+> **nuget.org** and are versioned independently.
 
 ## Quick start
 

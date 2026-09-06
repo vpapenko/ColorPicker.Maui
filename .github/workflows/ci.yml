@@ -1,9 +1,9 @@
 name: CI
 
-# Runs on every push to main: full build + UI tests + pack, then publishes
-# the resulting nupkg as a PREVIEW package to GitHub Packages. Stable
-# releases are produced by release.yml (tag-driven). MinVer assigns
-# preview versions like "1.1.0-preview.0.42" between tags.
+# Runs on every push to main: full build + UI tests, packs a coherent preview
+# pair, publishes both packages to GitHub Packages, then consumes that exact
+# pair through the real feed. Stable package versions remain independent and
+# are published through the manual Release workflow.
 
 on:
   push:
@@ -30,27 +30,76 @@ jobs:
     if: github.repository == 'vpapenko/ColorPicker.Maui'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            10.0.302
       - uses: actions/download-artifact@v8
         with:
           name: nupkgs
           path: nupkgs
       - name: Push to GitHub Packages
+        env:
+          CORE_VERSION: ${{ needs.build-and-test.outputs.core-version }}
+          PICKER_VERSION: ${{ needs.build-and-test.outputs.picker-version }}
+          GH_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          dotnet nuget push "nupkgs/*.nupkg" \
+          set -euo pipefail
+
+          dotnet nuget push "nupkgs/ColorPicker.Maui.Core.${CORE_VERSION}.nupkg" \
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
-            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --api-key "$GH_PACKAGES_TOKEN" \
+            --no-symbols \
             --skip-duplicate
-          dotnet nuget push "nupkgs/*.snupkg" \
+          dotnet nuget push "nupkgs/ColorPicker.Maui.Core.${CORE_VERSION}.snupkg" \
             --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
-            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --api-key "$GH_PACKAGES_TOKEN" \
+            --skip-duplicate || true
+
+          config="$RUNNER_TEMP/NuGet.config"
+          cp samples/ConsumerSmoke/NuGet.config "$config"
+          dotnet nuget add source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --name github-packages \
+            --username "${{ github.repository_owner }}" \
+            --password "$GH_PACKAGES_TOKEN" \
+            --store-password-in-clear-text \
+            --configfile "$config"
+
+          ready=false
+          for attempt in $(seq 1 60); do
+            if dotnet restore samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj \
+              --configfile "$config" \
+              -p:ColorPickerVersion="$CORE_VERSION" \
+              --force \
+              --no-cache \
+              --verbosity quiet > "$RUNNER_TEMP/core-restore.log" 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 10
+          done
+          if [ "$ready" != "true" ]; then
+            cat "$RUNNER_TEMP/core-restore.log"
+            echo "::error::Timed out waiting for ColorPicker.Maui.Core ${CORE_VERSION} in GitHub Packages."
+            exit 1
+          fi
+
+          dotnet nuget push "nupkgs/ColorPicker.Maui.${PICKER_VERSION}.nupkg" \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --api-key "$GH_PACKAGES_TOKEN" \
+            --no-symbols \
+            --skip-duplicate
+          dotnet nuget push "nupkgs/ColorPicker.Maui.${PICKER_VERSION}.snupkg" \
+            --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --api-key "$GH_PACKAGES_TOKEN" \
             --skip-duplicate || true
       - name: Job summary
         run: |
           echo "## Preview published" >> $GITHUB_STEP_SUMMARY
-          echo "Version: \`${{ needs.build-and-test.outputs.package-version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Picker: \`${{ needs.build-and-test.outputs.picker-version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Core: \`${{ needs.build-and-test.outputs.core-version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "Source: \`https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json\`" >> $GITHUB_STEP_SUMMARY
 
   consumer-e2e-github-packages:
@@ -89,45 +138,33 @@ jobs:
       - name: Restore consumer against just-published version
         shell: pwsh
         env:
-          VERSION: ${{ needs.build-and-test.outputs.package-version }}
+          PICKER_VERSION: ${{ needs.build-and-test.outputs.picker-version }}
+          CORE_VERSION: ${{ needs.build-and-test.outputs.core-version }}
         run: |
-          Write-Host "Restoring ConsumerSmoke against ColorPicker.Maui = $env:VERSION from GitHub Packages"
+          Write-Host "Restoring ConsumerSmoke against ColorPicker.Maui = $env:PICKER_VERSION from GitHub Packages"
           dotnet restore samples/ConsumerSmoke/ConsumerSmoke.csproj `
-            -p:ColorPickerVersion=$env:VERSION
-          Write-Host "Restoring CoreConsumerSmoke against ColorPicker.Maui.Core = $env:VERSION from GitHub Packages"
+            --configfile samples/ConsumerSmoke/NuGet.config `
+            -p:ColorPickerVersion=$env:PICKER_VERSION
+          Write-Host "Restoring CoreConsumerSmoke against ColorPicker.Maui.Core = $env:CORE_VERSION from GitHub Packages"
           dotnet restore samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj `
             --configfile samples/ConsumerSmoke/NuGet.config `
-            -p:ColorPickerVersion=$env:VERSION
-          Write-Host "Restoring PackageCompatibilitySmoke against ColorPicker.Maui = $env:VERSION from GitHub Packages"
+            -p:ColorPickerVersion=$env:CORE_VERSION
+          Write-Host "Restoring PackageCompatibilitySmoke against ColorPicker.Maui = $env:PICKER_VERSION from GitHub Packages"
           dotnet restore samples/PackageCompatibilitySmoke/PackageCompatibilitySmoke.csproj `
             --configfile samples/ConsumerSmoke/NuGet.config `
-            -p:ColorPickerVersion=$env:VERSION
+            -p:ColorPickerVersion=$env:PICKER_VERSION
       - name: Install Android SDK platform (API 36)
         run: dotnet build ColorPicker/ColorPicker.csproj -t:InstallAndroidDependencies -f net10.0-android -p:AcceptAndroidSDKLicenses=True
       - name: Build consumer (Android)
-        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-android -p:ColorPickerVersion=${{ needs.build-and-test.outputs.package-version }}
+        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-android -p:ColorPickerVersion=${{ needs.build-and-test.outputs.picker-version }}
       - name: Build consumer (Windows)
-        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-windows10.0.19041.0 -p:ColorPickerVersion=${{ needs.build-and-test.outputs.package-version }}
+        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-windows10.0.19041.0 -p:ColorPickerVersion=${{ needs.build-and-test.outputs.picker-version }}
       - name: Build Core consumer
-        run: dotnet build samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj --configuration Release --no-restore -p:ColorPickerVersion=${{ needs.build-and-test.outputs.package-version }}
+        run: dotnet build samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj --configuration Release --no-restore -p:ColorPickerVersion=${{ needs.build-and-test.outputs.core-version }}
       - name: Verify package assembly compatibility
-        run: dotnet run --project samples/PackageCompatibilitySmoke/PackageCompatibilitySmoke.csproj --configuration Release --no-restore -p:ColorPickerVersion=${{ needs.build-and-test.outputs.package-version }}
+        run: dotnet run --project samples/PackageCompatibilitySmoke/PackageCompatibilitySmoke.csproj --configuration Release --no-restore -p:ColorPickerVersion=${{ needs.build-and-test.outputs.picker-version }}
       - name: Job summary
         shell: pwsh
         run: |
           "## Consumer E2E passed" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          "Consumed `ColorPicker.Maui` and `ColorPicker.Maui.Core` **${{ needs.build-and-test.outputs.package-version }}** from GitHub Packages and verified the Core type-forwarding contract." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-
-  draft-release-notes:
-    name: Update release draft
-    needs: [ build-and-test ]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: read
-    steps:
-      - uses: release-drafter/release-drafter@v7
-        with:
-          config-name: release-drafter.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          "Consumed Picker **${{ needs.build-and-test.outputs.picker-version }}** and Core **${{ needs.build-and-test.outputs.core-version }}** from GitHub Packages and verified the Core type-forwarding contract." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
