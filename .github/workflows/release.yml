@@ -1,97 +1,436 @@
 name: Release
 
-# Triggered by a `vX.Y.Z` (or `vX.Y.Z-preview.N`) tag pushed to the
-# repository. Re-runs the full gate (build + UI tests) against the tagged
-# commit, then publishes the nupkg + snupkg to nuget.org and creates a
-# GitHub Release with auto-drafted notes.
-#
-# Cutting a release:
-#   git tag v1.0.0 && git push origin v1.0.0
-#   git tag v1.1.0-preview.1 && git push origin v1.1.0-preview.1
+run-name: Release ${{ inputs.target }} (Picker ${{ inputs.picker_version || 'unchanged' }}, Core ${{ inputs.core_version || 'auto' }})
 
 on:
-  push:
-    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Package release target
+        required: true
+        default: both
+        type: choice
+        options:
+          - picker
+          - core
+          - both
+      picker_version:
+        description: ColorPicker.Maui version, without a leading v (required for Picker or Both)
+        required: false
+        type: string
+      core_version:
+        description: ColorPicker.Maui.Core version (required for Core or Both; blank uses latest Core for Picker-only)
+        required: false
+        type: string
 
 permissions:
   contents: read
 
+concurrency:
+  group: stable-nuget-release
+  cancel-in-progress: false
+
 jobs:
+  prepare:
+    name: Prepare release
+    runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.release.outputs.target }}
+      picker-version: ${{ steps.release.outputs.picker-version }}
+      core-version: ${{ steps.release.outputs.core-version }}
+      core-dependency-version: ${{ steps.release.outputs.core-dependency-version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Validate release request
+        id: release
+        shell: bash
+        env:
+          RELEASE_TARGET: ${{ inputs.target }}
+          REQUESTED_PICKER_VERSION: ${{ inputs.picker_version }}
+          REQUESTED_CORE_VERSION: ${{ inputs.core_version }}
+        run: |
+          set -euo pipefail
+
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Stable releases must be run from the main branch."
+            exit 1
+          fi
+
+          validate_version() {
+            local name="$1"
+            local version="$2"
+            local identifier='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+            local pattern="^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-${identifier}(\\.${identifier})*)?$"
+            if [[ ! "$version" =~ $pattern ]]; then
+              echo "::error::${name} '${version}' is not a canonical NuGet semantic version."
+              exit 1
+            fi
+          }
+
+          picker_version="$REQUESTED_PICKER_VERSION"
+          core_version="$REQUESTED_CORE_VERSION"
+
+          case "$RELEASE_TARGET" in
+            picker)
+              if [ -z "$picker_version" ]; then
+                echo "::error::picker_version is required for a Picker release."
+                exit 1
+              fi
+              validate_version "Picker version" "$picker_version"
+
+              if [ -z "$core_version" ]; then
+                core_tag="$(git tag --list 'core-v*' |
+                  grep -E '^core-v[0-9]+\.[0-9]+\.[0-9]+$' |
+                  sort -V |
+                  tail -n 1 || true)"
+                if [ -z "$core_tag" ]; then
+                  core_tag="$(git tag --list 'core-v*' --sort=-version:refname | head -n 1)"
+                fi
+                if [ -z "$core_tag" ]; then
+                  echo "::error::No Core release tag exists. Use target 'both' for the first release."
+                  exit 1
+                fi
+                core_version="${core_tag#core-v}"
+              fi
+              validate_version "Core version" "$core_version"
+
+              if ! git rev-parse --verify "refs/tags/core-v${core_version}" >/dev/null 2>&1; then
+                echo "::error::Core tag 'core-v${core_version}' does not exist. Release Core first or select target 'both'."
+                exit 1
+              fi
+
+              core_status="$(curl --silent --show-error --location \
+                --output /dev/null \
+                --write-out "%{http_code}" \
+                "https://api.nuget.org/v3-flatcontainer/colorpicker.maui.core/${core_version,,}/colorpicker.maui.core.${core_version,,}.nupkg")"
+              if [ "$core_status" != "200" ]; then
+                echo "::error::ColorPicker.Maui.Core ${core_version} is not available on nuget.org (HTTP ${core_status})."
+                exit 1
+              fi
+              ;;
+            core)
+              if [ -z "$core_version" ]; then
+                echo "::error::core_version is required for a Core release."
+                exit 1
+              fi
+              validate_version "Core version" "$core_version"
+              ;;
+            both)
+              if [ -z "$picker_version" ] || [ -z "$core_version" ]; then
+                echo "::error::picker_version and core_version are both required when target is 'both'."
+                exit 1
+              fi
+              validate_version "Picker version" "$picker_version"
+              validate_version "Core version" "$core_version"
+              ;;
+            *)
+              echo "::error::Unknown release target '$RELEASE_TARGET'."
+              exit 1
+              ;;
+          esac
+
+          core_major="${core_version%%.*}"
+          next_core_major="$((core_major + 1))"
+          core_dependency="[${core_version},${next_core_major}.0.0)"
+
+          echo "target=$RELEASE_TARGET" >> "$GITHUB_OUTPUT"
+          echo "picker-version=$picker_version" >> "$GITHUB_OUTPUT"
+          echo "core-version=$core_version" >> "$GITHUB_OUTPUT"
+          echo "core-dependency-version=$core_dependency" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## Release request"
+            echo "- Target: \`$RELEASE_TARGET\`"
+            echo "- Picker: \`${picker_version:-not published}\`"
+            echo "- Core: \`$core_version\`"
+            if [ "$RELEASE_TARGET" != "core" ]; then
+              echo "- Picker dependency: \`ColorPicker.Maui.Core $core_dependency\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
   build-and-test:
+    name: Build, test, and pack
+    needs: [ prepare ]
     uses: ./.github/workflows/build-and-test.yml
     with:
       pack: true
+      package_selection: ${{ needs.prepare.outputs.target }}
+      picker_version: ${{ needs.prepare.outputs.picker-version }}
+      core_version: ${{ needs.prepare.outputs.core-version }}
+      core_dependency_version: ${{ needs.prepare.outputs.core-dependency-version }}
 
   publish-nuget:
     name: Publish to nuget.org
-    needs: [ build-and-test ]
+    needs: [ prepare, build-and-test ]
     runs-on: ubuntu-latest
     permissions:
-      id-token: write   # required for NuGet Trusted Publishing (OIDC)
+      id-token: write
       contents: read
     environment:
       name: nuget-prod
       url: https://www.nuget.org/packages/ColorPicker.Maui
     steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            10.0.302
       - uses: actions/download-artifact@v8
         with:
           name: nupkgs
           path: nupkgs
-      - name: Verify version matches tag
-        shell: bash
-        run: |
-          tag="${GITHUB_REF#refs/tags/v}"
-          ver="${{ needs.build-and-test.outputs.package-version }}"
-          ver="${ver%.nupkg}"
-          if [ "$tag" != "$ver" ]; then
-            echo "::error::Tag '$tag' does not match packed version '$ver'."
-            exit 1
-          fi
-          echo "Tag and package version match: $ver"
       - name: NuGet login (OIDC -> short-lived API key)
         id: nuget-login
         uses: NuGet/login@v1
         with:
           user: VictorPapenko
-      - name: Push to nuget.org
+      - name: Publish selected packages
+        shell: bash
+        env:
+          RELEASE_TARGET: ${{ needs.prepare.outputs.target }}
+          PICKER_VERSION: ${{ needs.prepare.outputs.picker-version }}
+          CORE_VERSION: ${{ needs.prepare.outputs.core-version }}
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: |
-          dotnet nuget push "nupkgs/*.nupkg" \
-            --source https://api.nuget.org/v3/index.json \
-            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
-            --skip-duplicate
-          dotnet nuget push "nupkgs/*.snupkg" \
-            --source https://api.nuget.org/v3/index.json \
-            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
-            --skip-duplicate
+          set -euo pipefail
 
-  github-release:
-    name: Create GitHub Release
-    needs: [ publish-nuget ]
+          package_status() {
+            local package_id="$1"
+            local version="$2"
+            local lowercase_id="${package_id,,}"
+            local lowercase_version="${version,,}"
+            curl --silent --show-error --location \
+              --output "$3" \
+              --write-out "%{http_code}" \
+              "https://api.nuget.org/v3-flatcontainer/${lowercase_id}/${lowercase_version}/${lowercase_id}.${lowercase_version}.nupkg"
+          }
+
+          package_content_hash() {
+            local package="$1"
+            local unpacked
+            unpacked="$(mktemp -d)"
+            unzip -qq "$package" -d "$unpacked"
+            find "$unpacked" -name '.signature.p7s' -delete
+
+            local content_hash
+            content_hash="$(
+              cd "$unpacked"
+              while IFS= read -r -d '' file; do
+                case "$file" in
+                  './.signature.p7s'|'./[Content_Types].xml'|'./_rels/'*|'./package/services/metadata/'*)
+                    continue
+                    ;;
+                esac
+                printf '%s\0' "$file"
+                sha256sum "$file" | cut -d ' ' -f 1
+              done < <(find . -type f -print0 | sort -z) |
+                sha256sum |
+                cut -d ' ' -f 1
+            )"
+            rm -rf "$unpacked"
+            printf '%s' "$content_hash"
+          }
+
+          preflight_package() {
+            local package_id="$1"
+            local version="$2"
+            local package="$3"
+            local existing_package
+            existing_package="$(mktemp)"
+            local status
+            status="$(package_status "$package_id" "$version" "$existing_package")"
+
+            if [ "$status" = "200" ]; then
+              local local_hash
+              local existing_hash
+              local_hash="$(package_content_hash "$package")"
+              existing_hash="$(package_content_hash "$existing_package")"
+              if [ "$local_hash" != "$existing_hash" ]; then
+                echo "::error::${package_id} ${version} already exists with different package contents."
+                rm -f "$existing_package"
+                exit 1
+              fi
+              echo "${package_id} ${version} already exists with identical contents; continuing a safe retry."
+            elif [ "$status" != "404" ]; then
+              echo "::error::NuGet lookup for ${package_id} ${version} returned HTTP ${status}."
+              rm -f "$existing_package"
+              exit 1
+            fi
+            rm -f "$existing_package"
+          }
+
+          preflight_tag() {
+            local tag="$1"
+            if git rev-parse --verify "refs/tags/${tag}" >/dev/null 2>&1; then
+              local existing_commit
+              existing_commit="$(git rev-list -n 1 "$tag")"
+              if [ "$existing_commit" != "$GITHUB_SHA" ]; then
+                echo "::error::Tag ${tag} already points to ${existing_commit}, not ${GITHUB_SHA}."
+                exit 1
+              fi
+            fi
+          }
+
+          publish_package() {
+            local package_id="$1"
+            local version="$2"
+            local package="nupkgs/${package_id}.${version}.nupkg"
+            local symbols="nupkgs/${package_id}.${version}.snupkg"
+
+            if [ ! -f "$package" ] || [ ! -f "$symbols" ]; then
+              echo "::error::Expected package pair not found for ${package_id} ${version}."
+              exit 1
+            fi
+
+            dotnet nuget push "$package" \
+              --source https://api.nuget.org/v3/index.json \
+              --api-key "$NUGET_API_KEY" \
+              --no-symbols \
+              --skip-duplicate
+            dotnet nuget push "$symbols" \
+              --source https://api.nuget.org/v3/index.json \
+              --api-key "$NUGET_API_KEY" \
+              --skip-duplicate
+          }
+
+          require_package_pair() {
+            local package_id="$1"
+            local version="$2"
+            if [ ! -f "nupkgs/${package_id}.${version}.nupkg" ] ||
+               [ ! -f "nupkgs/${package_id}.${version}.snupkg" ]; then
+              echo "::error::Expected package pair not found for ${package_id} ${version}."
+              exit 1
+            fi
+          }
+
+          wait_for_package() {
+            local package_id="$1"
+            local version="$2"
+            local config="$RUNNER_TEMP/NuGet.config"
+            cp samples/ConsumerSmoke/NuGet.config "$config"
+            for attempt in $(seq 1 60); do
+              if dotnet restore samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj \
+                --configfile "$config" \
+                -p:ColorPickerVersion="$version" \
+                --force \
+                --no-cache \
+                --verbosity quiet > "$RUNNER_TEMP/core-restore.log" 2>&1; then
+                echo "${package_id} ${version} is available from nuget.org."
+                return
+              fi
+              sleep 10
+            done
+            cat "$RUNNER_TEMP/core-restore.log"
+            echo "::error::Timed out waiting for ${package_id} ${version} to become available."
+            exit 1
+          }
+
+          if [ "$RELEASE_TARGET" = "core" ] || [ "$RELEASE_TARGET" = "both" ]; then
+            require_package_pair "ColorPicker.Maui.Core" "$CORE_VERSION"
+            preflight_package \
+              "ColorPicker.Maui.Core" \
+              "$CORE_VERSION" \
+              "nupkgs/ColorPicker.Maui.Core.${CORE_VERSION}.nupkg"
+            preflight_tag "core-v${CORE_VERSION}"
+          fi
+          if [ "$RELEASE_TARGET" = "picker" ] || [ "$RELEASE_TARGET" = "both" ]; then
+            require_package_pair "ColorPicker.Maui" "$PICKER_VERSION"
+            preflight_package \
+              "ColorPicker.Maui" \
+              "$PICKER_VERSION" \
+              "nupkgs/ColorPicker.Maui.${PICKER_VERSION}.nupkg"
+            preflight_tag "picker-v${PICKER_VERSION}"
+          fi
+
+          if [ "$RELEASE_TARGET" = "core" ] || [ "$RELEASE_TARGET" = "both" ]; then
+            publish_package "ColorPicker.Maui.Core" "$CORE_VERSION"
+          fi
+          if [ "$RELEASE_TARGET" = "both" ]; then
+            wait_for_package "ColorPicker.Maui.Core" "$CORE_VERSION"
+          fi
+          if [ "$RELEASE_TARGET" = "picker" ] || [ "$RELEASE_TARGET" = "both" ]; then
+            publish_package "ColorPicker.Maui" "$PICKER_VERSION"
+          fi
+
+  github-releases:
+    name: Create GitHub releases
+    needs: [ prepare, publish-nuget ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: read
     steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v8
         with:
           name: nupkgs
           path: nupkgs
-      - name: Publish release-drafter draft for this tag
-        uses: release-drafter/release-drafter@v7
-        with:
-          config-name: release-drafter.yml
-          publish: true
-          tag: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+      - name: Create package-specific releases
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Attach nupkgs to release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ github.ref_name }}
-          files: |
-            nupkgs/*.nupkg
-            nupkgs/*.snupkg
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TARGET: ${{ needs.prepare.outputs.target }}
+          PICKER_VERSION: ${{ needs.prepare.outputs.picker-version }}
+          CORE_VERSION: ${{ needs.prepare.outputs.core-version }}
+        run: |
+          set -euo pipefail
+
+          create_release() {
+            local package_id="$1"
+            local version="$2"
+            local tag_prefix="$3"
+            local latest="$4"
+            local tag="${tag_prefix}-v${version}"
+            local previous_tag
+            previous_tag="$(git tag --merged "$GITHUB_SHA" --list "${tag_prefix}-v*" --sort=-creatordate |
+              grep -Fvx "$tag" |
+              head -n 1 || true)"
+            local package="nupkgs/${package_id}.${version}.nupkg"
+            local symbols="nupkgs/${package_id}.${version}.snupkg"
+
+            if git rev-parse --verify "refs/tags/${tag}" >/dev/null 2>&1; then
+              existing_commit="$(git rev-list -n 1 "$tag")"
+              if [ "$existing_commit" != "$GITHUB_SHA" ]; then
+                echo "::error::Tag ${tag} already points to ${existing_commit}, not ${GITHUB_SHA}."
+                exit 1
+              fi
+            fi
+
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release upload "$tag" "$package" "$symbols" --clobber
+              echo "Release ${tag} already exists; refreshed its assets."
+              return
+            fi
+
+            release_flags=(
+              "$tag"
+              "$package"
+              "$symbols"
+              --target "$GITHUB_SHA"
+              --title "${package_id} ${version}"
+              --generate-notes
+            )
+            if [ -n "$previous_tag" ]; then
+              release_flags+=(--notes-start-tag "$previous_tag")
+            fi
+            if [[ "$version" == *-* ]]; then
+              release_flags+=(--prerelease)
+            fi
+            if [ "$latest" = "false" ]; then
+              release_flags+=(--latest=false)
+            fi
+            gh release create "${release_flags[@]}"
+          }
+
+          if [ "$RELEASE_TARGET" = "core" ] || [ "$RELEASE_TARGET" = "both" ]; then
+            create_release "ColorPicker.Maui.Core" "$CORE_VERSION" "core" "false"
+          fi
+          if [ "$RELEASE_TARGET" = "picker" ] || [ "$RELEASE_TARGET" = "both" ]; then
+            create_release "ColorPicker.Maui" "$PICKER_VERSION" "picker" "true"
+          fi

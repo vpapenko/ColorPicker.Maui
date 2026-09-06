@@ -24,8 +24,11 @@
 		<TargetPlatformMinVersion Condition="$(TargetFramework.Contains('-windows'))">10.0.17763.0</TargetPlatformMinVersion>
 		<Platforms>AnyCPU;x64</Platforms>
 
-		<!-- NuGet package metadata. Version is supplied by MinVer from the latest
-		     git tag (prefix 'v'); no manual <Version> here. -->
+		<!-- CI supplies package versions independently for stable releases and
+		     as a coherent pair for preview builds. Assembly versions stay stable. -->
+		<Version Condition="'$(ColorPickerMauiVersion)' != ''">$(ColorPickerMauiVersion)</Version>
+		<Version Condition="'$(ColorPickerMauiVersion)' == ''">0.0.0-local</Version>
+		<PackageVersion>$(Version)</PackageVersion>
 		<IsPackable>true</IsPackable>
 		<PackageId>ColorPicker.Maui</PackageId>
 		<Authors>Victor Papenko</Authors>
@@ -59,8 +62,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <!-- Build-time only: derive Version from latest git tag, embed source links. -->
-	  <PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all" />
+	  <!-- Build-time only: embed source links. -->
 	  <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.400" PrivateAssets="all" />
 	</ItemGroup>
 
@@ -69,22 +71,18 @@
 	  <None Include="icon.png" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
-	<!--
-	  Embed the platform-agnostic ColorPicker.Core math sources directly so the
-	  MAUI package ships as a single nupkg with no extra runtime dependency.
-	  Core remains an independently-buildable project for cross-platform unit
-	  tests; promoting it to a separate NuGet later is a one-line swap.
-	-->
 	<ItemGroup>
-	  <Compile Include="..\ColorPicker.Core\**\*.cs"
-	           Exclude="..\ColorPicker.Core\bin\**;..\ColorPicker.Core\obj\**"
-	           LinkBase="Core" />
+	  <ProjectReference Include="..\ColorPicker.Core\ColorPicker.Core.csproj"
+	                    Condition="'$(UseCorePackageReference)' != 'true'" />
+	  <PackageReference Include="ColorPicker.Maui.Core"
+	                    Version="$(ColorPickerCoreDependencyVersion)"
+	                    Condition="'$(UseCorePackageReference)' == 'true'" />
 	</ItemGroup>
 
-	<PropertyGroup Label="MinVer">
-		<MinVerTagPrefix>v</MinVerTagPrefix>
-		<MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
-	</PropertyGroup>
+	<Target Name="ValidateCorePackageReferenceVersion"
+	        BeforeTargets="CollectPackageReferences"
+	        Condition="'$(UseCorePackageReference)' == 'true' and '$(ColorPickerCoreDependencyVersion)' == ''">
+		<Error Text="ColorPickerCoreDependencyVersion is required when UseCorePackageReference=true." />
+	</Target>
 
 </Project>
-

@@ -18,5 +18,9 @@ public partial class SmokePage : ContentPage
         _ = typeof(AlphaSlider);
         _ = typeof(LuminositySlider);
         _ = typeof(ColorDisc);
+
+        // ColorPicker.Core is a transitive dependency of ColorPicker.Maui.
+        // Referencing it here catches a missing or mismatched package dependency.
+        _ = new ColorPicker.Core.HslaColor(0.5, 0.75, 0.5).ToRgba();
     }
 }

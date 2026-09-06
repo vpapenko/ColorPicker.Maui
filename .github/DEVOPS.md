@@ -17,7 +17,8 @@ run at least once on the default branch**. Easiest order:
    the job names).
 4. Configure branch protection (section 1a) in one pass, including required
    checks.
-5. Tag `v0.1.0-preview.1` to dry-run `release.yml` (section 5).
+5. Open **Actions → Release → Run workflow** and make the first coordinated
+   preview release (section 5).
 
 ## 1a. Branch protection on `main`
 
@@ -62,7 +63,7 @@ the repo, nothing to rotate.
    | Repository           | `ColorPicker.Maui`                                   |
    | Workflow File        | `release.yml`                                        |
    | Environment          | `nuget-prod`                                         |
-   | Package Glob / IDs   | `ColorPicker.Maui`                                   |
+   | Package Glob / IDs   | `ColorPicker.Maui*`                                  |
 
 3. Save. First push from `release.yml` (after the package exists) will
    bind the policy to the package owner — that's normal.
@@ -70,7 +71,7 @@ the repo, nothing to rotate.
 If the package doesn't exist on nuget.org yet, the **very first** publish
 still needs a one-shot API key:
 - Generate at https://www.nuget.org/account/apikeys
-  scope **Push new packages and package versions**, Glob `ColorPicker.Maui`,
+  scope **Push new packages and package versions**, Glob `ColorPicker.Maui*`,
   expires in **1 day**.
 - Add as repo secret `NUGET_API_KEY` temporarily.
 - Temporarily change `release.yml` to use `${{ secrets.NUGET_API_KEY }}`
@@ -87,7 +88,7 @@ still needs a one-shot API key:
 
 - ✅ Required reviewers: **vpapenko**
   → Manual approval gate before any push to nuget.org.
-- ✅ Deployment branches and tags: only allow tags matching `v*`.
+- ✅ Deployment branches: only allow `main`.
 
 The environment name **must** match the `Environment` field in the
 Trusted Publishing policy above, otherwise OIDC exchange will be rejected.
@@ -96,15 +97,22 @@ Trusted Publishing policy above, otherwise OIDC exchange will be rejected.
 
 ## 4. GitHub Packages (preview feed)
 
-No setup needed — `ci.yml` pushes to `https://nuget.pkg.github.com/vpapenko/index.json`
-using the built-in `GITHUB_TOKEN`. To consume previews locally:
+No setup needed — `ci.yml` pushes a coherent Picker/Core preview pair to
+`https://nuget.pkg.github.com/vpapenko/index.json` using the built-in
+`GITHUB_TOKEN`. Both packages receive the same
+`0.0.0-preview.<run>` version, and Picker depends on that exact Core preview.
+Core is uploaded and restored from the feed before Picker is uploaded; rerunning
+the workflow keeps the same package version.
+
+The exact version is shown in the workflow summary. To consume it locally:
 
 ```sh
 dotnet nuget add source https://nuget.pkg.github.com/vpapenko/index.json \
   --name github-vpapenko \
   --username <your-github-username> \
   --password <a-github-pat-with-read:packages>
-dotnet add package ColorPicker.Maui --prerelease
+dotnet add package ColorPicker.Maui --version <version-from-workflow>
+dotnet add package ColorPicker.Maui.Core --version <version-from-workflow>
 ```
 
 ### 4a. Consumer-smoke validation of the packed nupkg
@@ -119,59 +127,52 @@ jobs close that gap:
 | `build-and-test.yml → consumer-smoke` | every PR (when `pack: true`) | local feed = the just-packed `nupkgs/` artifact | catch packaging bugs **before merge** |
 | `ci.yml → consumer-e2e-github-packages` | every push to `main` | GitHub Packages (just-published preview) | catch upload/index/auth issues that only show up via the real feed |
 
-Both build the [`samples/ConsumerSmoke/`](../samples/ConsumerSmoke/README.md)
-class library against the version under test, on Android **and** Windows
-TFMs. If either job fails on a PR, the underlying package is broken and
-must not be promoted to a release tag.
+Both jobs build [`samples/ConsumerSmoke/`](../samples/ConsumerSmoke/README.md)
+against `ColorPicker.Maui` on Android and Windows,
+[`samples/CoreConsumerSmoke/`](../samples/CoreConsumerSmoke/README.md) against
+`ColorPicker.Maui.Core` on `netstandard2.0` and `net8.0`, and run
+`samples/PackageCompatibilitySmoke/` to verify the Core assembly identity and
+every type forwarder in `ColorPicker.dll`. The MAUI package also consumes Core
+transitively, so the smoke pass verifies the dependency between the two
+packages. If either job fails on a PR, the packages must not be
+promoted to a stable release.
 
 ---
 
-## 5. First release dry-run
+## 5. Stable releases from the GitHub UI
 
-After this PR merges:
+Open **Actions → Release → Run workflow**, keep the branch set to `main`, and
+choose a target:
 
-```sh
-git checkout main && git pull
-git tag v0.1.0-preview.1
-git push origin v0.1.0-preview.1
-```
+| Target | Required fields | Result |
+|---|---|---|
+| `picker` | Picker version; Core version may be blank | Publishes only `ColorPicker.Maui`. Blank Core selects the latest `core-v*` release. |
+| `core` | Core version | Publishes only `ColorPicker.Maui.Core`. |
+| `both` | Picker version and Core version | Packs and tests both, publishes Core first, waits for NuGet indexing, then publishes Picker. |
 
-Watch `release.yml` run; approve the `nuget-prod` deployment when prompted.
-After it succeeds you should see `0.1.0-preview.1` on
-https://www.nuget.org/packages/ColorPicker.Maui.
+The `nuget-prod` environment asks for approval immediately before publication.
+The workflow validates semantic versions, package contents, consumers, and safe
+retries. It creates package-specific tags and GitHub releases automatically:
 
-When you're confident in the API, cut a stable release:
+- `picker-v2.0.0`
+- `core-v1.0.0`
 
-```sh
-git tag v0.1.0
-git push origin v0.1.0
-```
+No local tag or `dotnet nuget push` command is required.
 
----
-
-## 6. Versioning rules (enforced by MinVer)
-
-- No tag yet → `0.0.0-preview.0.<height>` on every push to main.
-- Tag `v1.0.0-preview.5` → that commit packs as `1.0.0-preview.5`.
-  Subsequent commits pack as `1.0.0-preview.5.<height>`.
-- Tag `v1.0.0` → packs as exactly `1.0.0`. Subsequent commits pack as
-  `1.0.1-preview.0.<height>` (next-patch preview).
-- Bumping major/minor: just push a tag. No file edits, no PRs.
+For the first coordinated release, choose `both`, Picker `2.0.0-preview.1`, and
+Core `1.0.0-preview.1`. When ready for stable packages, run `both` again with
+Picker `2.0.0` and Core `1.0.0`.
 
 ---
 
-## 7. Useful labels (apply to PRs for release-drafter categorization)
+## 6. Independent stable versioning
 
-Create these labels in **Issues → Labels**:
-
-| Label | Color | Effect on changelog | Effect on next version |
-|---|---|---|---|
-| `feature` / `enhancement` | `#84b6eb` | "🚀 Features" | minor bump |
-| `fix` / `bug` | `#d73a4a` | "🐛 Bug fixes" | patch bump |
-| `breaking` / `major` | `#b60205` | implicit | **major bump** |
-| `test` | `#fbca04` | "🧪 Tests" | patch |
-| `docs` | `#0075ca` | "📚 Documentation" | patch |
-| `ci` / `devops` | `#5319e7` | "🏗️ CI / DevOps" | patch |
-| `dependencies` | `#0366d6` | "⬆️ Dependencies" | patch |
-| `refactor` / `chore` | `#cfd3d7` | "♻️ Refactor / chores" | patch |
-| `skip-changelog` | `#cccccc` | excluded | n/a |
+- Picker-only UI, renderer, or MAUI changes bump only `ColorPicker.Maui`.
+- Core-only compatible changes bump only `ColorPicker.Maui.Core`.
+- When Picker needs a new Core API, release `both`; Picker is packaged against
+  the new Core nupkg before either package is published.
+- Picker declares a compatible Core major range. For example, a minimum Core
+  version of `1.1.0` produces `[1.1.0,2.0.0)`.
+- A breaking Core major normally requires a Picker major because Picker exposes
+  Core types and maintains type forwarders.
+- Package-specific tags record exactly which commit produced each stable package.

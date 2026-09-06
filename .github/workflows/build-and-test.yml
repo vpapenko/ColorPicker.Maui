@@ -1,9 +1,9 @@
 name: Build and test (reusable)
 
 # Reusable workflow: builds the library + sample app for Android/Windows and
-# runs the Appium UI tests on Windows. Optionally produces NuGet packages.
-# Called by pr.yml (gate), ci.yml (gate + preview publish), release.yml (gate
-# + stable publish).
+# runs the Appium UI tests on Windows. Optionally produces either package or
+# a coherent pair. Normal builds use ProjectReference; package builds consume
+# Core through the generated nupkg to validate the real distribution boundary.
 
 on:
   workflow_call:
@@ -13,10 +13,33 @@ on:
         required: false
         default: false
         type: boolean
+      package_selection:
+        description: "Packages to create: picker, core, or both."
+        required: false
+        default: both
+        type: string
+      picker_version:
+        description: "ColorPicker.Maui package version. Blank creates a CI preview version."
+        required: false
+        default: ""
+        type: string
+      core_version:
+        description: "ColorPicker.Maui.Core package version. Blank creates a CI preview version."
+        required: false
+        default: ""
+        type: string
+      core_dependency_version:
+        description: "NuGet range used by ColorPicker.Maui. Blank pins the generated Core preview exactly."
+        required: false
+        default: ""
+        type: string
     outputs:
-      package-version:
-        description: "Version assigned by MinVer to the packed nupkg."
-        value: ${{ jobs.pack.outputs.version }}
+      picker-version:
+        description: "Version assigned to ColorPicker.Maui, if packed."
+        value: ${{ jobs.pack.outputs.picker-version }}
+      core-version:
+        description: "Version assigned to ColorPicker.Maui.Core, if packed or consumed by Picker."
+        value: ${{ jobs.pack.outputs.core-version }}
 
 permissions:
   contents: read
@@ -45,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0   # MinVer needs full history + tags
+          fetch-depth: 0
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
@@ -80,6 +103,7 @@ jobs:
         run: |
           dotnet restore ColorPicker.Maui.sln
           dotnet restore ColorPickerTestApp/ColorPickerTestApp.csproj -r win-x64 -p:TargetFramework=net10.0-windows10.0.19041.0
+          dotnet restore ColorPicker.Core/ColorPicker.Core.csproj
       - name: Build library (Windows)
         run: dotnet build ColorPicker/ColorPicker.csproj --configuration Release --no-restore -f net10.0-windows10.0.19041.0
       - name: Build sample (Windows)
@@ -107,6 +131,7 @@ jobs:
         run: |
           dotnet restore ColorPicker.Maui.sln
           dotnet restore ColorPickerTestApp/ColorPickerTestApp.csproj -r win-x64 -p:TargetFramework=net10.0-windows10.0.19041.0
+          dotnet restore ColorPicker.Core/ColorPicker.Core.csproj
       - name: Build sample (Windows)
         run: dotnet build ColorPickerTestApp/ColorPickerTestApp.csproj --configuration Release --no-restore -f net10.0-windows10.0.19041.0 -r win-x64
       - name: Enable Windows Developer Mode
@@ -188,37 +213,118 @@ jobs:
     runs-on: windows-latest
     needs: [ build-android, build-windows, ui-tests-windows ]
     outputs:
-      version: ${{ steps.minver.outputs.version }}
+      picker-version: ${{ steps.versions.outputs.picker-version }}
+      core-version: ${{ steps.versions.outputs.core-version }}
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0   # MinVer needs full history + tags
+          fetch-depth: 0
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
             8.0.x
             10.0.302
       - name: Install MAUI workloads
+        if: ${{ inputs.package_selection != 'core' }}
         run: dotnet workload install maui-android maui-windows
-      - name: Restore
-        run: dotnet restore ColorPicker/ColorPicker.csproj
-      - name: Install Android SDK platform (API 36)
-        run: dotnet build ColorPicker/ColorPicker.csproj -t:InstallAndroidDependencies -f net10.0-android -p:AcceptAndroidSDKLicenses=True
-      - name: Pack
-        id: minver
+      - name: Resolve package versions
+        id: versions
         shell: pwsh
+        env:
+          PACKAGE_SELECTION: ${{ inputs.package_selection }}
+          REQUESTED_PICKER_VERSION: ${{ inputs.picker_version }}
+          REQUESTED_CORE_VERSION: ${{ inputs.core_version }}
+          REQUESTED_CORE_DEPENDENCY: ${{ inputs.core_dependency_version }}
         run: |
-          dotnet pack ColorPicker/ColorPicker.csproj `
-            --configuration Release `
-            --no-restore `
-            --output ${{ github.workspace }}/nupkgs `
-            -p:ContinuousIntegrationBuild=true
-          $pkg = Get-ChildItem ${{ github.workspace }}/nupkgs -Filter "*.nupkg" | Select-Object -First 1
-          if (-not $pkg) { throw "No .nupkg produced." }
-          # Filename: ColorPicker.Maui.<version>.nupkg
-          $version = $pkg.BaseName -replace '^ColorPicker\.Maui\.', ''
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-          Write-Host "Packed version: $version"
+          if ($env:PACKAGE_SELECTION -notin @("picker", "core", "both")) {
+            throw "Unknown package selection '$env:PACKAGE_SELECTION'."
+          }
+
+          $previewVersion = "0.0.0-preview.$env:GITHUB_RUN_NUMBER"
+          $pickerVersion = if ($env:PACKAGE_SELECTION -eq "core") {
+            ""
+          } elseif ($env:REQUESTED_PICKER_VERSION) {
+            $env:REQUESTED_PICKER_VERSION
+          } else {
+            $previewVersion
+          }
+          $coreVersion = if ($env:REQUESTED_CORE_VERSION) { $env:REQUESTED_CORE_VERSION } else { $previewVersion }
+          $coreDependency = if ($env:REQUESTED_CORE_DEPENDENCY) {
+            $env:REQUESTED_CORE_DEPENDENCY
+          } else {
+            "[$coreVersion]"
+          }
+
+          if ($env:PACKAGE_SELECTION -eq "picker" -and -not $env:REQUESTED_CORE_VERSION) {
+            throw "core_version is required when packing Picker without Core."
+          }
+
+          "picker-version=$pickerVersion" >> $env:GITHUB_OUTPUT
+          "core-version=$coreVersion" >> $env:GITHUB_OUTPUT
+          "core-dependency=$coreDependency" >> $env:GITHUB_OUTPUT
+          Write-Host "Selection: $env:PACKAGE_SELECTION"
+          Write-Host "Picker version: $pickerVersion"
+          Write-Host "Core version: $coreVersion"
+          Write-Host "Picker Core dependency: $coreDependency"
+      - name: Pack
+        shell: pwsh
+        env:
+          PACKAGE_SELECTION: ${{ inputs.package_selection }}
+          PICKER_VERSION: ${{ steps.versions.outputs.picker-version }}
+          CORE_VERSION: ${{ steps.versions.outputs.core-version }}
+          CORE_DEPENDENCY: ${{ steps.versions.outputs.core-dependency }}
+        run: |
+          $output = Join-Path $env:GITHUB_WORKSPACE "nupkgs"
+          New-Item -ItemType Directory -Path $output -Force | Out-Null
+
+          if ($env:PACKAGE_SELECTION -in @("core", "both")) {
+            $env:ColorPickerCoreVersion = $env:CORE_VERSION
+            dotnet restore ColorPicker.Core/ColorPicker.Core.csproj
+            if ($LASTEXITCODE -ne 0) { throw "Core restore failed." }
+            dotnet pack ColorPicker.Core/ColorPicker.Core.csproj `
+              --configuration Release `
+              --no-restore `
+              --output $output `
+              -p:ContinuousIntegrationBuild=true
+            if ($LASTEXITCODE -ne 0) { throw "Core pack failed." }
+          }
+
+          if ($env:PACKAGE_SELECTION -in @("picker", "both")) {
+            $env:UseCorePackageReference = "true"
+            $env:ColorPickerCoreDependencyVersion = $env:CORE_DEPENDENCY
+            $env:ColorPickerMauiVersion = $env:PICKER_VERSION
+            $config = Join-Path $env:RUNNER_TEMP "ColorPicker-pack.NuGet.config"
+            Copy-Item samples/ConsumerSmoke/NuGet.config $config
+            dotnet nuget add source $output `
+              --name local-colorpicker `
+              --configfile $config
+            if ($LASTEXITCODE -ne 0) { throw "Local package source registration failed." }
+
+            dotnet restore ColorPicker/ColorPicker.csproj `
+              --configfile $config
+            if ($LASTEXITCODE -ne 0) { throw "Picker package-mode restore failed." }
+            dotnet build ColorPicker/ColorPicker.csproj `
+              -t:InstallAndroidDependencies `
+              --no-restore `
+              -f net10.0-android `
+              -p:AcceptAndroidSDKLicenses=True
+            if ($LASTEXITCODE -ne 0) { throw "Android SDK installation failed." }
+            dotnet pack ColorPicker/ColorPicker.csproj `
+              --configuration Release `
+              --no-restore `
+              --output $output `
+              -p:ContinuousIntegrationBuild=true
+            if ($LASTEXITCODE -ne 0) { throw "Picker pack failed." }
+          }
+
+          $packages = @(Get-ChildItem $output -Filter "*.nupkg")
+          $mauiPackages = @($packages | Where-Object Name -NotLike "ColorPicker.Maui.Core.*")
+          $corePackages = @($packages | Where-Object Name -Like "ColorPicker.Maui.Core.*")
+          $expectedMaui = if ($env:PACKAGE_SELECTION -in @("picker", "both")) { 1 } else { 0 }
+          $expectedCore = if ($env:PACKAGE_SELECTION -in @("core", "both")) { 1 } else { 0 }
+          if ($mauiPackages.Count -ne $expectedMaui -or $corePackages.Count -ne $expectedCore) {
+            throw "Unexpected package count: Maui=$($mauiPackages.Count)/$expectedMaui Core=$($corePackages.Count)/$expectedCore."
+          }
       - name: Upload nupkgs
         uses: actions/upload-artifact@v7
         with:
@@ -240,6 +346,7 @@ jobs:
             8.0.x
             10.0.302
       - name: Install MAUI workloads
+        if: ${{ inputs.package_selection != 'core' }}
         run: dotnet workload install maui-android maui-windows
       - uses: actions/download-artifact@v8
         with:
@@ -251,22 +358,49 @@ jobs:
           dotnet nuget add source "${{ github.workspace }}\nupkgs" `
             --name local-colorpicker `
             --configfile samples/ConsumerSmoke/NuGet.config
-      - name: Restore consumer against packed version
+      - name: Restore Picker consumers
+        if: ${{ inputs.package_selection != 'core' }}
         shell: pwsh
         env:
-          VERSION: ${{ needs.pack.outputs.version }}
+          PICKER_VERSION: ${{ needs.pack.outputs.picker-version }}
         run: |
-          Write-Host "Restoring ConsumerSmoke against ColorPicker.Maui = $env:VERSION"
+          Write-Host "Restoring ConsumerSmoke against ColorPicker.Maui = $env:PICKER_VERSION"
           dotnet restore samples/ConsumerSmoke/ConsumerSmoke.csproj `
-            -p:ColorPickerVersion=$env:VERSION
+            --configfile samples/ConsumerSmoke/NuGet.config `
+            -p:ColorPickerVersion=$env:PICKER_VERSION
+          Write-Host "Restoring PackageCompatibilitySmoke against ColorPicker.Maui = $env:PICKER_VERSION"
+          dotnet restore samples/PackageCompatibilitySmoke/PackageCompatibilitySmoke.csproj `
+            --configfile samples/ConsumerSmoke/NuGet.config `
+            -p:ColorPickerVersion=$env:PICKER_VERSION
+      - name: Restore Core consumer
+        if: ${{ inputs.package_selection != 'picker' }}
+        shell: pwsh
+        env:
+          CORE_VERSION: ${{ needs.pack.outputs.core-version }}
+        run: |
+          Write-Host "Restoring CoreConsumerSmoke against ColorPicker.Maui.Core = $env:CORE_VERSION"
+          dotnet restore samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj `
+            --configfile samples/ConsumerSmoke/NuGet.config `
+            -p:ColorPickerVersion=$env:CORE_VERSION
       - name: Install Android SDK platform (API 36)
+        if: ${{ inputs.package_selection != 'core' }}
         run: dotnet build ColorPicker/ColorPicker.csproj -t:InstallAndroidDependencies -f net10.0-android -p:AcceptAndroidSDKLicenses=True
       - name: Build consumer (Android)
-        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-android -p:ColorPickerVersion=${{ needs.pack.outputs.version }}
+        if: ${{ inputs.package_selection != 'core' }}
+        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-android -p:ColorPickerVersion=${{ needs.pack.outputs.picker-version }}
       - name: Build consumer (Windows)
-        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-windows10.0.19041.0 -p:ColorPickerVersion=${{ needs.pack.outputs.version }}
+        if: ${{ inputs.package_selection != 'core' }}
+        run: dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj --configuration Release --no-restore -f net10.0-windows10.0.19041.0 -p:ColorPickerVersion=${{ needs.pack.outputs.picker-version }}
+      - name: Build Core consumer
+        if: ${{ inputs.package_selection != 'picker' }}
+        run: dotnet build samples/CoreConsumerSmoke/CoreConsumerSmoke.csproj --configuration Release --no-restore -p:ColorPickerVersion=${{ needs.pack.outputs.core-version }}
+      - name: Verify package assembly compatibility
+        if: ${{ inputs.package_selection != 'core' }}
+        run: dotnet run --project samples/PackageCompatibilitySmoke/PackageCompatibilitySmoke.csproj --configuration Release --no-restore -p:ColorPickerVersion=${{ needs.pack.outputs.picker-version }}
       - name: Job summary
         shell: pwsh
         run: |
           "## Consumer smoke passed" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-          "Consumed `ColorPicker.Maui` **${{ needs.pack.outputs.version }}** from local feed." | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          "Selection: **${{ inputs.package_selection }}**" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          "Picker version: **${{ needs.pack.outputs.picker-version }}**" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          "Core version: **${{ needs.pack.outputs.core-version }}**" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
