@@ -57,8 +57,8 @@
 	     bump it in lockstep with the SDK. -->
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
-	  <PackageReference Include="SkiaSharp" Version="4.151.1" />
-	  <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="4.151.1" />
+	  <PackageReference Include="SkiaSharp" Version="4.151.2" />
+	  <PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="4.151.2" />
 	</ItemGroup>
 
 	<ItemGroup>
